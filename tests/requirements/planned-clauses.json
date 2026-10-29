@@ -84,6 +84,10 @@
     "name": "Creation"
   },
   {
+    "id": "PAGE-017",
+    "name": "Page creation is keyboard-complete on a phone and templates honour a locked destination"
+  },
+  {
     "id": "PAGE-003",
     "name": "Identity survives everything"
   },
