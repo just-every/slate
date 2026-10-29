@@ -262,6 +262,13 @@
       "supportingTests": []
     },
     {
+      "id": "PAGE-017",
+      "document": "CONTRACT.md",
+      "status": "unproven",
+      "unmetReason": "No complete Verify-loaded journey covers PAGE-017 — Page creation is keyboard-complete on a phone and templates honour a locked destination. The phone and desktop Tab then Shift+Tab sequences, writable-root template listing, preview and apply with an unrelated locked page, and locked-destination refusal with unchanged content remain unproven.",
+      "supportingTests": []
+    },
+    {
       "id": "PAGE-003",
       "document": "CONTRACT.md",
       "status": "unproven",
