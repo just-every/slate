@@ -19,6 +19,7 @@ import { managedFirstOpen } from './managed-first-open.mjs';
 import { randomUUID } from 'node:crypto';
 import { confirmationFlow } from './confirmation-flow.mjs';
 import { signInHintFlow } from './signin-hint.mjs';
+import { providerFallbackFlow } from './provider-fallback-flow.mjs';
 import { healthRequest } from '@runeditrun/rer/internal/modules/deploy-kit/health-request.mjs';
 
 const clientAssets = path.join(root, "dist", "client", "assets");
@@ -132,6 +133,7 @@ test("emitted bundles keep server internals and Markdown tooling off the client"
 });
 
 test("emitted Worker admission serves configured public doors and protects native owner access", async () => {
+  await providerFallbackFlow();
   // Preserve every original assertion and each runtime step's original deadline.
   const cases = [
     { name: "every request family refuses a deployment that is missing configuration", timeout: 180000, run: async () => {

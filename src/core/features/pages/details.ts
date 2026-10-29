@@ -38,5 +38,5 @@ export async function pageDetails(ctx:FeatureContext,pageId:string,appOrigin?:st
   }
   const text=(await labelForReader(ctx,JSON.parse(revision.body_json) as BlockView[])).map(block=>plainContent(block.content)).join(' ').trim();
   const wordCount=text?text.split(/\s+/u).length:0;
-  return {owner,linkedFrom,wordCount,readingMinutes:Math.max(1,Math.ceil(wordCount/200))};
+  return {owner,linkedFrom,wordCount,characterCount:text.length,readingMinutes:Math.max(1,Math.ceil(wordCount/200))};
 }

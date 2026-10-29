@@ -4,6 +4,7 @@ import {createApi} from '../../../src/core/app/hono';
 import type {searchFixture} from './route-fixture';
 import seed from '../../../seed.json';
 import {freshnessJourney} from './freshness-journey';
+import {mixedKindsJourney} from './mixed-kinds-journey';
 
 /** One public HTTP search journey, shared with the existing authority corpus. */
 export async function discoveryJourney(f:Awaited<ReturnType<typeof searchFixture>>) {
@@ -96,4 +97,5 @@ export async function discoveryJourney(f:Awaited<ReturnType<typeof searchFixture
  await sql("UPDATE page_grants SET revoked_at=? WHERE id='discovery-private-grant'",now);
  expect((await find('title:Discovery','denied')).data.total).toBe(0);
  await freshnessJourney(f);
+ await mixedKindsJourney(f);
 }

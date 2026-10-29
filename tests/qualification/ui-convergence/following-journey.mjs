@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { accessible, openPageAction } from './browser-support.mjs';
 import { ok, restrictedPage } from './two-people-support.mjs';
+import { homeJourney } from './home-journey.mjs';
+import { inboxJourney } from './inbox-journey.mjs';
 
 const title = 'Quarterly plan', hidden = 'Board salaries';
 
@@ -56,4 +58,6 @@ export async function followingJourney(state, people) {
   await bob.page.waitForURL(url => url.pathname === `/app/pages/${pageId}`);
   await expect(bob.page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue(title);
   await people.shot('bob', 'following opened');
+  await homeJourney(state, people);
+  await inboxJourney(state, people);
 }

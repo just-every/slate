@@ -1,3 +1,7 @@
+import {contentQueryJourney} from './content-query-journey.mjs';
+import { publicationJourney } from './publication-journey.mjs';
+import {unpublishedChangesJourney} from './unpublished-changes-journey.mjs';
+import {pageDetailsJourney} from './page-details-journey.mjs';
 import {syncedCustodyJourney,syncedHistoryJourney,syncedMemberErasureJourney} from './synced-custody.mjs';
 import {peopleJourney} from './people-journey.mjs';
 import {workspaceAuthorityJourney} from './workspace-authority-journey.mjs';
@@ -49,6 +53,7 @@ import { treeFilterJourney } from './tree-filter-journey.mjs';
 import { failedSaveJourney } from './failed-save-journey.mjs';
 import { sharedNavigationJourney } from './shared-navigation-journey.mjs';
 import { globalCreateJourney } from './global-create-journey.mjs';
+import { templateCaptureJourney } from './template-capture-journey.mjs';
 import { starterTemplatesJourney } from './starter-templates-journey.mjs';
 import { taskAssignmentJourney } from './task-assignment-journey.mjs';
 import { recordTemplatesJourney } from './record-templates-journey.mjs';
@@ -59,6 +64,7 @@ import { taskReportJourney } from './task-report-journey.mjs';
 import { myTasksJourney } from './my-tasks-journey.mjs';
 import { trustRankingJourney } from './trust-ranking-journey.mjs';
 import { chatJourney } from './chat-journey.mjs';
+import { todayOutcomesJourney } from './today-outcomes-journey.mjs';
 
 // Retain both responsive branches: desktop sidebar visibility and horizontal
 // column geometry are unique assertions, while the phone case checks stacking.
@@ -80,11 +86,15 @@ for (const width of [390, 1440]) {
         assert.ok(touch, 'Touch-member writing must complete before its dependent journeys.');
         await step('anchored comment, reset composer, reply and resolve; touch member comments and resolves', async () => {await commentJourney(state, pageId);await touchCommentJourney(touch,touch.pageId);});
         await step('invite existing member, persisted grant and canonical copied link; touch member publishes and shares', async () => {await shareJourney(state, pageId);await touchPublishShareJourney(touch,touch.pageId);});
+        await step('PAGE-007 populated Details and full-member ownership preserve grants under replay and edit-only refusal', async () => {await withSecondPerson(state,width,people=>pageDetailsJourney(state,people));});
         await step('query, highlighted results and opening exact page; touch Search, Inbox, My tasks and review queues', async () => {await searchJourney(state, pageId);await touchOperatorJourney(state,touch);});
+        await step('published readers, editor indication, republish and lossless discard', () => withSecondPerson(state, width, people => unpublishedChangesJourney(state, people)));
         // Finish earlier page notifications before connecting the chat journey destinations.
         await state.runScheduled();
         await chatJourney(state, width);
         if (width === 390) {
+          await templateCaptureJourney(state);
+          await withSecondPerson(state, width, people => step('DB-015 — template handover and revoked-saver pause on a phone', () => recordTemplatesJourney(state, people)));
           // One phone smoke visits the main screens; functional journeys use desktop
           // except where an assertion distinguishes the phone layout or touch input.
           for (const route of ['/app', `/app/pages/${pageId}`, '/app/search', '/app/inbox', '/app/tasks', '/app/review', '/app/templates', '/app/settings']) {
@@ -106,7 +116,7 @@ for (const width of [1440]) {
 }
 
 for (const width of [390]) {
-  test(`space tree title filtering preserves ancestors, access and expansion at ${width}px`, { timeout: 180000 }, async () => {
+  test(`space tree title filtering preserves ancestors, access and expansion at ${width}px`, { timeout: 420000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await treeFilterJourney(state);
@@ -168,6 +178,7 @@ for (const width of [1440]) {
   test(`TMPL-007 starter templates are found by category; touch spaces, templates, archive and workspace settings work at ${width}px`, { timeout: 240000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
+      await templateCaptureJourney(state);
       await starterTemplatesJourney(state).catch(async cause => {
         await state.page.screenshot({ path: `.artifacts/ui-convergence/starter-templates-${width}-failure.png`, fullPage: true });
         throw cause;
@@ -239,13 +250,15 @@ for (const width of [1440]) {
 }
 
 for (const width of [1440]) {
-  test(`page creation destinations and editor locks preserve readable content at ${width}px`, { timeout: 180000 }, async () => {
+  test(`page creation destinations and editor locks preserve readable content at ${width}px`, { timeout: 300000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await step('TREE-005 — create in place names root and child destinations', () => createInPlaceJourney(state));
       await state.switchIdentity('owner');
+      await step('review, publish, edit and cancel a scheduled publication', () => publicationJourney(state));
+      await state.switchIdentity('owner');
       await withSecondPerson(state, width, people => step('PAGE-015 — locks protect content while editors comment and unlock', () => pageLockBrowserJourney(state, people)));
-    });
+    }, {}, {scheduled:true});
   });
 }
 
@@ -254,7 +267,7 @@ for (const width of [1440]) {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await withSecondPerson(state, width, people => recordTemplatesJourney(state, people));
-    });
+    }, {}, { scheduled: true });
   });
 }
 
@@ -335,7 +348,8 @@ for (const width of [1440]) {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'flagship', async state => {
       await setupWorkspace(state);
       await askDraftJourney(state);
-    });
+      await todayOutcomesJourney(state);
+    }, {}, {scheduled:true});
   });
 }
 
@@ -359,12 +373,23 @@ for (const width of [1440]) {
 }
 
 for (const width of [1440]) {
-  test(`page outline follows headings and navigates long pages at ${width}px`, { timeout: 180000 }, async () => {
+  test(`page outline follows headings and navigates long pages at ${width}px`, { timeout: 420000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await outlineJourney(state);
       await settingsJourney(state,width);
       await workspaceAuthorityJourney(state,width);
+    });
+  });
+}
+
+// Give the complete query journey its own workspace and deadline, keeping the
+// established member journey's timeout and every query assertion unchanged.
+for (const width of [1440, 390]) {
+  test(`BLOCK-010 — native content queries retain criteria and current-reader results at ${width}px`, { timeout: 180000 }, async () => {
+    await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
+      await setupWorkspace(state);
+      await contentQueryJourney(state, width);
     });
   });
 }

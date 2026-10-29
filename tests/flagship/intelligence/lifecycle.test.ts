@@ -1,4 +1,5 @@
 import {nativeProposalCase} from './native-proposal.case';
+import {attentionJourney} from './attention-journey';
 import {claimsCase} from './claims.case';
 import {reservationPrerequisitesCase} from './reservation-prerequisites.case';
 import {runFoldCases} from '../fold-cases';
@@ -33,6 +34,9 @@ try {
       expect(stored.failure_reason).toBe('INVALID_MODEL_EVIDENCE');
       expect(stored.output_json).toBeNull();
       expect(calls).toBe(1);
+      await consumeIntelligenceJob({...env,AI_API_KEY:'test-only'} as AppBindings,{kind:'intelligence.run',runId:run.value.id,workspaceId:f.workspaceId});
+      const inbox=await door.request('GET','/api/notifications');expect(inbox.status).toBe(200);
+      expect((await inbox.json<any>()).items.filter((item:any)=>item.detail?.runId===run.value.id)).toMatchObject([{event:'run-failed'}]);
       return {id:run.value.id,status:'failed',pendingReason:'INVALID_MODEL_EVIDENCE',output:null};
     }},
     {title:'AI-009 transport retries stop at three and retain conservative unknown spend',execute:async(f,door)=>{
@@ -85,10 +89,14 @@ try {
       expect(stored.cost_micros).toBe(130);
       expect((await env.DB.prepare('SELECT count(*) n FROM intelligence_budgets WHERE run_id=? AND released_at IS NULL').bind(run.value.id).first<{n:number}>())!.n).toBe(0);
       expect((await env.DB.prepare("SELECT count(*) n FROM notification_outbox WHERE json_extract(detail_json,'$.runId')=? AND event='run-review'").bind(run.value.id).first<{n:number}>())!.n).toBe(0);
+      const inbox=await door.request('GET','/api/notifications');expect(inbox.status).toBe(200);
+      expect((await inbox.json<any>()).items.filter((item:any)=>item.detail?.runId===run.value.id)).toEqual([]);
       return {id:run.value.id,status:'completed',cost:130,output:{answer},availableActions:['successor']};
     }},
   ];
   for(const entry of cases)await runFlowCase(entry.title,entry.execute);
+  await resetFoldDeployment();
+  await attentionJourney();
 
 } finally {{await (vi.unstubAllGlobals());}}
 }},

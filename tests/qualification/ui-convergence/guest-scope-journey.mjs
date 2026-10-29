@@ -26,14 +26,22 @@ export async function guestScopeJourney(state,width) {
     const results=await ok(guest,origin,'GET','/api/search?q=Partner%20scope');
     assert.ok(results.items.some(item=>item.id===shared));
     assert.ok(!results.items.some(item=>item.id===secret));
+    assert.deepEqual(results.items.map(item=>item.id),[shared],'Search exposes the named page only, with a real ungranted page present.');
     const view=await guest.newPage();
     await view.goto(`${origin}/app/pages/${shared}`,{waitUntil:'networkidle'});
     await expect(view.getByRole('textbox',{name:'Page title',exact:true})).toHaveValue('Partner scope response guide');
     await accessible(view,'guest sees only the named page');
-    await ok(context,origin,'POST','/api/sharing',{operationKey:key(),targetKind:'container',targetId:space,principalKind:'member',principalId:who.id,level:'view'});
+    const grant={operationKey:key(),targetKind:'container',targetId:space,principalKind:'member',principalId:who.id,level:'view'};
+    await ok(context,origin,'POST','/api/sharing',grant);
+    assert.equal((await ok(guest,origin,'GET',`/api/containers/${space}`)).name,'Partner response guides');
     assert.equal((await ok(guest,origin,'GET',`/api/pages/${secret}`)).page.title,'Partner scope private plan');
+    const granted=await ok(guest,origin,'GET','/api/search?q=Partner%20scope');
+    assert.deepEqual(granted.items.map(item=>item.id).sort(),[shared,secret].sort(),'A named container grant immediately admits both contained pages to search.');
+    for(const route of ['/api/containers','/api/members'])assert.equal((await call(guest,origin,'GET',route)).status,403,'A container grant gives no workspace index authority.');
+    assert.deepEqual(await api('/api/members'),members);
     const current=await api(`/api/containers/${space}`);
     await ok(context,origin,'POST','/api/sharing/container-settings',{operationKey:key(),id:space,expectedRevisionId:current.revisionId,visibility:'private',guestAccess:'forbidden',publicLinkAccess:current.publicLinkAccess,anonymousAccess:current.anonymousAccess});
+    assert.equal((await call(guest,origin,'GET',`/api/containers/${space}`)).status,404);
     for(const id of [shared,secret])assert.equal((await call(guest,origin,'GET',`/api/pages/${id}`)).status,404,'The space veto wins over both named page and space grants.');
     const denied=await ok(guest,origin,'GET','/api/search?q=Partner%20scope');
     assert.ok(!denied.items.some(item=>[shared,secret].includes(item.id)));
@@ -43,5 +51,9 @@ export async function guestScopeJourney(state,width) {
     await accessible(view,'guest space veto hides previously shared content');
     await ok(context,origin,'POST','/api/guests/revoke',{operationKey:key(),memberIds:[who.id]});
     assert.equal((await call(guest,origin,'GET','/api/session')).status,401);
+    await ok(context,origin,'POST','/api/sharing',grant);
+    assert.equal((await guest.request.post(origin+'/api/auth/invitation/accept',{headers:{origin},form:{token:link.searchParams.get('token')},maxRedirects:0})).status(),400,'Replaying the accepted invitation cannot restore a revoked guest.');
+    for(const route of ['/api/session',`/api/pages/${shared}`,'/api/search?q=Partner%20scope'])assert.equal((await call(guest,origin,'GET',route)).status,401,'Replayed sharing cannot restore the revoked session.');
+    assert.deepEqual(await api('/api/members'),members);
   } finally {await guest.close();}
 }

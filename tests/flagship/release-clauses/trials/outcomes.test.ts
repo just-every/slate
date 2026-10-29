@@ -6,6 +6,7 @@ import {executeTrial} from '../../../../src/core/features/experiments/execution'
 import {collectMeasurements} from '../../../../src/core/features/experiments/measurement';
 import {concludeTrial} from '../../../../src/core/features/experiments/service';
 import {saveField} from '../../../../src/core/features/databases/service';
+import {sessionDoor} from '../../intelligence/run-flow';
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
 
 // Independent two-observation-per-arm oracle: sample-mean variance is (x1-x2)^2/4.
@@ -26,6 +27,8 @@ test('TRIAL-003 — persisted conclusions use collected fields and independently
   await resetDeployment();
   try{
    await setupCase({name:`TRIAL-003 — persisted ${label} conclusion uses collected fields and independently checked precision`});
+  const bindings={CONNECTOR_CREDENTIALS_KEY:f.context().sourceSecret};
+  const owner=await sessionDoor(f.owner,bindings),reader=await sessionDoor(f.reader,bindings);
   const input={id:f.trialId,operationKey:'u6-outcome',expectedRevisionId:active.value.revisionId,instrumentationRevision:f.plan.instrumentationRevision};
   await expect(concludeTrial(f.context(),input)).rejects.toMatchObject({code:'WINDOW_OPEN'});
   await collectMeasurements(f.context(),f.trialId);
@@ -40,6 +43,11 @@ test('TRIAL-003 — persisted conclusions use collected fields and independently
   expect(JSON.parse((await env.DB.prepare('SELECT outcome_json FROM intelligence_experiments WHERE id=?').bind(f.trialId).first<string>('outcome_json'))!)).toEqual(outcome);
   expect((await concludeTrial(f.context(),{...input,instrumentationRevision:'caller-cannot-bless-measurements'})).value).toEqual(result.value);
   expect(f.wire.sends).toHaveLength(2);
+  const inbox=await owner('GET','/api/notifications');expect(inbox.status,await inbox.clone().text()).toBe(200);
+  const results=(await inbox.json<any>()).items.filter((item:any)=>item.detail?.experimentId===f.trialId);
+  expect(results).toMatchObject([{event:'experiment-result',detail:{outcome:outcome.classification}}]);
+  const outsider=await reader('GET','/api/notifications');expect(outsider.status).toBe(200);
+  expect((await outsider.json<any>()).items.some((item:any)=>item.detail?.experimentId===f.trialId)).toBe(false);
 
   }finally{vi.useRealTimers();vi.unstubAllGlobals();}
  }

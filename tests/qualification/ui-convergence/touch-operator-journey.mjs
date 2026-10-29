@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {expect} from '@playwright/test';
-import {ok,grant} from './two-people-support.mjs';
+import {ok,grant,call,restrictedPage} from './two-people-support.mjs';
 import {tap,type,checkpoint} from './touch-controls.mjs';
 
 /** Search, work and both review queues are operated by an ordinary touch member. */
@@ -88,5 +88,91 @@ export async function touchOperatorJourney(state,touch){
  await expect(health).toHaveCount(0);
  assert.equal((await api(`/api/status/page/${reviewed}`)).verification.state,'current');
  await checkpoint(page,'health queue reverified');
+ await inboxJourney(state,touch);
  console.log('NAV-006 touch Search, Inbox, My tasks, requested reviews and verification health passed');
+}
+
+/** Native inbox events retain their period, audience, comment and personal read state. */
+export async function inboxJourney(state,touch){
+ const {page,context,origin,api}=touch;
+ // Finish earlier notices through the same personal actions before this corpus.
+ await ok(context,origin,'POST','/api/notifications/actions',{operationKey:randomUUID(),action:'read-all'});
+ await ok(context,origin,'POST','/api/notifications/actions',{operationKey:randomUUID(),action:'archive-read'});
+ const {pageId}=await restrictedPage(state,'Inbox handover notes',['Confirm the next shift before leaving.']);
+ await grant(state.context,origin,pageId,'browser-reader','comment');
+ await ok(context,origin,'PUT','/api/navigation/watches',{operationKey:randomUUID(),pageId,enabled:true});
+ const plain=(await ok(state.context,origin,'POST',`/api/comments/page/${pageId}`,{operationKey:randomUUID(),body:[{text:'The early shift is confirmed.'}]})).value.id;
+ const mentioned=(await ok(state.context,origin,'POST',`/api/comments/page/${pageId}`,{operationKey:randomUUID(),body:[{text:'Confirm the later shift, '},{text:'Morgan Reader',mention:{kind:'person',id:'browser-reader',label:'Morgan Reader'}}]})).value.id;
+ const notices=(await api('/api/notifications')).items;
+ const direct=notices.find(item=>item.event==='mention'&&item.commentId===mentioned);
+ const recent=notices.find(item=>item.event==='comment'&&item.commentId===mentioned);
+ const older=notices.find(item=>item.event==='comment'&&item.commentId===plain);
+ const access=notices.find(item=>item.event==='access-granted'&&item.pageId===pageId);
+ assert.ok(direct&&recent&&older&&access,'All inbox examples originate in native grants, watches and comments.');
+ // Only elapsed clock state changes; native event payloads and authority are untouched.
+ const ordered=[direct,recent,older,access],times=['2020-04-03T10:00:00.000Z','2020-04-03T09:00:00.000Z','2020-04-02T13:00:00.000Z','2020-04-01T12:00:00.000Z'];
+ await state.fixtureSql(ordered.map((item,index)=>`UPDATE notifications SET created_at='${times[index]}' WHERE id='${item.id}'`));
+ const inbox=await api('/api/notifications');
+ assert.deepEqual(inbox.items.map(item=>item.id),ordered.map(item=>item.id));
+ assert.equal(inbox.unreadCount,4);
+ assert.deepEqual(inbox.items.map(item=>item.period),['2020-04-03','2020-04-03','2020-04-02','2020-04-01']);
+ await page.goto(origin+'/app/inbox',{waitUntil:'networkidle'});
+ const groups=page.getByRole('region',{name:/^Notifications for /}),rows=page.locator('.outcome-list li');
+ await expect(groups).toHaveCount(3);
+ assert.deepEqual(await groups.locator('h2 time').evaluateAll(elements=>elements.map(element=>element.dateTime)),['2020-04-03','2020-04-02','2020-04-01']);
+ assert.deepEqual(await rows.locator('time').evaluateAll(elements=>elements.map(element=>element.dateTime)),times);
+ await expect(page.locator('.page-lede')).toHaveText('4 unread notifications');
+ await checkpoint(page,'inbox newest first period groups');
+ const audience=page.getByRole('combobox',{name:'Notification audience',exact:true});
+ await audience.selectOption('direct');
+ await expect(rows).toHaveCount(2);
+ assert.deepEqual(await rows.locator('.outcome-kind').allTextContents(),['mention · Unread','access granted · Unread']);
+ await expect(page.locator('.page-lede')).toHaveText('4 unread notifications');
+ await audience.selectOption('watched');
+ await expect(rows).toHaveCount(2);
+ assert.deepEqual(await rows.locator('time').evaluateAll(elements=>elements.map(element=>element.dateTime)),times.slice(1,3));
+ await expect(page.locator('.page-lede')).toHaveText('4 unread notifications');
+ await checkpoint(page,'inbox watching view');
+ await audience.selectOption('direct');
+ const mention=rows.filter({has:page.locator('.outcome-kind').filter({hasText:/^mention/})});
+ await tap(mention.getByRole('link'));
+ await expect(page).toHaveURL(origin+`/app/pages/${pageId}?comment=${mentioned}`);
+ await expect(page.locator(`#comment-${mentioned}`)).toContainText('Confirm the later shift, @Morgan Reader');
+ await expect(page.locator(`#comment-${mentioned}`)).toBeInViewport();
+ assert.ok((await api('/api/notifications')).items.find(item=>item.id===direct.id).readAt);
+ await checkpoint(page,'inbox opens the referenced comment');
+ await page.goto(origin+'/app/inbox',{waitUntil:'networkidle'});
+ await page.reload({waitUntil:'networkidle'});
+ await expect(page.locator('.page-lede')).toHaveText('3 unread notifications');
+ await expect(rows.filter({has:page.locator('.outcome-kind').filter({hasText:/^mention$/})})).toHaveCount(1);
+ await tap(page.getByRole('button',{name:'Archive read',exact:true}));
+ await expect(rows).toHaveCount(3);
+ await page.reload({waitUntil:'networkidle'});
+ assert.deepEqual((await api('/api/notifications')).items.map(item=>item.id),ordered.slice(1).map(item=>item.id));
+ assert.deepEqual((await api('/api/notifications?archived=true')).items.filter(item=>item.pageId===pageId).map(item=>item.id),[direct.id]);
+ await expect(page.locator('.page-lede')).toHaveText('3 unread notifications');
+ await tap(page.getByRole('button',{name:'Mark all read',exact:true}));
+ await expect(page.locator('.page-lede')).toHaveText('0 unread notifications');
+  await expect(rows).toHaveCount(3);
+ await page.reload({waitUntil:'networkidle'});
+ assert.ok((await api('/api/notifications')).items.every(item=>item.readAt));
+ await tap(page.getByRole('button',{name:'Archive read',exact:true}));
+ await expect(rows).toHaveCount(0);
+ await page.reload({waitUntil:'networkidle'});
+ await expect(page.getByText('You’re all caught up.',{exact:true})).toBeVisible();
+ assert.deepEqual((await api('/api/notifications?archived=true')).items.filter(item=>item.pageId===pageId).map(item=>item.id),ordered.map(item=>item.id));
+ await checkpoint(page,'inbox read items archived after reload');
+ // Retained history and a newly unread item never bypass current page access.
+ const freshComment=(await ok(state.context,origin,'POST',`/api/comments/page/${pageId}`,{operationKey:randomUUID(),body:[{text:'A newly unread handover update.'}]})).value.id;
+ const fresh=(await api('/api/notifications')).items.find(item=>item.commentId===freshComment);
+ assert.ok(fresh&&!fresh.readAt);
+ assert.equal((await api('/api/notifications')).unreadCount,1);
+ const grants=(await state.api(`/api/sharing/pages/${pageId}`)).items;
+ await grant(state.context,origin,pageId,'browser-reader','comment',{id:grants.find(item=>item.principalId==='browser-reader').id,revoke:true});
+ assert.equal((await api('/api/notifications?archived=true')).items.some(item=>item.pageId===pageId),false);
+ assert.equal((await api('/api/notifications')).unreadCount,0);
+ const refused=await call(context,origin,'POST','/api/notifications/actions',{operationKey:randomUUID(),action:'read',id:fresh.id});
+ assert.equal(refused.status,404);
+ await page.reload({waitUntil:'networkidle'});
+ await expect(rows).toHaveCount(0);
 }

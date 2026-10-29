@@ -28,10 +28,14 @@ export function ContentQueryDialog({
       "/api/status",
     ),
     saved=useResource<{items:{id:string;name:string;query:EmbeddedSearchQuery}[]}>('/api/search/saved');
+  const resources = [spaces, pages, members, statuses, saved];
+  const loading = resources.some(resource => resource.loading);
+  const unavailableChoices = [spaces, pages, members, statuses].some(resource => resource.error);
   return (
     <ActionDialog
       title="Edit content query"
       action="Save query"
+      submitDisabled={loading}
       onClose={onClose}
       onSubmit={async (data) => {
         const definition: ContentQueryDefinition = {};
@@ -68,6 +72,8 @@ export function ContentQueryDialog({
         await onSave(definition);
       }}
     >
+      <RequestState loading={loading}>
+      {unavailableChoices ? <p role="status">Some query choices are unavailable. Saved criteria are retained.</p> : null}
       <RequestState loading={saved.loading} error={saved.error} retry={saved.reload}><label>Saved search<select aria-label="Saved search" name="savedSearch" defaultValue={block.definition.search?'embedded':''}>
         <option value="">Use the filters below</option>
         {block.definition.search?<option value="embedded">{block.definition.searchName??'Embedded search'} (current criteria)</option>:null}
@@ -83,6 +89,7 @@ export function ContentQueryDialog({
           defaultValue={block.definition.container ?? ""}
         >
           <option value="">All readable spaces</option>
+          {block.definition.container && !spaces.data?.items.some(item => item.id === block.definition.container) ? <option value={block.definition.container}>Unavailable space</option> : null}
           {spaces.data?.items.map((p) => (
             <option value={p.id} key={p.id}>
               {p.name}
@@ -98,6 +105,7 @@ export function ContentQueryDialog({
           defaultValue={block.definition.ancestor ?? ""}
         >
           <option value="">Any parent</option>
+          {block.definition.ancestor && !pages.data?.items.some(item => item.id === block.definition.ancestor) ? <option value={block.definition.ancestor}>Unavailable page</option> : null}
           {pages.data?.items.map((p) => (
             <option value={p.id} key={p.id}>
               {p.title}
@@ -125,6 +133,7 @@ export function ContentQueryDialog({
           defaultValue={block.definition.status ?? ""}
         >
           <option value="">Any status</option>
+          {block.definition.status && !statuses.data?.items.some(item => item.key === block.definition.status) ? <option value={block.definition.status}>Unavailable status</option> : null}
           {statuses.data?.items.map((p) => (
             <option value={p.key} key={p.key}>
               {p.label}
@@ -140,6 +149,7 @@ export function ContentQueryDialog({
           defaultValue={block.definition.contributor ?? ""}
         >
           <option value="">Any contributor</option>
+          {block.definition.contributor && !members.data?.items.some(item => item.id === block.definition.contributor) ? <option value={block.definition.contributor}>Unavailable contributor</option> : null}
           {members.data?.items.map((p) => (
             <option value={p.id} key={p.id}>
               {p.displayName}
@@ -186,6 +196,7 @@ export function ContentQueryDialog({
           required
         />
       </label>
+      </RequestState>
     </ActionDialog>
   );
 }

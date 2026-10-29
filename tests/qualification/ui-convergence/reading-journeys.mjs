@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import {themeJourney} from './theme-journey.mjs';
+import {activityContextJourney} from './activity-context-journey.mjs';
 import {guestConsoleJourney} from './guest-console-journey.mjs';
 import { expect } from '@playwright/test';
 import { accessible } from './browser-support.mjs';
 import { compactPage } from './browser-evidence.mjs';
 import {searchFiltersJourney} from './search-filters-journey.mjs';
+import {mixedSearchJourney} from './mixed-search-journey.mjs';
 
 export async function searchJourney(state, pageId) {
   const {page,origin,journeyTitle,searchTerm}=state;
@@ -53,6 +56,7 @@ export async function searchJourney(state, pageId) {
   assert.ok(await create.evaluate(element => element.classList.contains('primary-button')));
   await accessible(page, 'search no match');
   await searchFiltersJourney(state);
+  await mixedSearchJourney(state);
 }
 
 export async function settingsJourney(state, width) {
@@ -86,4 +90,6 @@ export async function settingsJourney(state, width) {
   await expect(page.locator('body')).not.toContainText(/\bContainers?\b/);
   await accessible(page, 'space settings');
   await guestConsoleJourney(state);
+  await themeJourney(state, width);
+  if(width===1440)await activityContextJourney(state);
 }

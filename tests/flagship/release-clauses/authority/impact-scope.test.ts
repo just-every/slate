@@ -57,10 +57,20 @@ try {
  const valid=await issueGrant(f.context(),{operationKey:'maintenance-current',subjectId:f.owner,kind:'effect',expiresAt:'2099-01-01T00:00:00.000Z',scope});expect(valid.value.id).not.toBe(stale.value.id);
  const repair=await tryGrantedMaintenance(f.context(),f.run.value.id);expect(repair).not.toBeNull();
  const after=await readPage(f.context(),f.page.pageId);expect(after.page.revisionId).not.toBe(before.page.revisionId);expect(JSON.stringify(after.blocks)).toContain('Determinate local repair');
+ expect(JSON.stringify(after.blocks)).toContain('Related granted follow-through');
  expect(await tryGrantedMaintenance(f.context(),f.run.value.id)).toBeNull();expect(await readPage(f.context(),f.page.pageId)).toEqual(after);
+ const {sessionDoor}=await import('../../intelligence/run-flow');
+ const door=await sessionDoor(f.owner);
+ const inbox=await door('GET','/api/notifications');expect(inbox.status).toBe(200);
+ const notices=(await inbox.json<any>()).items.filter((item:any)=>item.detail?.runId===f.run.value.id);
+ expect(notices.map((item:any)=>item.event).sort()).toEqual(['maintenance','run-review']);
+ const outcome=notices.find((item:any)=>item.event==='maintenance');expect(outcome).toMatchObject({href:`/app/runs/${f.run.value.id}`,detail:{outcome:'Applied 1 granted page change.'}});
+ const today=await door('GET','/api/notifications/today');expect(today.status).toBe(200);
+ const grouped=await today.json<any>();expect(grouped.decisions).toEqual([]);expect(grouped.outcomes).toHaveLength(1);expect(grouped.outcomes[0].count).toBe(1);
+ const inspected=await door('GET',`/api/runs/${f.run.value.id}`);expect(inspected.status).toBe(200);expect(JSON.stringify(await inspected.json())).toContain('Related granted follow-through');
  const reviews=(await env.DB.prepare('SELECT * FROM intelligence_reviews WHERE run_id=?').bind(f.run.value.id).all()).results;expect(reviews).toHaveLength(1);expect(reviews[0]).toMatchObject({actor_id:f.owner,outcome:'accepted'});
  const receipt=await env.DB.prepare('SELECT request_hash FROM operation_receipts WHERE workspace_id=? AND operation_key=?').bind(f.workspaceId,'granted-maintenance:'+f.run.value.id).first<{request_hash:string}>();
- expect(receipt!.request_hash).toBe(await requestHash({action:'runs.granted-changes',request:{runId:f.run.value.id,operationKey:'granted-maintenance:'+f.run.value.id,expectedRevisionId:f.row.revision_id,selections:[{index:0,pageId:f.page.pageId,expectedPageRevisionId:before.page.revisionId,mode:'insert-below'}],standingGrantId:valid.value.id}}));
+ expect(receipt!.request_hash).toBe(await requestHash({action:'runs.granted-changes',request:{runId:f.run.value.id,operationKey:'granted-maintenance:'+f.run.value.id,expectedRevisionId:f.row.revision_id,selections:f.proposedChanges.map((_,index)=>({index,pageId:f.page.pageId,expectedPageRevisionId:before.page.revisionId,mode:'insert-below'})),standingGrantId:valid.value.id}}));
  expect(await effects(f.workspaceId)).toEqual([]);expect(f.calls).toHaveLength(3);
 
 } finally {{await (vi.unstubAllGlobals());}}

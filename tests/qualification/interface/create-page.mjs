@@ -4,6 +4,8 @@
  */
 export async function createPage(page, origin, containerId, title) {
   await page.goto(origin + '/app/containers/' + containerId, { waitUntil: 'networkidle' });
+  const navigation=page.getByRole('button',{name:'Open navigation',exact:true});
+  if(await navigation.isVisible())await navigation.click();
   await page.locator('aside.sidebar').getByRole('button', { name: 'Create', exact: true }).click();
   await page.getByRole('menu', { name: 'Create content', exact: true }).getByRole('menuitem', { name: 'Page', exact: true }).click();
   await page.waitForURL(url => url.pathname.startsWith('/app/pages/'));

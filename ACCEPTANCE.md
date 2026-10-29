@@ -8,12 +8,12 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 39 | 258 | 34 | 331 |
+| Core | 49 | 248 | 34 | 331 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 39 | 258 | 40 | 337 |
+| Full target | 49 | 248 | 40 | 337 |
 
-Judged from the code and tests at commit `297b2ea5343fa80455166331849aca69e3730e5f` (28 October 2026). Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
+Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
 ## Core
 
@@ -112,7 +112,7 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE
 
 #### WORK-006 — Invitations
 
-Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ROLE-001
+Core · published · **done** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ROLE-001
 
 **Requirement.** An invitation is single-use, can be revoked before it is used, and can no longer be accepted 7 days after it was sent; an expired invitation is retained, not deleted.
 
@@ -120,8 +120,8 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE
 1. Requesting an invitation returns the same response whether or not the address already belongs to a member.
 2. Invitation accepted once, revoked before use, refused after 7 days; the request response is identical for known and unknown addresses.
 
-**Evidence.** `tests/e2e/local-outbox.node.test.mts` — "native local mail sign-in and invitations preserve identity, delivery and scoped authority"
-**Gap.** Missing a native invitation journey that advances past seven days, reads the retained expired invitation and compares existing-address responses; the cited local-mail journey accepts and revokes invitations without that expiry path.
+**Evidence.** `tests/e2e/local-outbox.node.test.mts` — "native local mail sign-in and invitations preserve identity, delivery and scoped authority": acceptance 1 and 2, complete HTTP admission comparison apart from generated operation identifiers, native single-use session acceptance, pre-use revocation and retained seven-day expiry. `tests/qualification/policies/invitations.test.ts` — "native member invitations preserve uniform admission, lifetime and current inviter authority": acceptance 1 and 2 through the native Workers HTTP doors, including expired GET and POST refusal with unchanged members, sessions and retained invitation.
+**Gap.** None.
 
 #### WORK-007 — Removal
 
@@ -165,7 +165,7 @@ Core · published · **done** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-RO
 
 #### WORK-010 — Guests
 
-Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ROLE-001
+Core · published · **done** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ROLE-001
 
 **Requirement.** A guest is a person invited to named pages or containers only.
 
@@ -174,8 +174,8 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE
 2. A container may forbid guests (`CONT-007`).
 3. A guest reaches only granted pages and sees no container index, member list or search results beyond grants.
 
-**Evidence.** `tests/qualification/core/identity.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/identity.mjs`.
+**Evidence.** `tests/qualification/ui-convergence/guest-scope-journey.mjs` — "guestScopeJourney", through "workspaceAuthorityJourney" in `tests/qualification/ui-convergence/workspace-authority-journey.mjs`, called by "space tree title filtering preserves ancestors, access and expansion at 390px" and "page outline follows headings and navigates long pages at 1440px" in `tests/qualification/ui-convergence/journeys.test.mjs`: guest admission preserves member list and count; named page and container grants bound reads and search while workspace indexes stay denied; the container veto immediately removes access; revocation survives grant and invitation replay.
+**Gap.** None.
 
 #### WORK-011 — Workspace settings
 
@@ -243,7 +243,7 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE
 2. SAML single sign-on and SCIM provisioning are `ADMIN-001` and `ADMIN-002`.
 3. Configured OIDC provider signs in an invited member only; a failing provider leaves magic-link sign-in working and says which is unavailable.
 
-**Evidence.** `tests/qualification/core/identity.mjs`
+**Evidence.** `tests/qualification/core/identity.mjs` Supporting candidate regressions: `tests/flagship/core/identity-upgrade.test.ts` — native invited OIDC, refused identities without writes, provider outages, mailbox replacement and email fallback; `tests/e2e/provider-fallback-flow.mjs` — emitted provider failure and email recovery.
 **Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/identity.mjs`.
 
 ### Editing and saving
@@ -724,14 +724,14 @@ Core · published · **partial**
 2. A query whose source is deleted shows that, not an empty list.
 3. Content query shows each reader only readable pages, never drafts, shows last run and a deleted source.
 
-**Evidence.** `tests/qualification/interface/blocks.mjs`
+**Evidence.** `tests/qualification/interface/blocks.mjs`; additional supporting browser coverage: `tests/qualification/ui-convergence/journeys.test.mjs` — "BLOCK-010 — native content queries retain criteria and current-reader results at 1440px" and "BLOCK-010 — native content queries retain criteria and current-reader results at 390px", through `tests/qualification/ui-convergence/content-query-journey.mjs` — contentQueryJourney: native criteria persistence, exact ordered current-reader results, both authors’ drafts excluded, response-correlated last run, committed source updates on reopen, revoked and deleted sources without stale rows, and retained missing-source criteria.
 **Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/blocks.mjs`.
 
 ### Page lifecycle
 
 #### LIFE-001 — Lifecycle states
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A page is `draft`, `scheduled`, `live`, `live-with-unpublished-changes` or `archived`.
 
@@ -740,8 +740,8 @@ Core · published · **partial**
 2. Every transition records the actor and the time, and every state exists in the stored model whichever value `LIFE-006` carries.
 3. Every lifecycle state and transition is stored with actor and time under both lifecycle policy values.
 
-**Evidence.** `tests/qualification/interface/publication.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/publication.mjs`.
+**Evidence.** `tests/flagship/content/http.test.ts` — publication, human verification and media enforce current reader authority; `tests/qualification/ui-convergence/journeys.test.mjs` — page creation destinations and editor locks preserve readable content at 1440px (publication steps in `tests/qualification/interface/publication.mjs`).
+**Gap.** None.
 
 #### LIFE-002 — A draft is private
 
@@ -761,7 +761,7 @@ Core · published · **partial**
 
 #### LIFE-003 — Publish
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** Publishing takes a location, a general access setting (`SHARE-004`), an optional version comment, an optional schedule and an optional publish-as attribution, shows a preview of what readers will see, and on confirmation makes the page visible in its container's tree, in search and in content queries, and writes one version with origin `publish` (`REV-002`).
 
@@ -769,12 +769,12 @@ Core · published · **partial**
 1. Publishing takes a location, a general access setting (`SHARE-004`), an optional version comment, an optional schedule and an optional publish-as attribution, shows a preview of what readers will see, and on confirmation makes the page visible in its container's tree, in search and in content queries, and writes one version with origin `publish` (`REV-002`).
 2. Publish with location, access, comment, schedule and attribution previews and writes one `publish` version.
 
-**Evidence.** `tests/qualification/interface/publication.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/publication.mjs`.
+**Evidence.** `tests/flagship/content/http.test.ts` — publication, human verification and media enforce current reader authority; `tests/qualification/ui-convergence/journeys.test.mjs` — page creation destinations and editor locks preserve readable content at 1440px (publication steps in `tests/qualification/interface/publication.mjs`).
+**Gap.** None.
 
 #### LIFE-004 — Scheduled publish
 
-Core · published · **partial** · Cites BASE-OPS-004
+Core · published · **done** · Cites BASE-OPS-004
 
 **Requirement.** A publish set for a future time leaves the page `scheduled`, shows that time wherever the page appears to its author, and publishes at that time without a further action.
 
@@ -782,12 +782,12 @@ Core · published · **partial** · Cites BASE-OPS-004
 1. Canceling before it fires returns the page to `draft` and publishes nothing; a schedule that fails to fire leaves the page `scheduled` and reports the failure under `BASE-OPS-004`.
 2. A scheduled publish fires at its time; cancel returns to draft; a failed schedule is reported.
 
-**Evidence.** `tests/qualification/interface/publication.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/publication.mjs`.
+**Evidence.** `tests/flagship/content/http.test.ts` — publication, human verification and media enforce current reader authority; `tests/qualification/ui-convergence/journeys.test.mjs` — page creation destinations and editor locks preserve readable content at 1440px (publication steps in `tests/qualification/interface/publication.mjs`).
+**Gap.** None.
 
 #### LIFE-005 — Unpublished changes
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** Editing a `live` page changes what readers see only when it is republished: every reader other than the editors sees the published revision, and the page shows that it has unpublished changes to anyone who may edit it.
 
@@ -795,8 +795,8 @@ Core · published · **partial**
 1. Discarding them restores the published revision as the working revision and deletes no version.
 2. Readers see the published revision until republish; discard restores it without deleting a version.
 
-**Evidence.** `tests/qualification/interface/publication.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/publication.mjs`.
+**Evidence.** `tests/flagship/content/http.test.ts` — publication, human verification and media enforce current reader authority; `tests/qualification/ui-convergence/journeys.test.mjs` — page creation destinations and editor locks preserve readable content at 1440px (publication steps in `tests/qualification/interface/publication.mjs`).
+**Gap.** None.
 
 #### LIFE-006 — Lifecycle profile
 
@@ -1745,7 +1745,7 @@ Core · published · **partial**
 
 #### SEARCH-001 — Global search
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** One search covers page titles and retained body text, record field values, container names and descriptions, comments and templates, and returns the first page of ranked results within 500ms with the total number of matches and an ordering stable across pages.
 
@@ -1753,8 +1753,8 @@ Core · published · **partial**
 1. One search covers page titles and retained body text, record field values, container names and descriptions, comments and templates, and returns the first page of ranked results within 500ms with the total number of matches and an ordering stable across pages.
 2. One search over titles, bodies, fields, containers, comments and templates returns ranked results within 500ms with stable paging.
 
-**Evidence.** `tests/qualification/core/discovery-browser.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/discovery-browser.mjs`.
+**Evidence.** `tests/e2e/search/fts-permissions.test.ts` — "Indexed search uses current native authority for literal matches, totals, facets and cursors", calling `tests/e2e/search/mixed-kinds-journey.ts` — "mixedKindsJourney" (all retained kinds, exact mixed ranking, totals and current-authority cursor traversal); `tests/qualification/ui-convergence/journeys.test.mjs` — "real core-wiki and touch-member journeys at 1440px" and "real core-wiki and touch-member journeys at 390px", calling `tests/qualification/ui-convergence/reading-journeys.mjs` — "searchJourney" and `tests/qualification/ui-convergence/mixed-search-journey.mjs` — "mixedSearchJourney"; `tests/qualification/search/capacity-journey.mjs` — native emitted-Worker HTTP capacity journey with raw first-page latency samples and canonical corpus manifest (exact candidate receipt supplied at handoff).
+**Gap.** None.
 
 #### SEARCH-002 — Results
 
@@ -1864,7 +1864,7 @@ Core · published · **partial**
 
 #### NAV-001 — Home
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A member's home shows their recent pages, their favorites and the containers they belong to, each entry opening the record.
 
@@ -1872,8 +1872,8 @@ Core · published · **partial**
 1. It shows nothing the member may not read and no workspace-wide activity feed.
 2. Home shows recents, favorites and containers, only readable, with no workspace feed.
 
-**Evidence.** `tests/qualification/backend/emitted.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/backend/emitted.mjs`.
+**Evidence.** `tests/qualification/ui-convergence/home-journey.mjs` — "homeJourney", called by "CONT-012 a watched space's create, edit sessions and comment appear once each in Home's Following at 1440px" in `tests/qualification/ui-convergence/journeys.test.mjs`: populated recents, page and container favourites, owned containers, opening every entry, personal visits and immediate removal of revoked entries.
+**Gap.** None.
 
 #### NAV-002 — Recents
 
@@ -1960,12 +1960,12 @@ Core · published · **partial**
 7. Preserve `NOTIF-002` inbox behavior, `NOTIF-003` optional link-only chat delivery and `MAIL-001` limited email use.
 8. Each listed event notifies its recipient once, rechecks access, never notifies the actor and never discloses unreadable records.
 
-**Evidence.** `tests/qualification/backend/emitted.mjs`
-**Gap.** Missing a complete public-door journey for meaningful notifications under the current authority, audience and company policy; prior quoted implementation and policy notes are retained in CHANGELOG.md.
+**Evidence.** `tests/flagship/discovery/meaningful-notifications.ts` — "meaningfulNotifications", called by "PAGE-016 — authoring watches respect durable unwatch, personal overrides and workspace defaults" in `tests/flagship/discovery/following.test.ts`; `tests/flagship/intelligence/attention-journey.ts` — "attentionJourney" and run failure and quiet-success cases in `tests/flagship/intelligence/lifecycle.test.ts`; `tests/flagship/release-clauses/authority/impact-scope.test.ts` — "EFFECT-003 — scoped rehearsal and pinned maintenance require exact current authority"; `tests/flagship/release-clauses/trials/outcomes.test.ts` — "TRIAL-003 — persisted conclusions use collected fields and independently checked precision".
+**Gap.** Company-policy integration and delegated actionable pauses remain unproven under both held and all-autonomous dispositions. BASE-AGENT-007 owns the shared policy chokepoint; BASELINE.md records its conformance journey as planned and the pinned Base has no agent-door module. Retained default: exact explicit grants permit bounded maintenance, other proposed changes require their named person; no new policy authority is inferred. No live provider result is claimed.
 
 #### NOTIF-002 — Inbox
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** Notifications are listed newest first, grouped by period, with an unread count and separate views for those addressed to the member and those from watched pages.
 
@@ -1973,8 +1973,8 @@ Core · published · **partial**
 1. Opening one marks it read and opens the referenced record at the referenced comment; a member can mark all read and archive read notifications.
 2. Inbox groups by period with unread count and two views; opening marks read and opens the referenced comment.
 
-**Evidence.** `tests/qualification/core/discovery.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/discovery.mjs`.
+**Evidence.** `tests/qualification/ui-convergence/inbox-journey.mjs` — "inboxJourney", called by "CONT-012 a watched space's create, edit sessions and comment appear once each in Home's Following at 1440px" in `tests/qualification/ui-convergence/journeys.test.mjs`: populated periods and newest-first order, unread count, Direct and Watching views, opening the referenced comment marks read, mark all read and archive read. `tests/flagship/discovery/meaningful-notifications.ts` — "meaningfulNotifications" in `tests/flagship/discovery/following.test.ts` covers native actions and current access after revocation and erasure.
+**Gap.** None.
 
 #### NOTIF-003 — Chat notifications
 
@@ -2170,7 +2170,7 @@ Core · published · **partial**
 1. It copies no comment, version, grant, watcher, analytics figure, status or public link.
 2. Saving a page as a template copies body and properties and none of the excluded records.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
+**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.; no validated CI-run proof. Supporting native capture/apply journey: `tests/qualification/ui-convergence/template-capture-journey.mjs` — "templateCaptureJourney", loaded by the existing responsive core-wiki (390px) and starter-template (1440px) journeys in `tests/qualification/ui-convergence/journeys.test.mjs`; exercises authored body and properties, optional children, exclusion of source comments, revisions, grants, watchers, readership, status and public exposure, fresh identifiers, receipt retry and destination-derived authority. This supporting registration retains the current partial judgment and acceptance gaps.
 **Gap.** No validated CI-run proof for this acceptance point: "Saving a page as a template copies its body, its properties and, on request, its children."<br>No validated CI-run proof for this acceptance point: "It copies no comment, version, grant, watcher, analytics figure, status or public link."
 
 #### TMPL-006 — Where a template lives
@@ -2183,7 +2183,7 @@ Core · published · **partial**
 1. A container's templates are offered first inside that container and are not offered elsewhere, and moving a template between the two is one action.
 2. Container templates are offered first in their container only; moving scope is one action.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
+**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof. Supporting regression: `tests/qualification/ui-convergence/template-scope-journey.mjs` — "templateScopeJourney", invoked by the existing "TMPL-007 starter templates are found by category; touch spaces, templates, archive and workspace settings work at 1440px" journey in `tests/qualification/ui-convergence/journeys.test.mjs`; populated workspace and two readable containers prove exact local-first lists after reload, and one Move collection submission each way retains identifier and snapshot and reconciles all three collections. Main's partial judgment is retained; this supporting proof does not promote acceptance.
 **Gap.** No validated CI-run proof for this acceptance point: "A template belongs to the workspace or to one container."<br>No validated CI-run proof for this acceptance point: "A container's templates are offered first inside that container and are not offered elsewhere, and moving a template between the two is one action."
 
 ### Import
@@ -2430,7 +2430,7 @@ Core · published · **partial**
 
 #### LINK-004 — Links respect access
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A mention or link to a record the reader may not open shows that a linked record exists and that access is needed, and shows no title, snippet, icon or author.
 
@@ -2438,8 +2438,8 @@ Core · published · **partial**
 1. Requesting access is one action that notifies a member who can grant it.
 2. Links to unreadable records show only that access is needed; request access notifies a granter.
 
-**Evidence.** `tests/qualification/backend/emitted.mjs`
-**Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/backend/emitted.mjs`.
+**Evidence.** `tests/qualification/ui-convergence/link-access-journey.mjs` — "linkAccessJourney", called by "shared page invitations name their space and disappear on revocation at 1440px" in `tests/qualification/ui-convergence/journeys.test.mjs`: readable mention and destination, content-free denied mention and page, one-action request, current granter, duplicate suppression and no implicit grant. `tests/flagship/content/mention-access.test.ts` — "LINK-004 — a mentioned page title reaches a reader through no door once their access is removed or expired" covers retained representations and expiry.
+**Gap.** None.
 
 ### AI
 

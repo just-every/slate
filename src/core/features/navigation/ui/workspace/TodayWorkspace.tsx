@@ -12,6 +12,7 @@ interface Notice {
   href: string;
   createdAt: string;
   readAt: string | null;
+  detail?: { outcome?: string };
 }
 interface Today {
   decisions: Notice[];
@@ -51,6 +52,7 @@ function FlagshipToday() {
                 {item.event.replaceAll("-", " ")}
               </span>
               <h3>{item.title ?? "Workspace update"}</h3>
+              {item.detail?.outcome ? <p>{item.detail.outcome}</p> : null}
               <time dateTime={item.createdAt}>
                 {new Date(item.createdAt).toLocaleString()}
               </time>
@@ -101,10 +103,10 @@ function FlagshipToday() {
             </section>
           ) : null}
           {data?.outcomes.map((group) => (
-            <section className="today-section" key={group.day}>
-              <h2>Completed work · {group.day}</h2>
+            <details className="today-section" key={group.items[0]?.id ?? group.day}>
+              <summary>Completed work · {group.count} {group.count === 1 ? "outcome" : "outcomes"} · {group.day}</summary>
               {rows(group.items)}
-            </section>
+            </details>
           ))}
           {data?.notices.length ? (
             <section className="today-section">

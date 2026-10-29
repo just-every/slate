@@ -44,7 +44,7 @@
         "BLOCK-008",
         "CONT-007"
       ],
-      "reason": "Preserves separately asserted cases of the same public flow; supports only the listed requirements and does not establish complete acceptance."
+      "reason": "Preserves separately asserted cases of the same public flow. LIFE-005 support performs published title and body reads, editor changes, republish, read-only discard refusal, lossless discard and duplicate-safe replay through native routes. Full LIFE-005 browser acceptance is the unpublishedChangesJourney in the existing responsive core journeys; the other named clauses retain supporting scope."
     },
     {
       "file": "tests/flagship/content/http.test.ts",
@@ -750,7 +750,7 @@
         "SEARCH-004",
         "SEARCH-005"
       ],
-      "reason": "Public HTTP search journey checks literal matches, exact phrases, refinements, live member and guest authority, private drafts, personal spaces, totals, facets and cursors. It also checks committed content changes, completed import indexing, erasure and refused import replay. Built browser results and filter controls run in the existing core-wiki journeys; hosted capacity remains separate."
+      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify."
     },
     {
       "file": "tests/e2e/search/fts-upgrade.test.ts",
@@ -777,7 +777,7 @@
         "WORK-010",
         "WORK-015"
       ],
-      "reason": "A D1 store at the published v0.1.0 schema with owner, member, scoped guest, group and live sessions upgrades through 0018-0023; the access table holds through HTTP. Earlier GET links retire; Base email proofs preview inert and confirm once by same-origin POST; the pinned incumbent provider with a real RS256 signature binds the verified mailbox's member and never moves a binding; ownership change needs a step-up proof from the asking session and ends the changed member's fenced sessions. Live provider acceptance and full product acceptance are separate."
+      "reason": "Native prior-schema upgrade preserves members, groups, guests and current authority. WORK-015 extends that same loaded journey through actual invitation issue and acceptance, signed RS256 OIDC admission, refusal of an uninvited verified identity with unchanged native identity state, discovery and token outages, wrong signatures, independent email confirmation and a new-address invitation without restoring removed sessions or private grants. Existing SAML acceptance is retained. The emitted Worker sign-in journey separately renders provider failure and confirms email fallback. R-12 real tenant receipts remain field proof; ADMIN-001 and ADMIN-002 retain their own protocol duties."
     },
     {
       "file": "tests/e2e/imports/preview-undo.test.ts",
@@ -890,7 +890,7 @@
         "CONT-012",
         "CONT-010"
       ],
-      "reason": "Default-profile (SLATE_PROFILE unset) API/native-session Workers journey proves in-app container and page watch events, durable editing-session coalescing, deduplication, a blog post as one post-published item, Home Following data, draft/restricted suppression, moves, archive/trash, permission revocation and erasure. Digest delivery belongs to NOTIF-005."
+      "reason": "Default-profile (SLATE_PROFILE unset) API/native-session Workers journey proves in-app container and page watch events, durable editing-session coalescing, deduplication, a blog post as one post-published item, Home Following data, draft/restricted suppression, moves, archive/trash, permission revocation and erasure. Digest delivery belongs to NOTIF-005. The folded inboxJourney uses native grants, watches and comments across three stored periods, verifies newest-first ordering, global unread totals and both audiences, follows the precise comment link, reads one and all, archives only read items, then refuses foreign and revoked reads and replay without changing retained state, and erases the source and its notification history."
     },
     {
       "file": "tests/flagship/discovery/following.test.ts",
@@ -974,13 +974,13 @@
     },
     {
       "file": "tests/qualification/policies/invitations.test.ts",
-      "testName": "a member invitation stops admitting once its inviter is no longer a full member",
+      "testName": "native member invitations preserve uniform admission, lifetime and current inviter authority",
       "kind": "supporting-regression",
       "clauses": [
         "WORK-006",
         "WORK-010"
       ],
-      "reason": "Asserts a member invitation stops admitting once its inviter is no longer a full member. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance."
+      "reason": "Native HTTP admission compares the complete known and unknown address response except generated operation identifiers. The same journey accepts once into an authenticated native session, refuses replay and pre-use revocation without changing members or sessions, advances an actually issued invitation to seven days and beyond without changing storage, and reads the retained expired row. It also accepts a second link immediately before expiry, refuses anonymous admission and member revocation without writes, and preserves the prior inviter-removal and guest-return refusal. Only mail delivery and the Date clock are faked; no external inbox delivery or unrelated Base acceptance is claimed."
     },
     {
       "file": "tests/e2e/databases/record-templates.test.ts",
@@ -1027,13 +1027,15 @@
     },
     {
       "file": "tests/qualification/core/audit-content.test.ts",
-      "testName": "ACT-002 BASE-OPS-005 audit content, publication, archive and version mutations once with actor/time",
+      "testName": "ACT-002 BASE-OPS-005 audit content, publication, archive and version mutations once with actor and time",
       "kind": "supporting-regression",
       "clauses": [
         "ACT-002",
-        "BASE-OPS-005"
+        "BASE-OPS-005",
+        "ACT-001",
+        "ACT-004"
       ],
-      "reason": "Preserves the existing content audit assertions and extends them through native HTTP sign-in, sharing, token use, owner metadata exports, retention and signed ordered audit recovery. Real vendor receivers and resolved-address pinning remain unproven."
+      "reason": "Preserves the existing content audit assertions and extends them through native HTTP sign-in, sharing, token use, owner metadata exports, retention and signed ordered audit recovery. Real vendor receivers and resolved-address pinning remain unproven. Native page HTTP writes correlate the committed revision, durable receipt and one activity entry under replay; a late real D1 trigger abort leaves content, revisions, receipts and activity unchanged. Native scheduled publication retains the scheduler feature, operation key and exact revision. Comment and grant references retain their own context and revoked readers receive no target data."
     },
     {
       "file": "tests/e2e/scim/contract.test.ts",

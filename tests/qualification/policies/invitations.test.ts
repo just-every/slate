@@ -87,7 +87,10 @@ test('ADMIN-003 — HTTP guest policy, default expiry and bulk revocation; SHARE
         provider.mockRestore();
     }
 });
-test('a member invitation stops admitting once its inviter is no longer a full member', async () => {
+test('native member invitations preserve uniform admission, lifetime and current inviter authority', async () => {
+    vi.useFakeTimers({toFake:['Date']});
+    vi.setSystemTime(new Date('2026-10-20T12:00:00.000Z'));
+    try {
     const { owner, reader, containerId } = await scenario();
     const page = await createPage(owner, { operationKey: key('return-page'), containerId, title: 'Guest return page' });
     const config = { ...readRuntimeConfig(env, false), mailFrom: 'test@qualification.invalid', mailApiKey: 'synthetic-slate-301' };
@@ -95,6 +98,100 @@ test('a member invitation stops admitting once its inviter is no longer a full m
     const provider = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => { mails.push(String(init?.body)); return Response.json({ id: 'synthetic-slate-302' }); });
     const token = () => mails.at(-1)!.match(/\/api\/auth\/invitation\/accept\?token=([A-Za-z0-9_-]+)/)![1]!;
     try {
+        {
+        const origin='https://qualification.invalid';
+        const bindings={...env,APP_URL:origin,SLATE_PROFILE:undefined,MAIL_PROVIDER:'resend',MAIL_FROM:'synthetic-slate-602\x40example.test',MAIL_API_KEY:'synthetic-slate-603'};
+        const api=createApi(),cookie=await sessionFor(owner.actor.id);
+        const request=(path:string,method='GET',body?:unknown)=>api.request(origin+'/api'+path,{method,headers:{cookie,origin,'content-type':'application/json'},body:body?JSON.stringify(body):undefined},bindings);
+        const admit=async(email:string)=>{
+            const operationKey=key('lifetime');
+            const response=await request('/invitations','POST',{operationKey,email,kind:'member'});
+            expect(response.status).toBe(200);
+            const body=await response.json<any>();
+            expect(body.value).toEqual({accepted:true});
+            expect(body.receipt.operationKey).toBe(operationKey);
+            expect(body.receipt.activityId).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+            expect(body.receipt.revisionId).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+            expect(body.receipt.entity.revisionId).toBe(body.receipt.revisionId);
+            return {status:response.status,headers:[...response.headers],body:{...body,receipt:{...body.receipt,operationKey:'request',activityId:'activity',revisionId:'revision',entity:{...body.receipt.entity,revisionId:'revision'}}}};
+        };
+        const acceptance=(delivered:string,method='POST')=>api.request(origin+'/api/auth/invitation/accept'+(method==='GET'?`?token=${delivered}`:''),{method,headers:{origin,'content-type':'application/x-www-form-urlencoded'},...(method==='POST'?{body:new URLSearchParams({token:delivered})}:{})},bindings);
+        const snapshot=async()=>Promise.all(['members','sessions','invitations'].map(table=>rows(`SELECT * FROM ${table} ORDER BY id`)));
+        const refuse=async(delivered:string)=>{
+            const before=await snapshot();
+            for(const method of ['GET','POST']){
+                const response=await acceptance(delivered,method);
+                expect(response.status).toBe(400);
+                expect(await response.text()).toContain('This invitation is invalid or expired');
+                expect(response.headers.get('set-cookie')).toBeNull();
+                expect(await snapshot()).toEqual(before);
+            }
+        };
+        const beforeAnonymous=await snapshot();
+        const anonymous=await api.request(origin+'/api/invitations',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({operationKey:key('anonymous-invite'),email:'synthetic-slate-607\x40example.test',kind:'member'})},bindings);
+        expect(anonymous.status).toBe(401);
+        expect(await snapshot()).toEqual(beforeAnonymous);
+        const knownEmail=(await rows('SELECT email FROM members WHERE id=?',reader.actor.id))[0].email as string;
+        const sentBefore=mails.length,known=await admit(knownEmail);
+        expect(mails).toHaveLength(sentBefore);
+        const admittedAt=Date.now(),email='synthetic-slate-604\x40example.test';
+        expect(await admit(email)).toEqual(known);
+        expect(mails).toHaveLength(sentBefore+1);
+        const acceptedToken=token(),beforeAccept=await snapshot();
+        const preview=await acceptance(acceptedToken,'GET');
+        expect(preview.status).toBe(200);
+        expect(await preview.text()).toContain('Accept invitation');
+        expect(preview.headers.get('set-cookie')).toBeNull();
+        expect(await snapshot()).toEqual(beforeAccept);
+        const acceptedResponse=await acceptance(acceptedToken);
+        expect(acceptedResponse.status).toBe(303);
+        expect(acceptedResponse.headers.get('location')).toBe('/app');
+        const acceptedCookie=acceptedResponse.headers.get('set-cookie')!.split(';')[0];
+        const current=await api.request(origin+'/api/members/current',{headers:{cookie:acceptedCookie}},bindings);
+        expect(current.status).toBe(200);
+        expect((await current.json<any>()).email).toBe(email);
+        expect(await rows('SELECT id FROM members WHERE email=?',email)).toHaveLength(1);
+        await refuse(acceptedToken);
+        const revokedEmail='synthetic-slate-605\x40example.test';
+        await admit(revokedEmail);
+        const revokedToken=token(),[revoked]=await rows('SELECT id FROM invitations WHERE email=?',revokedEmail);
+        const memberCookie=await sessionFor(reader.actor.id),beforeForbidden=await snapshot();
+        const forbidden=await api.request(origin+'/api/invitations/revoke',{method:'POST',headers:{cookie:memberCookie,origin,'content-type':'application/json'},body:JSON.stringify({operationKey:key('member-revoke'),id:revoked.id})},bindings);
+        expect(forbidden.status).toBe(403);
+        expect(await snapshot()).toEqual(beforeForbidden);
+        const revokedResponse=await request('/invitations/revoke','POST',{operationKey:key('lifetime-revoke'),id:revoked.id});
+        expect(revokedResponse.status).toBe(200);
+        expect((await revokedResponse.json<any>()).value).toEqual({revoked:true});
+        await refuse(revokedToken);
+        expect(await rows('SELECT id FROM members WHERE email=?',revokedEmail)).toEqual([]);
+        const expiredEmail='synthetic-slate-606\x40example.test';
+        await admit(expiredEmail);
+        const expiredToken=token(),[expiring]=await rows('SELECT * FROM invitations WHERE email=?',expiredEmail);
+        expect(Date.parse(expiring.expires_at as string)-admittedAt).toBe(7*86400000);
+        const boundaryEmail='synthetic-slate-608\x40example.test';
+        await admit(boundaryEmail);
+        const boundaryToken=token();
+        const beforeExpiry=await snapshot();
+        vi.setSystemTime(new Date(Date.parse(expiring.expires_at as string)-1));
+        const stillValid=await acceptance(expiredToken,'GET');
+        expect(stillValid.status).toBe(200);
+        expect(await stillValid.text()).toContain('Accept invitation');
+        expect(stillValid.headers.get('set-cookie')).toBeNull();
+        expect(await snapshot()).toEqual(beforeExpiry);
+        const lastValidAcceptance=await acceptance(boundaryToken);
+        expect(lastValidAcceptance.status).toBe(303);
+        const boundaryCookie=lastValidAcceptance.headers.get('set-cookie')!.split(';')[0];
+        const boundaryMember=await api.request(origin+'/api/members/current',{headers:{cookie:boundaryCookie}},bindings);
+        expect(boundaryMember.status).toBe(200);
+        expect((await boundaryMember.json<any>()).email).toBe(boundaryEmail);
+        for(const elapsed of [0,1]){
+            vi.setSystemTime(new Date(Date.parse(expiring.expires_at as string)+elapsed));
+            await refuse(expiredToken);
+        }
+        expect(await rows('SELECT * FROM invitations WHERE id=?',expiring.id)).toEqual([expiring]);
+        expect(await rows('SELECT id FROM members WHERE email=?',expiredEmail)).toEqual([]);
+        vi.setSystemTime(new Date(admittedAt));
+        }
         await invite(reader, config, { operationKey: key('member-invite'), email: 'latecomer@qualification.invalid', kind: 'member' });
         const delivered = token();
         await removeMember(owner, { operationKey: key('remove-inviter'), memberId: reader.actor.id });
@@ -107,4 +204,5 @@ test('a member invitation stops admitting once its inviter is no longer a full m
         expect(response.headers.get('set-cookie')).toBeNull();
         expect(await rows("SELECT id FROM members WHERE email='latecomer@qualification.invalid'")).toEqual([]);
     } finally { provider.mockRestore(); }
+    } finally { vi.useRealTimers(); }
 });

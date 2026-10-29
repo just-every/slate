@@ -30,5 +30,7 @@
   "named review request, reviewer queue, exact verify and overdue escalation at 1440px": 5,
   "space blog post reaches a follower's inbox and Home at 1440px": 4,
   "flagship no-provider Ask retains a page-scoped draft at 1440px": 6,
-  "SAML sign-in verifies the domain and signatures while preserving guest and designated-owner access at 1440px": 4
+  "SAML sign-in verifies the domain and signatures while preserving guest and designated-owner access at 1440px": 4,
+  "BLOCK-010 — native content queries retain criteria and current-reader results at 390px": 1,
+  "BLOCK-010 — native content queries retain criteria and current-reader results at 1440px": 2
 }

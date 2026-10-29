@@ -7,7 +7,7 @@ import { PaperPage, PaperScene } from "./PaperPage";
 import type { SignInCapabilities } from '../capabilities';
 
 /** Public capabilities are request-specific first-response content. */
-export function SignInPage({ capabilities, requested = false, loginHint, ownerLinkRefused = false }: { loginHint?: string; next: string; capabilities: SignInCapabilities; requested?: boolean; ownerLinkRefused?: boolean }) {
+export function SignInPage({ capabilities, requested = false, loginHint, ownerLinkRefused = false, providerRefused = false }: { loginHint?: string; next: string; capabilities: SignInCapabilities; requested?: boolean; ownerLinkRefused?: boolean; providerRefused?: boolean }) {
   const [failure, setFailure] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState(() => {
@@ -17,6 +17,11 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
     "queued" | "sent" | "failed" | "uncertain" | "unconfirmed" | null
   >(requested ? "unconfirmed" : null);
   const requestKey = useRef<string | null>(null);
+  const providerNotice = providerRefused
+    ? `Sign-in with ${capabilities.identityProviders.find(provider => provider.start === '/auth/oidc/identity/start')?.name ?? 'the OIDC identity provider'} is unavailable for this attempt. You can request an email sign-in link.`
+    : capabilities.identityProviders.length === 0
+      ? 'OIDC sign-in is not configured. You can sign in by email.'
+      : undefined;
   useEffect(() => {
     if (delivery !== "queued" || !requestKey.current) return;
     let alive = true;
@@ -81,6 +86,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
           setFailure(null);
         }}
         identityProviders={capabilities.identityProviders}
+        providerNotice={providerNotice}
         onSubmit={() => {
           setSubmitting(true);
           setFailure(null);
@@ -127,6 +133,8 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
               ))}
             </div>
           ) : null}
+
+          {providerRefused ? <div className="paper-alert" role="alert">{providerNotice}</div> : null}
 
           {failure ? <p className="paper-alert" role="alert">{failure}</p> : null}
         </div>

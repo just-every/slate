@@ -90,7 +90,7 @@ function commitPublication(ctx: FeatureContext, id: string, input: PublicationIn
         const post = first && !!await ctx.db.prepare('SELECT 1 FROM blog_posts WHERE page_id=?').bind(id).first();
         statements.push(ctx.db.prepare("UPDATE content_schedules SET state='published',failure=NULL,updated_at=? WHERE page_id=? AND state IN ('scheduled','failed')").bind(ctx.now, id), ...notificationStatements(ctx, { id: `${revisionId}:published`, event: post ? 'post-published' : 'published', pageId: id }, { containerWatchers: first }));
       }
-      return { statements, entity: { id, kind: 'page', revisionId }, value: { pageId: id, revisionId, scheduled } };
+      return { statements, entity: { id, kind: 'page', revisionId }, value: { pageId: id, revisionId, scheduled }, ...(firing ? { feature: 'lifecycle', detail: { scheduleOperationKey: firing.operation_key } } : {}) };
     },
   });
 }

@@ -116,32 +116,98 @@ export async function elapsedUntil(check, { timeout, interval = 50, since = Date
 }
 
 /**
- * SAVE-001: the time between the server's committed block response and the
- * page showing Saved. The page records when each status text first appears.
+ * SAVE-001 through the native title or block mutation. Hold the request before
+ * dispatch, then inspect its durable write and activity before delivering the
+ * unmodified receipt. All status times come from the browser's clock.
  */
-export async function savedAfterCommit(page, blockId, edit) {
-  await page.evaluate(id => {
+export async function savedAfterCommit(page, blockId, edit, { whileSaving } = {}) {
+  const origin = new URL(page.url()).origin;
+  const pageId = new URL(page.url()).pathname.split('/').at(-1);
+  const routePath = `/api/pages/${pageId}${blockId ? `/blocks/${blockId}` : ''}`;
+  const action = blockId ? 'pages.block.update' : 'pages.update';
+  const activityPath = `/api/activity?action=${action}&limit=100`;
+  const [before, session] = await Promise.all([
+    ok(page.context(), origin, 'GET', `/api/pages/${pageId}`),
+    ok(page.context(), origin, 'GET', '/api/session'),
+  ]);
+  const persisted = document => blockId ? document.blocks.find(block => block.id === blockId) : document.page.title;
+  const blockStatus = blockId ? `[data-block-id="${blockId}"] [role="status"]` : '.editor-save-status';
+  await page.evaluate(selector => {
     window.slateBlockStates?.observer.disconnect();
     const seen = [];
     const observe = () => {
-      for (const element of document.querySelectorAll(`.editor-save-status, [data-block-id="${CSS.escape(id)}"] [role="status"]`)) {
-        const text = element.textContent ?? '';
-        if (text && seen.at(-1)?.text !== text) seen.push({ text, at: Date.now() });
-      }
+      const text = (document.querySelector(selector) ?? document.querySelector('.editor-save-status'))?.textContent?.trim() ?? '';
+      if (seen.at(-1)?.text !== text) seen.push({ text, at: Date.now() });
     };
     observe();
     const observer = new MutationObserver(observe);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     window.slateBlockStates = { observer, seen };
-  }, blockId);
-  const committed = page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().includes(`/blocks/${blockId}`) && response.status() === 200, { timeout: 15000 });
-  await edit();
-  const response = await committed;
-  const commitAt = Date.now(), body = await response.json();
-  await expect(page.locator('.editor-save-status').filter({ hasText: /^Saved/ })).toBeVisible({ timeout: 2000 });
-  const seen = await page.evaluate(() => window.slateBlockStates.seen);
-  const saving = seen.find(item => /^Saving/.test(item.text)), saved = saving && seen.find(item => /^Saved/.test(item.text) && item.at >= saving.at);
-  assert.ok(saving, 'The page shows Saving while the write is in flight.');
-  assert.ok(saved, 'Saved follows Saving.');
-  return { blockRevisionId: body.value.blockRevisionId, revisionId: body.value.revisionId, savingShownMs: saving.at, savedAfterCommitMs: Math.max(0, saved.at - commitAt) };
+  }, blockStatus);
+  // Routing changes transport timing only: the real Worker still commits every
+  // byte, revision, receipt and activity entry returned to the editor.
+  let intercepted;
+  const matches = url => url.pathname === routePath;
+  const hold = route => {
+    if (route.request().method() !== 'PATCH') return route.continue();
+    intercepted = route;
+  };
+  await page.route(matches, hold);
+  try {
+    await edit();
+    await expect.poll(() => !!intercepted, { timeout: 15000 }).toBe(true);
+    const submitted = intercepted.request().postDataJSON();
+    const badge = page.locator(blockStatus);
+    await expect(badge).toHaveText(/^Saving/);
+    assert.deepEqual(persisted(await ok(page.context(), origin, 'GET', `/api/pages/${pageId}`)), persisted(before), 'The pending write has not changed durable content.');
+    assert.ok(!(await ok(page.context(), origin, 'GET', activityPath)).items.some(item => item.operationKey === submitted.operationKey), 'No activity entry exists before the write commits.');
+    await page.waitForTimeout(250);
+    await expect(badge).toHaveText(/^Saving/);
+    await whileSaving?.();
+    const dispatchedAt = await page.evaluate(() => Date.now());
+    const response = await intercepted.fetch({ maxRetries: 0 });
+    assert.equal(response.status(), 200, await response.text());
+    const body = await response.json(), receipt = body.receipt;
+    const receiptAt = await page.evaluate(() => Date.now());
+    assert.equal(receipt.operationKey, submitted.operationKey);
+    assert.deepEqual(receipt.entity, { kind: 'page', id: pageId, revisionId: body.value.revisionId });
+    assert.equal(receipt.revisionId, body.value.revisionId);
+    assert.ok(receipt.activityId, 'A changed write has an activity receipt.');
+    const commitAt = Date.parse(receipt.committedAt);
+    assert.ok(Number.isFinite(commitAt) && commitAt >= dispatchedAt && commitAt <= receiptAt, 'The native commit timestamp is inside this write, on the same clock.');
+    const durable = await ok(page.context(), origin, 'GET', `/api/pages/${pageId}`);
+    if (blockId) {
+      assert.equal(persisted(durable).revisionId, body.value.blockRevisionId);
+      assert.deepEqual(persisted(durable).content, submitted.content, 'The submitted body is durable before Saved.');
+    } else assert.equal(durable.page.title, submitted.properties.title, 'The submitted title is durable before Saved.');
+    const entries = (await ok(page.context(), origin, 'GET', activityPath)).items.filter(item => item.operationKey === submitted.operationKey);
+    assert.equal(entries.length, 1, 'The committed write has exactly one visible activity entry.');
+    const activity = entries[0];
+    assert.equal(activity.id, receipt.activityId);
+    assert.equal(activity.action, action);
+    assert.deepEqual(activity.target, { kind: 'page', id: pageId });
+    assert.equal(activity.occurredAt, receipt.committedAt);
+    assert.equal(activity.actor.id, session.member.id);
+    await expect(badge).toHaveText(/^Saving/);
+    const pending = await page.evaluate(() => window.slateBlockStates.seen);
+    const savingIndex = pending.findIndex(item => /^Saving/.test(item.text));
+    assert.ok(savingIndex >= 0, 'The page visibly enters Saving.');
+    assert.ok(pending.slice(savingIndex).every(item => /^Saving/.test(item.text)), 'Saving persists continuously until both the write and its activity are committed.');
+    await intercepted.fulfill({ response });
+    await expect(page.locator('.editor-save-status')).toHaveText(/^Saved$/, { timeout: 2000 });
+    const seen = await page.evaluate(() => window.slateBlockStates.seen);
+    const saving = seen[savingIndex], saved = seen.slice(savingIndex + 1).find(item => /^Saved$/.test(item.text));
+    assert.ok(saved && saved.at >= receiptAt, 'Saved follows the real committed receipt, never preceding it.');
+    const savedAfterCommitMs = saved.at - commitAt;
+    assert.ok(savedAfterCommitMs >= 0 && savedAfterCommitMs <= 2000, `Saved appears within two seconds of the native commit: ${savedAfterCommitMs} ms.`);
+    const measurement = { pageId, blockId, blockRevisionId: body.value.blockRevisionId, revisionId: body.value.revisionId, receipt, activity, savingShownMs: saving.at, savedAfterCommitMs };
+    const evidence = path.join(root, '.artifacts/ui-convergence/saves');
+    await mkdir(evidence, { recursive: true });
+    await writeFile(path.join(evidence, `${receipt.operationKey}.json`), JSON.stringify({ ...measurement, dispatchedAt, receiptAt, seen }, null, 2));
+    return measurement;
+  } finally {
+    await intercepted?.abort().catch(() => {});
+    await page.unroute(matches, hold);
+    await page.evaluate(() => window.slateBlockStates.observer.disconnect());
+  }
 }

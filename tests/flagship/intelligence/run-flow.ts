@@ -8,9 +8,9 @@ import {sessionFor} from '../../e2e/setup/fixtures';
 import {resetDeployment} from '../../e2e/setup/reset-deployment';
 import {fixture} from './measured-fixture';
 
-export async function sessionDoor(memberId:string) {
+export async function sessionDoor(memberId:string,overrides:Partial<AppBindings>={}) {
   const app=createApi(),cookie=await sessionFor(memberId);
-  const bindings={...env,AI_API_KEY:'test-only'} as AppBindings;
+  const bindings={...env,AI_API_KEY:'test-only',...overrides} as AppBindings;
   return async (method:string,path:string,body?:unknown,extraHeaders?:Headers) => {
     const headers=new Headers(extraHeaders);
     headers.set('cookie',cookie);

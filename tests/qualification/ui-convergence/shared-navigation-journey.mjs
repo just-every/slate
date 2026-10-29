@@ -7,6 +7,7 @@ import { root } from '../../e2e/runtime-harness.mjs';
 import { openNavigation } from './browser-support.mjs';
 import { accessible } from './browser-evidence.mjs';
 import { grant, ok } from './two-people-support.mjs';
+import { linkAccessJourney } from './link-access-journey.mjs';
 
 /** TREE-003: one page invitation exposes its named space, never its private neighbours. */
 export async function sharedNavigationJourney(state, people) {
@@ -76,4 +77,5 @@ export async function sharedNavigationJourney(state, people) {
   assert.ok(!after.items.some(page => page.id === shared), 'The first fresh tree has no removed invitation.');
   await accessible(bob.page, 'removed page invitation absent on first load');
   await shot('revoked');
+  await linkAccessJourney(state, people, shared, space);
 }

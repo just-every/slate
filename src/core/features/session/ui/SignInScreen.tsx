@@ -23,6 +23,7 @@ export function SignInScreen({
   deliveryError,
   lede,
   identityProviders = [],
+  providerNotice,
   className,
 }: {
   state: SignInScreenState;
@@ -37,6 +38,7 @@ export function SignInScreen({
   lede?: string;
   /** `WORK-015` — each configured, enabled provider keeps its own sign-in. */
   identityProviders?: SignInIdentityProvider[];
+  providerNotice?: string;
   className?: string;
 }) {
   const fieldId = useId();
@@ -64,6 +66,8 @@ export function SignInScreen({
           </h1>
 
           {state === "request" ? <p className="paper-lede">{lede ?? (samlAvailable ? 'Use your workspace sign-in method, or request an email sign-in link.' : 'Use your email address to get a one-time sign-in link.')}</p> : null}
+
+          {providerNotice ? <div className="paper-alert" role="status">{providerNotice}</div> : null}
 
           {state === "link-expired" ? (
             <p className="paper-lede">

@@ -4,9 +4,10 @@ import { localMailDatabase } from './helpers/local-mail-database';
 import { readRuntimeConfig } from '../../src/core/platform/config/runtime';
 import { createSessionService } from '../../src/core/features/session/service';
 import { createSessionRoutes } from '../../src/core/features/session/routes';
+import { createWorkspaceRoutes } from '../../src/core/features/workspace/routes';
 import { ApiProblem } from '../../src/core/app/problems';
 import { Hono } from 'hono';
-import type { AppBindings } from '../../src/core/app/types';
+import type { AppBindings, AppEnvironment } from '../../src/core/app/types';
 import type { FeatureContext } from '../../src/core/app/feature-context';
 import { invite, acceptInvitation, revokeInvitation } from '../../src/core/features/workspace/invitations';
 import { completeFirstRun } from '../../src/core/features/workspace/bootstrap';
@@ -35,8 +36,18 @@ const sessions = (db: D1Database) => createSessionService(db,{sessionSecret:sett
 const local = {host:'127.0.0.1:4312',origin:settings.APP_URL};
 /** The public session routes as the Worker mounts them, with the checked local configuration. */
 function routes() {
-  const app = new Hono<any>().use('*', async (context, next) => {context.set('runtimeConfig',config());await next();}).route('/',createSessionRoutes());
-  app.onError((cause,context) => context.json({code:cause instanceof ApiProblem?cause.code:'INTERNAL_ERROR'},cause instanceof ApiProblem?cause.status:500));
+  const app = new Hono<AppEnvironment>().use('*', async (context, next) => {context.set('runtimeConfig',config());await next();})
+    .use('/api/*', async (context, next) => {
+      if (!context.req.path.startsWith('/api/invitations')) return next();
+      const member = await sessions(context.env.DB).authenticate(context.req.raw);
+      if (!member) return context.json({code:'UNAUTHENTICATED'},401);
+      context.set('member',member);
+      await next();
+    }).route('/',createSessionRoutes()).route('/',createWorkspaceRoutes());
+  app.onError((cause,context) => {
+    if (!(cause instanceof ApiProblem)) throw cause;
+    return context.json({code:cause.code},cause.status);
+  });
   return app;
 }
 type LocalApp = ReturnType<typeof routes>;
@@ -56,12 +67,12 @@ const sessionCookie = (response: Response) => response.headers.getSetCookie().fi
 /** The newest Base sign-in link captured for a mailbox. */
 function signInToken(fixture: ReturnType<typeof localMailDatabase>, email: string) {
   const rows = captured.map(message => ({message:JSON.stringify(message)}));
-  const message = rows.map(row => JSON.parse(row.message as string) as {to:string[];text:string}).find(message => message.to.includes(email));
+  const message = rows.map(row => JSON.parse(row.message as string) as {to:string[];text:string}).reverse().find(message => message.to.includes(email));
   assert.ok(message, 'Expected a locally captured sign-in message');
   return /\/auth\/confirm\?token=([A-Za-z0-9_-]{43})/.exec(message.text)![1]!;
 }
 
-test("native local mail sign-in and invitations preserve identity, delivery and scoped authority", async () => {
+test("native local mail sign-in and invitations preserve identity, delivery and scoped authority", async (t) => {
   // Each row retains its original fixture and every assertion.
   const cases = [
     { name: 'native local first magic link bootstraps one owner and each new request reaches the mail provider once', run: async () => {
@@ -121,6 +132,8 @@ test("native local mail sign-in and invitations preserve identity, delivery and 
   } finally {fixture.close();}
 } },
     { name: 'native local member invitation delivers once, accepts into a native session and preserves member authority', run: async () => {
+  t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-20T12:00:00.000Z')});
+  try {
   await withLocalOwner(async (fixture,owner) => {
     const input = {operationKey:crypto.randomUUID(),email:'member\x40example.com',kind:'member' as const};
     const first = await invite(owner,config(),input);
@@ -141,7 +154,58 @@ test("native local mail sign-in and invitations preserve identity, delivery and 
     const before = invitationCounts(fixture);
     assert.deepEqual((await invite(owner,config(),{operationKey:crypto.randomUUID(),email:input.email,kind:'member'})).value,first.value);
     assert.deepEqual(invitationCounts(fixture).slice(0,3),before.slice(0,3));
+    const app=routes();
+    // The owner signs in through the real mail door; no fabricated authentication.
+    await requestLink(app,fixture.db,owner.actor.email);
+    const signedIn=await confirmLink(app,fixture.db,signInToken(fixture,owner.actor.email));
+    const cookie=sessionCookie(signedIn);
+    const admit=async(email:string)=>{
+      const operationKey=crypto.randomUUID();
+      const response=await app.request(`${settings.APP_URL}/api/invitations`,{method:'POST',headers:{...local,cookie,'content-type':'application/json'},body:JSON.stringify({operationKey,email,kind:'member'})},{...settings,DB:fixture.db});
+      assert.equal(response.status,200);
+      const body=await response.json() as typeof first;
+      assert.deepEqual(body.value,{accepted:true});
+      assert.equal(body.receipt.operationKey,operationKey);
+      assert.match(body.receipt.revisionId!,/^[0-9A-HJKMNP-TV-Z]{26}$/);
+      assert.match(body.receipt.activityId!,/^[0-9A-HJKMNP-TV-Z]{26}$/);
+      assert.equal(body.receipt.entity.revisionId,body.receipt.revisionId);
+      // Only per-operation identifiers differ; compare every remaining response field.
+      return {status:response.status,headers:[...response.headers],body:{...body,receipt:{...body.receipt,operationKey:'request',revisionId:'revision',activityId:'activity',entity:{...body.receipt.entity,revisionId:'revision'}}}};
+    };
+    const mailBefore=captured.length;
+    const known=await admit(input.email);
+    assert.equal(captured.length,mailBefore);
+    const expiredEmail='synthetic-slate-601\x40example.test';
+    const unknown=await admit(expiredEmail);
+    assert.deepEqual(unknown,known);
+    assert.equal(captured.length,mailBefore+1);
+    const expiring=fixture.sql.prepare('SELECT * FROM invitations WHERE email=?').get(expiredEmail)!;
+    assert.equal(expiring.accepted_by_member_id,null);
+    assert.equal(Date.parse(expiring.expires_at as string)-Date.parse(expiring.created_at as string),7*86400000);
+    const expiredToken=outboxToken(fixture,expiredEmail), url=`${settings.APP_URL}/api/auth/invitation/accept`;
+    const snapshot=()=>['members','sessions','invitations'].map(table=>fixture.sql.prepare(`SELECT * FROM ${table} ORDER BY id`).all());
+    const unchanged=snapshot();
+    t.mock.timers.setTime(Date.parse(expiring.expires_at as string)-1);
+    const beforeExpiry=await app.request(`${url}?token=${expiredToken}`,{headers:local},{...settings,DB:fixture.db});
+    assert.equal(beforeExpiry.status,200);
+    assert.match(await beforeExpiry.text(),/Accept invitation/);
+    assert.deepEqual(beforeExpiry.headers.getSetCookie(),[]);
+    assert.deepEqual(snapshot(),unchanged);
+    // Advance the real issued link to the boundary and beyond, without editing stored expiry.
+    for(const elapsed of [0,1]){
+      t.mock.timers.setTime(Date.parse(expiring.expires_at as string)+elapsed);
+      for(const method of ['GET','POST']){
+        const response=await app.request(method==='GET'?`${url}?token=${expiredToken}`:url,{method,headers:{...local,'content-type':'application/x-www-form-urlencoded'},...(method==='POST'?{body:new URLSearchParams({token:expiredToken})}:{})},{...settings,DB:fixture.db});
+        assert.equal(response.status,400);
+        assert.match(await response.text(),/This invitation is invalid or expired/);
+        assert.deepEqual(response.headers.getSetCookie(),[]);
+        assert.deepEqual(snapshot(),unchanged);
+      }
+    }
+    assert.deepEqual(fixture.sql.prepare('SELECT * FROM invitations WHERE id=?').get(expiring.id),expiring);
+    assert.equal(fixture.sql.prepare('SELECT count(*) n FROM members WHERE email=?').get(expiredEmail)!.n,0);
   });
+  } finally {t.mock.timers.reset();}
 } },
     { name: 'native local page and container guest invitations accept only their named scope and retain guest restrictions', run: async () => {
   for (const [index,target] of (['page','container'] as const).entries()) {
@@ -205,6 +269,15 @@ test("native local mail sign-in and invitations preserve identity, delivery and 
     assert.ok(fixture.sql.prepare('SELECT revoked_at FROM page_grants WHERE id=?').get(invitation.page_grant_id)!.revoked_at);
     await assert.rejects(acceptInvitation(fixture.db,config(),token,owner),{code:'LINK_INVALID'});
     assert.equal(fixture.sql.prepare('SELECT count(*) n FROM members').get()!.n,1);
+    const sessionsBefore=fixture.sql.prepare('SELECT * FROM sessions ORDER BY id').all();
+    for(const method of ['GET','POST']){
+      const url=`${settings.APP_URL}/api/auth/invitation/accept`;
+      const response=await routes().request(method==='GET'?`${url}?token=${token}`:url,{method,headers:{...local,'content-type':'application/x-www-form-urlencoded'},...(method==='POST'?{body:new URLSearchParams({token})}:{})},{...settings,DB:fixture.db});
+      assert.equal(response.status,400);
+      assert.deepEqual(response.headers.getSetCookie(),[]);
+      assert.equal(fixture.sql.prepare('SELECT count(*) n FROM members').get()!.n,1);
+      assert.deepEqual(fixture.sql.prepare('SELECT * FROM sessions ORDER BY id').all(),sessionsBefore);
+    }
   },true);
 } },
     { name: 'native invitation readiness still refuses hosted providers without credentials before admission', run: async () => {
@@ -220,7 +293,7 @@ test("native local mail sign-in and invitations preserve identity, delivery and 
   ];
   for (const scenario of cases) {
     try { await (installMailCapture)(); await scenario.run(); }
-    catch (cause) { throw new Error(`Case ${scenario.name} failed`, { cause }); }
+    catch (cause) { throw new Error(`Case ${scenario.name} failed: ${cause instanceof Error?cause.stack:String(cause)}`, { cause }); }
     finally { await (restoreMailCapture)(); }
   }
 });

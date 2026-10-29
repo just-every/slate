@@ -24,11 +24,11 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 16 | Table, board and chart | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
 | 17 | Every record is a page | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
 | 18 | Filter, sort and group | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
-| 19 | Search that respects who's asking. | `SEARCH-001` partial; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
-| 20 | One search covers pages and records, and each person only sees what they're allowed to open. No AI required. | `SEARCH-001` partial; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
-| 21 | Results each person may open | `SEARCH-001` partial; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
-| 22 | Pages and records | `SEARCH-001` partial; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
-| 23 | One container or all of them | `SEARCH-001` partial; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
+| 19 | Search that respects who's asking. | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
+| 20 | One search covers pages and records, and each person only sees what they're allowed to open. No AI required. | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
+| 21 | Results each person may open | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
+| 22 | Pages and records | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
+| 23 | One container or all of them | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
 | 24 | Share it, or publish it. | `SHARE-001` partial; `SHARE-006` partial; `SHARE-008` partial; `WEB-001` partial; `WEB-006` partial | partial |
 | 25 | Give people, groups or guests view, comment or edit access. Guest access can expire. Publish a page to the web, and take it down again whenever you like. | `SHARE-001` partial; `SHARE-006` partial; `SHARE-008` partial; `WEB-001` partial; `WEB-006` partial | partial |
 | 26 | People, groups and guests | `SHARE-001` partial; `SHARE-006` partial; `SHARE-008` partial; `WEB-001` partial; `WEB-006` partial | partial |
@@ -44,7 +44,7 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 36 | Comments: Discuss any page or record. | `COMM-001` partial; `COMM-006` done | partial |
 | 37 | Templates: Start from a page you've saved. | `TMPL-005` partial | partial |
 | 38 | Verification: Mark pages verified, with an expiry. | `STAT-003` done; `STAT-004` partial | partial |
-| 39 | Inbox: Mentions, replies and watched pages. | `NOTIF-001` partial; `NOTIF-002` partial | partial |
+| 39 | Inbox: Mentions, replies and watched pages. | `NOTIF-001` partial; `NOTIF-002` done | partial |
 | 40 | Containers: Separate trees with their own access. | `CONT-001` partial; `CONT-009` partial | partial |
 | 41 | Backup and restore: Export the whole wiki and restore it. | `PORT-001` partial; `PORT-002` partial | partial |
 | 42 | A team wiki you run yourself. | `AGENT-002` partial; `HOME-002` partial | partial |

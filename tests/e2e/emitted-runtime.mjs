@@ -8,6 +8,7 @@ import { slackEdge, teamsEdge } from '../helpers/slack-edge.mjs';
 import { s3Edge } from '../helpers/s3-edge.mjs';
 import { folderEdge } from '../helpers/folder-edge.mjs';
 import { samlEdge } from '../helpers/saml-edge.mjs';
+import { unavailableOidcEdge } from '../helpers/oidc-edge.mjs';
 
 // Use the same Wrangler conversion and module loader as Base productionRuntime,
 // with the qualification's isolated configuration, bindings and persistence.
@@ -27,6 +28,8 @@ const worker = { ...workerOptions, name: config.name,
   ...await productionModules(selected.main, modulesRules, miniflare),
   bindings: { ...workerOptions.bindings, ...vars, ...mail },
   outboundService: async request => {
+    const oidc = await unavailableOidcEdge(request, persistPath, miniflare.Response);
+    if (oidc) return oidc;
     const webhook = await webhookEdge(request,persistPath,miniflare.Response);
     if(webhook)return webhook;
     const saml = await samlEdge(request, persistPath, miniflare.Response);

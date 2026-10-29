@@ -48,7 +48,7 @@
       "id": "WORK-006",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of WORK-006 — Invitations. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This legacy inventory classifies supporting tests only; CONTRACT.md owns native clause status. The loaded HTTP invitation journey now covers uniform admission, single use, pre-use revocation and retained seven-day expiry. It does not claim external inbox delivery or unrelated Base acceptance.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/identity.test.ts",
@@ -57,6 +57,10 @@
         {
           "file": "tests/flagship/core/mail.test.ts",
           "testName": "identity mail preserves durable retry, recovery, authentication and provider custody"
+        },
+        {
+          "file": "tests/qualification/policies/invitations.test.ts",
+          "testName": "native member invitations preserve uniform admission, lifetime and current inviter authority"
         }
       ]
     },
@@ -128,7 +132,7 @@
       "id": "WORK-012",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for WORK-012 — Theme. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "The Workers-only registry does not classify browser acceptance. CONTRACT.md owns WORK-012 status; themeJourney in tests/qualification/ui-convergence/theme-journey.mjs is loaded by the existing desktop outline and phone tree journeys. It exercises all offered preferences across operator destinations and editors, device changes, native preference read-back, new sign-ins on another viewport, independent members and anonymous exposure themes.",
       "supportingTests": []
     },
     {
@@ -154,7 +158,7 @@
       "id": "WORK-015",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of WORK-015 — Identity provider. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This legacy inventory classifies supporting Workers tests only; CONTRACT.md owns clause status. The loaded native journey covers invited OIDC admission, unknown verified identity refusal with no identity writes, discovery and token outages, invalid signatures, email fallback and a replacement mailbox with no restored sessions or grants. The existing emitted Worker registration supplies the browser sign-in proof. SAML and SCIM remain ADMIN-001 and ADMIN-002 duties; R-12 real tenant receipts remain field proof.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/identity-upgrade.test.ts",
@@ -299,7 +303,7 @@
       "id": "PAGE-007",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for PAGE-007 — Details. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "This legacy inventory classifies Workers supporting tests only; CONTRACT.md owns native clause status. The existing responsive core-wiki Node registrations invoke pageDetailsJourney in tests/qualification/ui-convergence/page-details-journey.mjs. Through the emitted app and native HTTP they populate two contributors, owner and creator, times, table-inclusive length, status, labels, visits and readable backlinks; inspect Details; reassign as a full member with unchanged direct and inherited grants; replay with one activity entry; reload; and refuse an edit-only owner change and captured replay with unchanged page, revisions, grants and activity. The Node browser journey is outside this Workers report; independent release acceptance remains separate.",
       "supportingTests": []
     },
     {
@@ -483,7 +487,7 @@
       "id": "BLOCK-010",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for BLOCK-010 — Content queries. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "Native browser coverage is loaded by the named BLOCK-010 native content-query journeys in tests/qualification/ui-convergence/journeys.test.mjs through contentQueryJourney: persisted criteria, ordered current-reader results, drafts, native timestamps, reopening, revocation and deleted sources. The Workers-only release acceptance register remains unproven independently of this browser proof.",
       "supportingTests": []
     },
     {
@@ -540,7 +544,7 @@
       "id": "LIFE-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of LIFE-005 — Unpublished changes. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This Workers registry records supporting regressions only. LIFE-005 acceptance additionally runs unpublishedChangesJourney through the existing real core-wiki and touch-member browser journeys at 1440px and 390px, covering editor indication, reader reload, republish and lossless native discard; see the Status evidence in CONTRACT.md.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/http.test.ts",
@@ -571,7 +575,7 @@
       "id": "SHARE-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for SHARE-001 — Grants. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "The Workers inventory does not certify browser acceptance. The existing real core-wiki and touch-member journeys at 1440px and 390px in ./tests/qualification/ui-convergence/journeys.test.mjs load shareJourney and its native grant corpus in ./tests/qualification/ui-convergence/sharing-journey.mjs: ordered person, group, container and workspace grants, configured levels, optional expiry, direct and inherited source reconciliation after reload, current restrictions, revocation, expiry and replay. CONTRACT.md carries the acceptance judgment; exact candidate Verify and guarded landing remain required.",
       "supportingTests": []
     },
     {
@@ -1207,8 +1211,13 @@
       "id": "SEARCH-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for SEARCH-001 — Global search. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "Native HTTP and responsive browser sanity journeys cover retained content across all five kinds, exact unfiltered ranking, totals, cursor stability under late arrivals and current revocation. A separate committed native capacity journey records first-page wall latency, raw samples and its canonical corpus manifest. Independent acceptance and guarded landing receipts are established separately.",
+      "supportingTests": [
+        {
+          "file": "tests/e2e/search/fts-permissions.test.ts",
+          "testName": "Indexed search uses current native authority for literal matches, totals, facets and cursors"
+        }
+      ]
     },
     {
       "id": "SEARCH-002",
@@ -1339,7 +1348,7 @@
       "id": "NOTIF-002",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for NOTIF-002 — Inbox. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "The native Following Workers journey and emitted core-wiki inboxJourney cover period ordering, unread totals, both audiences, the visible referenced comment, read state, read-all without archiving, archive-only-read persistence and current access. The requirement verdict is recorded in CONTRACT.md; this supporting-test registry does not replace exact-candidate Verify or guarded landing.",
       "supportingTests": [
         {
           "file": "tests/flagship/discovery/following.test.ts",
@@ -1386,11 +1395,15 @@
       "id": "ACT-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of ACT-001 — Durable timeline. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Native HTTP audit proof covers durable page commits, real D1 rollback, scheduled publication and exact retained context. Recorded exact-candidate Verify and browser link proof remain required before counting full acceptance.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/security.test.ts",
           "testName": "core durable authority first-run, operation replay, atomic rollback and membership policies preserve authority"
+        },
+        {
+          "file": "tests/qualification/core/audit-content.test.ts",
+          "testName": "ACT-002 BASE-OPS-005 audit content, publication, archive and version mutations once with actor and time"
         }
       ]
     },
@@ -1412,11 +1425,15 @@
       "id": "ACT-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of ACT-004 — Context. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Native HTTP audit proof covers durable page commits, real D1 rollback, scheduled publication and exact retained context. Recorded exact-candidate Verify and browser link proof remain required before counting full acceptance.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/repair.test.ts",
           "testName": "content structure, task attribution, privacy and activity retain exact revisions"
+        },
+        {
+          "file": "tests/qualification/core/audit-content.test.ts",
+          "testName": "ACT-002 BASE-OPS-005 audit content, publication, archive and version mutations once with actor and time"
         }
       ]
     },
@@ -1472,7 +1489,7 @@
       "id": "TMPL-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of TMPL-005 — Save a page as a template. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "The Workers registry lists supporting capability regressions only. The native core-wiki browser capture and apply outcomes are covered by templateCaptureJourney in tests/qualification/ui-convergence/template-capture-journey.mjs through the existing responsive and starter-template registrations; those Node journeys are outside this Workers-only registry.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/template-permissions.test.ts",
@@ -1484,7 +1501,7 @@
       "id": "TMPL-006",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for TMPL-006 — Where a template lives. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "The existing desktop starter-template registration invokes templateScopeJourney in tests/qualification/ui-convergence/template-scope-journey.mjs. Native creation populates workspace templates and distinct templates in two containers the same member can read. Exact API and browser lists prove local-first ordering and scope isolation; one Move collection submission in each direction retains the identifier and snapshot and reconciles all three collections after reload. Independent release acceptance remains separate.",
       "supportingTests": []
     },
     {
@@ -2807,7 +2824,7 @@
       "id": "DB-015",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "A tagged default-profile Workers journey exercises record templates, schedules, restarts and the access pause; independent release acceptance is separate.",
+      "unmetReason": "The tagged default-profile Workers record templates journey covers defaults, personal time zones, two occurrences, restart deduplication and revoked-saver pause. The recordTemplatesJourney browser path in tests/qualification/ui-convergence/record-templates-journey.mjs runs in the existing desktop Templates registration and phone core journey, showing Alex then Morgan as the last saver after native re-save and reload, plus the visible paused reason and refused save replay after revocation. Independent release acceptance is separate.",
       "supportingTests": []
     },
     {

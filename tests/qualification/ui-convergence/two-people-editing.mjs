@@ -156,12 +156,11 @@ export async function concurrentEditingJourney(state, people) {
     await alice.page.keyboard.press('End');
     await alice.page.keyboard.type(aliceSuffix);
     const bobTitleBox = bob.page.getByRole('textbox', { name: 'Page title', exact: true });
-    await bobTitleBox.fill(bobTitle);
-    const bobSaved = bob.page.waitForResponse(response => response.request().method() === 'PATCH' && new URL(response.url()).pathname === `/api/pages/${pageId}`);
-    await bobTitleBox.blur();
-    const bobResponse = await bobSaved;
-    assert.equal(bobResponse.status(), 200);
-    bobTitleRevision = (await bobResponse.json()).value.revisionId;
+    const bobSave = await savedAfterCommit(bob.page, undefined, async () => {
+      await bobTitleBox.fill(bobTitle);
+      await bobTitleBox.blur();
+    });
+    bobTitleRevision = bobSave.revisionId;
     const refused = alice.page.waitForResponse(response => response.request().method() === 'PATCH' && new URL(response.url()).pathname === `/api/pages/${pageId}`);
     await title.blur();
     assert.equal((await refused).status(), 409, 'A title saved against a superseded page revision is rejected with 409.');

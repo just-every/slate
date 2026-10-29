@@ -3,6 +3,7 @@ import {beforeEach,expect,test} from 'vitest';
 import {resetDeployment} from '../../e2e/setup/reset-deployment';
 import {seedPage,seedPageGrant} from '../../e2e/setup/fixtures';
 import {followingFixture} from './following-support';
+import {meaningfulNotifications} from './meaningful-notifications';
 beforeEach(resetDeployment);
 
 test('PAGE-016 — authoring watches respect durable unwatch, personal overrides and workspace defaults',async()=>{
@@ -39,6 +40,7 @@ test('PAGE-016 — authoring watches respect durable unwatch, personal overrides
  await f.preferences(f.editor,true);
  const overridden=(await f.create('Personal autowatch on',f.editor)).value.pageId;
  expect((await f.ok(f.editor,'GET','/api/navigation')).watches).toContain(overridden);
+ await meaningfulNotifications(f);
 });
 
 test('CONT-012 — a watched container delivers creation, two edit sessions and a comment once each, nothing for restricted or draft pages, one item when the page is also watched, and rechecks moves, lifecycle and access',async()=>{
@@ -95,4 +97,76 @@ test('CONT-012 — a watched container delivers creation, two edit sessions and 
  // Erasure removes the durable opt-out and edit-session state alongside the content.
  await f.ok(f.owner,'POST',`/api/archive/${pageId}/permanent-delete`,{operationKey:f.key(),confirmedPageIds:[pageId]});
  expect((await env.DB.prepare('SELECT page_id FROM watch_edit_sessions WHERE page_id=? UNION SELECT page_id FROM page_watches WHERE page_id=?').bind(pageId,pageId).all()).results).toEqual([]);
+ await inboxJourney(f);
 });
+
+/** The same public inbox door covers personal state and authority over retained history. */
+async function inboxJourney(f:Awaited<ReturnType<typeof followingFixture>>){
+ await f.ok(f.editor,'POST','/api/notifications/actions',{operationKey:f.key(),action:'read-all'});
+ await f.ok(f.editor,'POST','/api/notifications/actions',{operationKey:f.key(),action:'archive-read'});
+ const pageId=(await f.create('Inbox handover notes')).value.pageId;
+ const draft=await f.ok(f.owner,'GET',`/api/pages/${pageId}`);
+ await f.ok(f.owner,'POST',`/api/pages/${pageId}/publish`,{operationKey:f.key(),expectedRevisionId:draft.page.revisionId});
+ await f.ok(f.owner,'POST','/api/sharing',{operationKey:f.key(),targetKind:'page',targetId:pageId,principalKind:'member',principalId:f.owner,level:'full'});
+ const doc=await f.ok(f.owner,'GET',`/api/pages/${pageId}`);
+ await f.ok(f.owner,'PUT',`/api/sharing/pages/${pageId}/inheritance`,{operationKey:f.key(),expectedRevisionId:doc.page.revisionId,restricted:true});
+ await f.ok(f.owner,'POST','/api/sharing',{operationKey:f.key(),targetKind:'page',targetId:pageId,principalKind:'member',principalId:f.editor,level:'comment'});
+ await f.watch(f.editor,pageId,true);
+ const plain=(await f.comment(pageId,f.owner)).value.id;
+ const mentioned=(await f.comment(pageId,f.owner,{body:[{text:'Confirm this shift, '},{text:'editor',mention:{kind:'person',id:f.editor,label:'editor'}}]})).value.id;
+ const notices=await f.ok(f.editor,'GET','/api/notifications');
+ const direct=notices.items.find((n:any)=>n.event==='mention'&&n.commentId===mentioned);
+ const recent=notices.items.find((n:any)=>n.event==='comment'&&n.commentId===mentioned);
+ const older=notices.items.find((n:any)=>n.event==='comment'&&n.commentId===plain);
+ const access=notices.items.find((n:any)=>n.event==='access-granted'&&n.pageId===pageId);
+ expect([direct,recent,older,access].every(Boolean)).toBe(true);
+ const ordered=[direct,recent,older,access],times=['2020-04-03T10:00:00.000Z','2020-04-03T09:00:00.000Z','2020-04-02T13:00:00.000Z','2020-04-01T12:00:00.000Z'];
+ await env.DB.batch(ordered.map((n,index)=>env.DB.prepare('UPDATE notifications SET created_at=? WHERE id=?').bind(times[index],n.id)));
+ const inbox=await f.ok(f.editor,'GET','/api/notifications');
+ expect(inbox.items.filter((n:any)=>n.pageId===pageId).map((n:any)=>n.id)).toEqual(ordered.map(n=>n.id));
+ expect(inbox.items.map((n:any)=>n.period)).toEqual(['2020-04-03','2020-04-03','2020-04-02','2020-04-01']);
+ expect(inbox.unreadCount).toBe(4);
+ const directView=await f.ok(f.editor,'GET','/api/notifications?audience=direct');
+ expect(directView.items.map((n:any)=>n.id)).toEqual([direct.id,access.id]);expect(directView.unreadCount).toBe(4);
+ const watchedView=await f.ok(f.editor,'GET','/api/notifications?audience=watched');
+ expect(watchedView.items.map((n:any)=>n.id)).toEqual([recent.id,older.id]);expect(watchedView.unreadCount).toBe(4);
+ const capture={operationKey:f.key(),action:'read',id:direct.id};
+ const read=await f.ok(f.editor,'POST','/api/notifications/actions',capture);
+ expect(read.value.href).toBe(`/app/pages/${pageId}?comment=${mentioned}`);
+ expect((await f.ok(f.editor,'GET',`/api/comments/page/${pageId}`)).comments.find((c:any)=>c.id===mentioned).body[0].text).toBe('Confirm this shift, ');
+ const afterRead=await f.ok(f.editor,'GET','/api/notifications');
+ expect(afterRead.items.find((n:any)=>n.id===direct.id).readAt).toBeTruthy();expect(afterRead.unreadCount).toBe(3);
+ await f.ok(f.editor,'POST','/api/notifications/actions',{operationKey:f.key(),action:'archive-read'});
+ expect((await f.ok(f.editor,'GET','/api/notifications')).items.map((n:any)=>n.id)).toEqual(ordered.slice(1).map(n=>n.id));
+ expect((await f.ok(f.editor,'GET','/api/notifications?archived=true')).items.filter((n:any)=>n.pageId===pageId).map((n:any)=>n.id)).toEqual([direct.id]);
+ await f.ok(f.editor,'POST','/api/notifications/actions',{operationKey:f.key(),action:'read-all'});
+ const allRead=await f.ok(f.editor,'GET','/api/notifications');
+ expect(allRead.items.map((n:any)=>n.id)).toEqual(ordered.slice(1).map(n=>n.id));
+ expect(allRead.unreadCount).toBe(0);expect(allRead.items.every((n:any)=>n.readAt)).toBe(true);
+ await f.ok(f.editor,'POST','/api/notifications/actions',{operationKey:f.key(),action:'archive-read'});
+ expect((await f.ok(f.editor,'GET','/api/notifications')).items).toEqual([]);
+ expect((await f.ok(f.editor,'GET','/api/notifications?archived=true')).items.filter((n:any)=>n.pageId===pageId).map((n:any)=>n.id)).toEqual(ordered.map(n=>n.id));
+ const freshComment=(await f.comment(pageId,f.owner)).value.id;
+ const unreadComment=(await f.comment(pageId,f.owner)).value.id;
+ const fresh=(await f.ok(f.editor,'GET','/api/notifications')).items;
+ const latestCapture={operationKey:f.key(),action:'read',id:fresh.find((n:any)=>n.commentId===freshComment).id};
+ await f.ok(f.editor,'POST','/api/notifications/actions',latestCapture);
+ expect((await f.ok(f.editor,'GET','/api/notifications')).unreadCount).toBe(1);
+ const retainedBefore=(await env.DB.prepare('SELECT id,read_at,archived_at FROM notifications WHERE source_page_id=? ORDER BY id').bind(pageId).all()).results;
+ const grants=await f.ok(f.owner,'GET',`/api/sharing/pages/${pageId}`);
+ await f.ok(f.owner,'POST','/api/sharing',{operationKey:f.key(),id:grants.items.find((g:any)=>g.principalId===f.editor).id,targetKind:'page',targetId:pageId,principalKind:'member',principalId:f.editor,level:'comment',revoke:true});
+ expect((await f.ok(f.editor,'GET','/api/notifications?archived=true')).items.filter((n:any)=>n.pageId===pageId)).toEqual([]);
+ expect((await f.request(f.editor,'POST','/api/notifications/actions',latestCapture)).status).toBe(404);
+ expect((await f.ok(f.editor,'GET','/api/notifications')).unreadCount).toBe(0);
+ expect((await f.request(f.editor,'POST','/api/notifications/actions',{operationKey:f.key(),action:'read',id:fresh.find((n:any)=>n.commentId===unreadComment).id})).status).toBe(404);
+ expect((await f.request(f.commenter,'POST','/api/notifications/actions',{operationKey:f.key(),action:'read',id:direct.id})).status).toBe(404);
+ expect((await env.DB.prepare('SELECT id,read_at,archived_at FROM notifications WHERE source_page_id=? ORDER BY id').bind(pageId).all()).results).toEqual(retainedBefore);
+ // Refused reads and replay leave the retained personal state intact.
+ expect((await env.DB.prepare('SELECT id FROM notifications WHERE source_page_id=? AND read_at IS NOT NULL AND archived_at IS NOT NULL').bind(pageId).all()).results.map((n:any)=>n.id).sort()).toEqual(ordered.map(n=>n.id).sort());
+ const current=await f.ok(f.owner,'GET',`/api/pages/${pageId}`);
+ await f.ok(f.owner,'POST',`/api/archive/${pageId}`,{operationKey:f.key(),expectedRevisionId:current.page.revisionId,action:'trash'});
+ await f.ok(f.owner,'POST',`/api/archive/${pageId}/permanent-delete`,{operationKey:f.key(),confirmedPageIds:[pageId]});
+ expect((await f.request(f.editor,'POST','/api/notifications/actions',capture)).status).toBe(404);
+ expect((await f.ok(f.editor,'GET','/api/notifications?archived=true')).items.filter((n:any)=>n.pageId===pageId)).toEqual([]);
+ expect((await env.DB.prepare('SELECT id FROM notifications WHERE source_page_id=?').bind(pageId).all()).results).toEqual([]);
+}

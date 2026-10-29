@@ -17,7 +17,7 @@ export interface SignInCapabilities {
 
 export function signInCapabilities(config: RuntimeConfig): SignInCapabilities {
   const identityProviders: SignInIdentityProvider[] = config.identityProvider
-    ? [{ name: 'your identity provider', start: '/auth/oidc/identity/start' }]
+    ? [{ name: new URL(config.identityProvider.issuer).hostname, start: '/auth/oidc/identity/start' }]
     : [];
   return {
     mailDelivery: Boolean((config.mailApiKey || config.mailProvider === 'development') && config.mailFrom && config.appUrl),

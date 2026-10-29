@@ -97,7 +97,7 @@ export function PageMoreMenu({
   const publishable =
     canEdit &&
     (document.policyProfile["page.lifecycle.v1"] === "draft-then-publish" || document.policyProfile["page.version.v1"] === "labelled" || document.page.lifecycle === "draft");
-  const hasUnpublished = !!document.publishedRevisionId && document.publishedRevisionId !== document.workingRevisionId;
+  const hasUnpublished = document.policyProfile["page.lifecycle.v1"] === "draft-then-publish" && !!document.publishedRevisionId && document.publishedRevisionId !== document.workingRevisionId;
 
   /** An item that opens a dialog or panel takes focus there instead of back to the trigger. */
   function open(action: () => void) {

@@ -39,7 +39,7 @@ export function PageActionDialogs({
       {templateSaved ? (
         <p role="status" className="page-notice">
           Template saved. <a href="/app/templates">Open templates</a>
-          <button type="button" aria-label="Dismiss" onClick={() => setTemplateSaved(false)}>
+          <button type="button" aria-label="Dismiss" data-tooltip="Dismiss notice" onClick={() => setTemplateSaved(false)}>
             <X aria-hidden="true" />
           </button>
         </p>

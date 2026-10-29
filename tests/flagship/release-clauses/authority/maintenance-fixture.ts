@@ -31,7 +31,7 @@ export async function maintenanceFixture(){
  const {question,...criteria}=testCase;
  const evaluation=await evaluateSkill(f.context(),{operationKey:'maintenance-evaluate',revisionId:skill.value.revisionId,caseSetId:cases.value.id,cutoff,cases:[{...criteria,candidateRunId:candidate.value.id,genericRunId:generic.value.id,expertRunId:expert.value.id,candidateOwnerSeconds:1,genericOwnerSeconds:1,expertOwnerSeconds:1}]});expect(evaluation.value.passed).toBe(true);
  await transitionSkill(f.context(),{operationKey:'maintenance-activate',revisionId:skill.value.revisionId,action:'activate'});
- proposedChanges=[{targetId:f.page.pageId,text:'Determinate local repair',evidenceIds:['E1']}];
+ proposedChanges=[{targetId:f.page.pageId,text:'Determinate local repair',evidenceIds:['E1']},{targetId:f.page.pageId,text:'Related granted follow-through',evidenceIds:['E1']}];
  const run=await startRun(f.context(),{...f.ask,operationKey:'maintenance-proposal',question:'Prepare the determinate local repair.',kind:'edit',audience:[f.owner],skillRevisionId:skill.value.revisionId},{apiKey:'test-only'});
  await consumeIntelligenceJob(binding,{kind:'intelligence.run',workspaceId:f.workspaceId,runId:run.value.id});const row=await requireRun(f.context(),run.value.id);
  expect(row).toMatchObject({status:'needs-review',skill_revision_id:skill.value.revisionId});expect(JSON.parse(row.output_json!).answer.proposedChanges).toEqual(proposedChanges);expect(calls).toHaveLength(3);

@@ -5,6 +5,7 @@ import { compactPage, savedAfterSaving, watchSaveStates } from './browser-eviden
 import { randomBytes } from 'node:crypto';
 import { secondaryCreateDestinations } from './navigation-journey.mjs';
 import { firstWordsJourney } from './first-words-journey.mjs';
+import { savedAfterCommit } from './two-people-support.mjs';
 
 export async function writeJourney(state, width) {
   const { page, origin, api } = state;
@@ -55,9 +56,11 @@ export async function writeJourney(state, width) {
   assert.ok(createdPage.page.title.length > 0, 'A new page starts with a default title.');
   assert.equal(await title.evaluate(element => [element.selectionStart, element.selectionEnd].join()), `0,${createdPage.page.title.length}`, 'The default title arrives selected.');
   assert.equal((await api('/api/pages')).items.length, pagesBefore + 1, 'One Create makes exactly one page.');
-  await page.keyboard.type(state.journeyTitle);
-  await expect(title).toHaveValue(state.journeyTitle);
-  await title.press('Tab');
+  await savedAfterCommit(page, undefined, async () => {
+    await page.keyboard.type(state.journeyTitle);
+    await expect(title).toHaveValue(state.journeyTitle);
+    await title.press('Tab');
+  }, { whileSaving: () => page.screenshot({ path: `.artifacts/ui-convergence/title-saving-${width}.png`, fullPage: true }) });
   await expect(page.getByRole('status').filter({ hasText: /^Saved$/ })).toBeVisible();
   assert.equal((await api(`/api/pages/${pageId}`)).page.title, state.journeyTitle);
   if (width !== 390) await expect(page.locator('aside.sidebar nav.page-links').getByRole('link', { name: state.journeyTitle })).toBeVisible();
@@ -109,10 +112,14 @@ export async function writeJourney(state, width) {
   assert.deepEqual((await api(`/api/pages/${pageId}`)).blocks, committed, 'Connection restoration alone does not commit the unsent draft.');
   await accessible(page, 'failed save retains text');
   await watchSaveStates(page);
-  await page.getByRole('button', { name: 'Try saving again', exact: true }).click();
+  const firstBlockId = await page.locator('[data-block-id]').first().getAttribute('data-block-id');
+  await savedAfterCommit(page, firstBlockId, () => page.getByRole('button', { name: 'Try saving again', exact: true }).click(), {
+    whileSaving: () => page.screenshot({ path: `.artifacts/ui-convergence/body-saving-${width}.png`, fullPage: true }),
+  });
   await savedAfterSaving(page);
   assert.ok(JSON.stringify((await api(`/api/pages/${pageId}`)).blocks).includes('Keep this unsent detail.'));
   await page.reload({ waitUntil: 'networkidle' });
+  await expect(title).toHaveValue(state.journeyTitle);
   await expect(page.getByRole('textbox', { name: 'Paragraph', exact: true }).first()).toContainText('Keep this unsent detail.');
   const firstBlockBox = await page.locator('[data-block-id]').first().boundingBox();
   const afterContent = await add.boundingBox();

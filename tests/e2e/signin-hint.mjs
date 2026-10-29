@@ -12,7 +12,7 @@ export async function signInHintFlow(origin) {
   const shots = process.env.SLATE_SIGNIN_SHOTS;
   const ownerEmail = process.env.SLATE_SIGNIN_EMAIL ?? 'owner@example.test';
   if (shots) await mkdir(shots, { recursive: true });
-  const browser = await chromium.launch({ headless: true, args: ['--use-mock-keychain', '--password-store=basic'] });
+  const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}), args: ['--no-sandbox', '--use-mock-keychain', '--password-store=basic'] });
   try {
     for (const width of [1440, 390]) {
       const context = await browser.newContext({ viewport: { width, height: width === 1440 ? 1000 : 844 } });
@@ -44,6 +44,10 @@ export async function signInHintFlow(origin) {
         assert.equal(requests, 0, 'Opening an owner entry never submits sign-in');
         assert.equal((await inbox(origin)).length, before.length, 'Prefill sends no mail');
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        if (width === 1440) {
+          assert.match(await page.getByRole('status').innerText(), /OIDC sign-in is not configured/);
+          assert.equal(await page.getByRole('button', { name: /^Continue with / }).count(), 0);
+        }
         if (shots) await page.screenshot({ path: path.join(shots, `login-hint-${width}.png`), fullPage: true });
 
         // The address remains editable. Only an explicit submit reaches the paid

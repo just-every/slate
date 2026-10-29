@@ -8,7 +8,7 @@ import { requestHash } from './request-hash';
 export { requestHash } from './request-hash';
 interface GuardCheck { select: string; values: (string | number | null)[]; recheck?: { select: string; values: (string | number | null)[]; pageId?: string } }
 const guardChecks = new WeakMap<D1PreparedStatement, GuardCheck>();
-export interface MutationPlan<T> { statements: D1PreparedStatement[]; entity: EntityRef; value: T; detail?: JsonValue; noChange?: boolean }
+export interface MutationPlan<T> { statements: D1PreparedStatement[]; entity: EntityRef; value: T; detail?: JsonValue; feature?: string; noChange?: boolean }
 /** Domain callers must include immutable revision writes and SQL CAS guards in statements. */
 export async function commitOperation<T>(ctx: FeatureContext, input: {
   operationKey: string; action: string; request: unknown;
@@ -31,6 +31,8 @@ export async function commitOperation<T>(ctx: FeatureContext, input: {
   const plan = await input.prepare({revisionId,activityId});
   const receipt: MutationReceipt = {operationKey:input.operationKey,entity:plan.entity,revisionId:plan.entity.revisionId,activityId:plan.noChange?null:activityId,committedAt:ctx.now,...(plan.noChange?{unchanged:true as const}:{})};
   const result = {value:plan.value,receipt};
+  const detail = plan.detail === undefined || (plan.detail && typeof plan.detail === 'object' && !Array.isArray(plan.detail))
+    ? { revisionId: plan.entity.revisionId, ...(plan.detail as Record<string, JsonValue> | undefined) } : plan.detail;
   const expires = new Date(Date.parse(ctx.now)+86400000).toISOString();
   const statements = [
       ctx.db.prepare('INSERT INTO operation_receipts (id,workspace_id,actor_member_id,operation_key,request_hash,target_kind,target_id,response_status,response_json,created_at,expires_at) VALUES (?,?,?,?,?,?,?,200,?,?,?)').bind(createUlid(),ctx.actor.workspaceId,ctx.actor.id,input.operationKey,hash,plan.entity.kind,plan.entity.id,JSON.stringify(result),ctx.now,expires),
@@ -40,7 +42,7 @@ export async function commitOperation<T>(ctx: FeatureContext, input: {
       ...(ctx.stepUp ? [freshProofGuard(ctx)] : []),
       ...(ctx.operationStatements?.before ?? []),
       ...plan.statements,
-      ...(plan.noChange?[]:[ctx.db.prepare('INSERT INTO activity_entries (id,workspace_id,actor_member_id,feature,action,target_kind,target_id,detail_json,operation_key,occurred_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(activityId,ctx.actor.workspaceId,ctx.actor.id,input.action.split('.')[0],input.action,plan.entity.kind,plan.entity.id,JSON.stringify(plan.detail??{}),input.operationKey,ctx.now)]),
+      ...(plan.noChange?[]:[ctx.db.prepare('INSERT INTO activity_entries (id,workspace_id,actor_member_id,feature,action,target_kind,target_id,detail_json,operation_key,occurred_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(activityId,ctx.actor.workspaceId,ctx.actor.id,plan.feature ?? input.action.split('.')[0],input.action,plan.entity.kind,plan.entity.id,JSON.stringify(detail),input.operationKey,ctx.now)]),
       ...(ctx.operationStatements?.after ?? []),
     ];
   try {

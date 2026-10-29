@@ -141,8 +141,12 @@ function LoadedPage({
       if(requestedReturn.current)detailReturnFocus.current=requestedReturn.current;
       else if(active instanceof HTMLElement && active!==window.document.body && !detailPanel.current?.contains(active))detailReturnFocus.current=active;
       requestedReturn.current=null;
-      detailPanel.current?.querySelector<HTMLButtonElement>('button')?.focus();
-      if (window.matchMedia("(max-width: 1200px)").matches) detailPanel.current?.scrollIntoView({block:"start"});
+      const params=new URLSearchParams(window.location.search);
+      const linkedComment=detail==="comments" && (params.has("comment") || params.has("thread"));
+      // PageComments scrolls to the referenced discussion. Panel focus must
+      // preserve that position when its data was already present at mount.
+      detailPanel.current?.querySelector<HTMLButtonElement>('button')?.focus({preventScroll:linkedComment});
+      if (!linkedComment && window.matchMedia("(max-width: 1200px)").matches) detailPanel.current?.scrollIntoView({block:"start"});
     }else if(detailReturnFocus.current || detailReturnBlock.current){
       if(detailReturnFocus.current?.isConnected)detailReturnFocus.current.focus();
       else if(detailReturnBlock.current){
@@ -312,6 +316,7 @@ function LoadedPage({
           <h1 className="sr-only">{title || "Untitled page"}</h1>
           {document.lock ? <p role="status" className="request-notice" data-page-lock>Locked by {document.lock.lockedByDisplayName}. This page is read-only; comments stay open.</p> : null}
           <PublicPageBanner document={document} onManage={()=>setDetail("publication")}/>
+          {document.permissions.canEdit && document.policyProfile["page.lifecycle.v1"] === "draft-then-publish" && document.publishedRevisionId && document.publishedRevisionId !== editor.workingRevisionId ? <p role="status" className="draft-label">Unpublished changes. Readers see the last published revision until you publish again.</p> : null}
           {(document as DocumentView&{schedule?:{state:string;publishAt:string;failure?:string}}).schedule?.state==='scheduled'?<p role="status">Scheduled for {new Date((document as DocumentView&{schedule:{publishAt:string}}).schedule.publishAt).toLocaleString()}</p>:null}
           {(document as DocumentView&{schedule?:{state:string;publishAt:string;failure?:string}}).schedule?.state==='failed'?<p role="alert">Scheduled publication needs attention: {(document as DocumentView&{schedule:{failure?:string}}).schedule.failure??'Open publication options to review and reschedule.'}</p>:null}
           <PageAppearance document={document}/>

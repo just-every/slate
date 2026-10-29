@@ -34,7 +34,7 @@ export async function saveGrant(ctx:FeatureContext,input:{operationKey:string;ta
     if(pending&&input.revoke)statements.push(ctx.db.prepare('UPDATE invitations SET revoked_at=? WHERE id=?').bind(ctx.now,pending.id),ctx.db.prepare("UPDATE mail_deliveries SET payload_ciphertext=NULL,next_attempt_at=NULL,lease_until=NULL,state=CASE WHEN state='sent' THEN state ELSE 'failed' END,delivery_phase=CASE WHEN state='sent' THEN delivery_phase ELSE 'cancelled' END,updated_at=? WHERE invitation_id=?").bind(ctx.now,pending.id));
     if(!input.revoke) { const recipientIds=await grantRecipients(ctx,input.principalKind,input.principalId); if(recipientIds.length)statements.push(...notificationStatements(ctx,{id:createUlid(),event:'access-granted',...(input.targetKind==='page'?{pageId:input.targetId}:{containerId:input.targetId}),recipientIds})); }
     statements.push(await identityRevision(ctx,revisionId,`${input.targetKind}-grant`,id,{targetId:input.targetId,principalKind:input.principalKind,principalId:input.principalId,level:input.level,expiresAt:input.expiresAt??null,revoked:!!input.revoke}));
-    return {entity:{id:input.targetId,kind:input.targetKind,revisionId},value:{id,revoked:!!input.revoke},statements};
+    return {entity:{id:input.targetId,kind:input.targetKind,revisionId},value:{id,revoked:!!input.revoke},detail:{grantId:id},statements};
   }});
 }
 export { listGrants } from './listing';

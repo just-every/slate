@@ -91,3 +91,30 @@ The 16 October managed first-open case `a claimed RER owner signs in to a ready 
 The CLI flagship credential leg explicitly configures its private development profile and requests credentials:mint’s email proof through the native /auth/step-up door. It privately receives the message at the test-only paid network edge, previews the real confirmation page and submits its native form in that same dev session. Credential issuance then succeeds with the durable proof the commit requires. No proof is injected and no authorization route is bypassed.
 
 The guest invitation case removes its obsolete 24-hour lifetime pin; requested guest access expiry, pending/accepted grants, replay, expired access and revocation behavior remain checked.
+
+
+## Member appearance journey
+
+WORK-012 is exercised by `themeJourney` in `tests/qualification/ui-convergence/theme-journey.mjs`, through `settingsJourney` in `tests/qualification/ui-convergence/reading-journeys.mjs`. The existing desktop outline and phone tree registrations in `tests/qualification/ui-convergence/journeys.test.mjs` load it in push Verify. No registration is added.
+
+The journey selects Light, Dark and Match device through Settings, observes each committed native preference, and checks painted backgrounds and readable text across every configured operator destination, each Settings section, page editing, database cells and record editing. Workspace destinations use their native navigation links, with separate document-door status checks; color inspection foregrounds the actual browser tab with motion enabled. Match device responds in place to both device schemes. Reload and a newly issued native identity session in a clean browser context at the other viewport preserve the preference; another member has independent durable choices. Two genuinely published exposures retain their own light and dark themes for signed-in and anonymous readers under both device schemes, including reload. Only identity and the mail-provider edge use the existing harness; application routes and responses are native. Captures remain outside product source. Existing polish assertions for settings, search and contrast remain intact.
+The existing responsive core journey at 390px and the existing starter-template
+journey at 1440px call `templateCaptureJourney` in
+`tests/qualification/ui-convergence/template-capture-journey.mjs` for TMPL-005.
+It authors a root, two children and a grandchild through native page mutations,
+with distinct body and appearance properties. Every source node also has a
+comment, historical body revision, direct grant, owner and reader watches,
+readership, a page status and an active public exposure. The page's More menu
+saves with child capture disabled and enabled. Retained previews and applied
+pages must contain exactly the requested body, properties and descendants,
+without those seven source record families or their identifiers. New creation
+revisions and visits belong to the copies; effective access comes from the
+chosen destination. Native receipt retry creates no extra pages, and a reader
+with destination view access cannot acquire the source comment grant. Existing
+preview, starter-template and creation assertions remain in their registrations.
+
+## Identity provider journey
+
+The WORK-015 native provider journey extends the existing published-identity upgrade registration in `tests/flagship/core/identity-upgrade.test.ts`. It issues and accepts an actual member invitation before signed RS256 OIDC sign-in, then refuses an uninvited verified identity without changing members, bindings or sessions. It removes the admitted member and re-invites a new address through the native invitation doors: the new identity cannot read the old private page, old native and provider sessions stay revoked, old grants stay revoked, used invitations cannot replay, and the old provider subject cannot move to the new identity. Discovery and token outages and a wrong signature each refuse sign-in without identity writes while real native email confirmation still succeeds. The disabled-provider case also completes native email sign-in. Only the provider and mail network edges are substituted.
+
+The existing emitted-Worker admission registration calls `providerFallbackFlow` in `tests/e2e/provider-fallback-flow.mjs` and `signInHintFlow` in `tests/e2e/signin-hint.mjs`. A synthetic provider discovery outage is observed at the outbound edge; its actual browser form returns to sign-in with the affected provider named, an enabled email door and no session. Email confirmation then creates a native session that survives reload while that provider stays broken. The unconfigured-provider journey identifies the missing OIDC option and completes email sign-in. Behaviour assertions use desktop width, and optional candidate screenshots capture the changed sign-in screens at 1440 and 390. Existing responsive assertions remain intact. The journeys run in push Verify's Workers shard and emitted-artifact contract job; they establish local native behaviour, not live tenant delivery. ADMIN-001 and ADMIN-002 retain SAML and SCIM; the R-12 field proof register retains real tenant receipts.

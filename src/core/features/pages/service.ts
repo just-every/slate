@@ -56,7 +56,20 @@ export async function readPage(ctx: FeatureContext, id: string): Promise<PageDoc
         (async () => {
             // Render immutable content for the revision named in this response, even if another edit commits mid-read.
             const delivered = await revisionRow(ctx, id, canEdit ? p.working_revision_id : p.published_revision_id ?? p.working_revision_id);
-            const blocks = JSON.parse(delivered.body_json);
+            let blocks = JSON.parse(delivered.body_json);
+            // Discard points working content back to the immutable published
+            // revision, while its restored live blocks have fresh write tokens.
+            // Read those tokens at the same page revision, so an older document
+            // can never acquire authority to overwrite a newer block edit.
+            if (canEdit && p.working_revision_id === p.published_revision_id && p.revision_id !== p.working_revision_id) {
+                const current = (await ctx.db.prepare('SELECT b.id,b.revision_id AS revisionId FROM page_blocks b JOIN pages p ON p.id=b.page_id WHERE p.id=? AND p.revision_id=?')
+                    .bind(id, p.revision_id).all<{id:string;revisionId:string}>()).results;
+                const tokens = new Map(current.map(block => [block.id, block.revisionId]));
+                // A snapshot remains readable without a live block projection.
+                // Keep its original tokens when the fenced lookup has no match;
+                // the write endpoint still refuses any stale token.
+                blocks = blocks.map((block:{id:string;revisionId:string}) => ({...block,revisionId:tokens.get(block.id) ?? block.revisionId}));
+            }
             const snapshotProperties: PageProperties = JSON.parse(delivered.properties_json);
             const publishedOnly = !canEdit && p.published_revision_id && p.published_revision_id !== p.working_revision_id;
             const [props, mentions] = await Promise.all([
