@@ -102,6 +102,7 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 - `SAVE-006`: *Tier:* Core
 - `PAGE-001`: *Tier:* Core
 - `PAGE-002`: *Tier:* Core
+- `PAGE-017`: *Tier:* Core · *From:* PAGE-002
 - `PAGE-003`: *Tier:* Core
 - `PAGE-004`: *Tier:* Core
 - `PAGE-005`: *Tier:* Core
@@ -528,6 +529,17 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 **Acceptance.**
 1. It is created in exactly one container at one position, and its initial lifecycle state follows `LIFE-006`.
 2. Pages are created blank and from a template from the tree, global create and as a child, each at one position.
+
+#### PAGE-017 — Page creation is keyboard-complete on a phone and templates honour a locked destination
+
+**Requirement.** Page creation (`PAGE-002`) remains keyboard-complete on phone and desktop layouts, and template use (`TMPL-003`) respects the chosen destination's page lock (`PAGE-015`) without blocking a writable space root because an unrelated page is locked.
+
+**Acceptance.**
+1. At a 390px phone width, after Tab then Shift+Tab through the page tree, focus returns to each row's create-child control in order and never skips it; row actions that appear on hover or focus-within stay reachable and visible while focused.
+2. The same keyboard journey passes at 1440px.
+3. With an unrelated page locked, a member's template listing, preview and apply at the writable space root return 200, 200 and 201 respectively.
+4. Applying a template to a locked destination is refused with `PAGE_LOCKED` (409) and leaves that destination unchanged.
+5. One journey loaded by the exact-SHA Verify performs both the phone keyboard sequence and the locked-page template scenario.
 
 #### PAGE-003 — Identity survives everything
 
@@ -3978,9 +3990,9 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 35 | 191 | 0 | 226 |
+| Published | 35 | 191 | 1 | 227 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 51 | 246 | 40 | 337 |
+| All | 51 | 246 | 41 | 338 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4008,6 +4020,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `SAVE-006` | Concurrent editing and optional co-editing | published | partial | `tests/qualification/ui-convergence/two-people-editing.mjs` | live co-editing only under the flagship opt-in; see COLLAB-001 |
 | `PAGE-001` | What a page is | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a page creation, metadata editing and round-trip journey that reads the complete page identity and labels; the cited incumbent-archive test calls the parser and does not exercise the page door. |
 | `PAGE-002` | Creation | published | partial | `tests/qualification/interface/content.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/content.mjs`. |
+| `PAGE-017` | Page creation is keyboard-complete on a phone and templates honour a locked destination | published | missing | None. | Supplied gate findings at d6ddfbb3: the 390px journey fails at line 66 after Tab then Shift+Tab because the create-child control is skipped; `src/core/app/styles/shell.css` lines 80–81 remove row actions from layout outside hover or focus-within. The member template fix at `src/core/features/templates/permissions.ts` line 14 works, but no Verify-loaded journey locks a page and lists, previews and applies a template. Missing the passing keyboard journeys at both widths and one Verify-loaded journey combining the phone sequence with writable-root success, locked-destination refusal and unchanged locked content. |
 | `PAGE-003` | Identity survives everything | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A page keeps its identifier for its lifetime."<br>No validated CI-run proof for this acceptance point: "Renaming it, editing it, moving it within or between containers, archiving, trashing, restoring, publishing and unpublishing never change it, and every link, mention, citation, content query and search result continues to resolve to it (`LINK-001`)." |
 | `PAGE-004` | Move | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A member with edit access on both places can move a page to another position, another parent, or another container, choosing the destination from a searchable picker."<br>No validated CI-run proof for this acceptance point: "Children move with it, grants are re-resolved against the new parent and the change is shown before it is applied, and comments, versions and links are unchanged." |
 | `PAGE-005` | Duplicate | published | partial | `tests/flagship/content/http.test.ts` | Missing a duplication journey that creates comments, versions, watchers, analytics, grants and publication before duplicating and reads their exclusion; the cited content flow checks some duplicate content and verification behavior only. |
