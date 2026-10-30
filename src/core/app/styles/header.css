@@ -5,7 +5,8 @@
  */
 .slate-app {
   --topbar-height: 56px;
-  --col-gutter: clamp(16px, 4vw, 56px);
+  /* 72px at 1440 so a page's block handles, which sit 76px left of the column edge, clear the sidebar. */
+  --col-gutter: clamp(16px, 5vw, 72px);
   --col-content: 1040px;
   --col-reading: 880px;
   --col-wide: 1120px;
