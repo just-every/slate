@@ -85,9 +85,9 @@
 .slate-app .filter-menu-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 /* Quiet text buttons: paging and secondary steps that sit under a list. */
-.slate-app .text-button { min-height: max(var(--slate-tap-target, 0px), 36px); padding: 0 8px; border: 0; background-color: transparent; color: var(--slate-ink); font-size: 15px; font-weight: 500; }
+.slate-app .text-button { min-height: max(var(--slate-tap-target, 0px), 36px); padding: 0 10px; border: 0; background-color: var(--slate-canvas); color: var(--slate-ink); font-size: 15px; font-weight: 500; }
 .slate-app .text-button:not(:disabled):hover { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
-.slate-app .list-paging { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0 -8px; }
+.slate-app .list-paging { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
 
 /* Applied filters: a soft fill with the accent's text, full radius, each removable. */
 .slate-app .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -106,14 +106,14 @@
 .slate-app .chip > button {
   display: inline-grid;
   place-items: center;
-  width: max(var(--slate-tap-target, 0px), 28px);
-  min-width: max(var(--slate-tap-target, 0px), 28px);
-  height: max(var(--slate-tap-target, 0px), 28px);
-  min-height: max(var(--slate-tap-target, 0px), 28px);
+  width: max(var(--slate-tap-target, 0px), 32px);
+  min-width: max(var(--slate-tap-target, 0px), 32px);
+  height: max(var(--slate-tap-target, 0px), 32px);
+  min-height: max(var(--slate-tap-target, 0px), 32px);
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background-color: transparent;
+  background-color: var(--slate-accent-soft);
   color: inherit;
 }
 .slate-app .chip > button:hover { background-color: color-mix(in srgb, var(--slate-accent) 12%, transparent); }
@@ -133,7 +133,7 @@
   padding: 0 8px 0 4px;
   border: 0;
   border-radius: 8px;
-  background-color: transparent;
+  background-color: var(--slate-wash);
   color: var(--slate-ink-strong);
   font-size: 15px;
   font-weight: 500;
