@@ -10,52 +10,66 @@
 .slate-app .empty-start p {
   flex-basis: 100%;
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .slate-app .today-section {
-  margin-top: 38px;
+  margin-top: 32px;
 }
-.slate-app .today-section h2 {
-  font-size: var(--text-small);
-  font-weight: 400;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  padding-bottom: 10px;
-}
+/* Notification and update rows: open rows with the type label, an Outfit item title and the time as meta. */
 .slate-app .outcome-list {
-  list-style: none;
+  margin: 0;
   padding: 0;
+  list-style: none;
 }
-.slate-app .outcome-list li {
+.slate-app .outcome-list > li:not(.inbox-period) + li:not(.inbox-period) {
   border-top: 1px solid var(--slate-line);
 }
 .slate-app .outcome-list a {
   display: block;
   position: relative;
-  padding: 24px 36px 24px 0;
+  padding: 16px 36px 16px 0;
 }
 .slate-app .outcome-kind {
-  color: var(--slate-accent);
+  color: var(--slate-ink-muted);
   text-transform: uppercase;
-  font-size: var(--text-small);
-  letter-spacing: 1.2px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.08em;
 }
 .slate-app .outcome-list h3 {
-  font:
-    25px/1.3 Georgia,
-    serif;
-  margin: 8px 0;
+  margin: 2px 0;
+  color: var(--slate-ink-strong);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
 }
+.slate-app .outcome-list a:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.slate-app .outcome-list p { margin: 2px 0; font-size: 15px; }
 .slate-app .outcome-list time {
-  font-size: var(--text-small);
+  font-size: 14px;
   color: var(--slate-ink-muted);
 }
 .slate-app .outcome-arrow {
   position: absolute;
   right: 0;
   top: 50%;
-  font-size: 25px;
-  color: var(--slate-accent);
+  font-size: 18px;
+  color: var(--slate-ink-muted);
+  transform: translateY(-50%);
+}
+.slate-app .inbox-period.section-label { margin: 24px 0 0; }
+.slate-app section[aria-label^="Notifications for"]:first-child > .inbox-period { margin-top: 0; }
+.slate-app .inline-field { display: inline-flex; align-items: center; gap: 8px; color: var(--slate-ink-muted); font-size: 14px; }
+.slate-app .review-workspace .control-row .tabs { margin: 0; }
+/* Settings: the section list beside the open section. */
+.slate-app .settings-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 0 48px; margin-top: 8px; }
+.slate-app .settings-layout > .settings-section-navigation { position: sticky; top: 16px; }
+.slate-app .settings-section { min-width: 0; }
+.slate-app .settings-section > :first-child > h2:first-child, .slate-app .settings-section > :first-child > :first-child > h2:first-child { margin-top: 0; }
+@media (max-width: 700px) {
+  .slate-app .settings-layout { display: block; }
+  .slate-app .settings-layout > .settings-section-navigation:not([data-portability="true"]) { position: static; }
 }
 .slate-app .settings-panel h2 {
   font-size: 22px;

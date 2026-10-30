@@ -43,10 +43,6 @@ export function WorkspaceArchive({containerId,embedded}:{containerId?:string;emb
     </div>
   );
   const body = <>
-        <p className="muted">
-          Archived pages retain their history. Permanently deleting trash is
-          irreversible.
-        </p>
         <RequestState
           loading={resource.loading}
           error={resource.error}

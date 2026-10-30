@@ -56,7 +56,7 @@ export function ContainerWorkspace({containerId,embedded}:{containerId?:string;e
   const panel = (
     <section className="settings-panel spaces-workspace">
       {embedded ? <h2>Spaces</h2> : null}
-      <div className="action-row">
+      <div className="action-row page-rule">
         <button className="primary-button"
           onClick={() => {
             key.current = operationKey();
@@ -76,14 +76,13 @@ export function ContainerWorkspace({containerId,embedded}:{containerId?:string;e
           />
           Show archived spaces
         </label>
-      </div>
-      <div className="action-row"><label>Visibility<select value={visibility} onChange={e=>setVisibility(e.target.value)}><option value="">All</option>{["default","open","closed","private","personal"].map(v=><option key={v} value={v}>{visibilityLabel(v)}</option>)}</select></label><label><input type="checkbox" checked={membership} onChange={e=>setMembership(e.target.checked)}/>My memberships</label><label><input type="checkbox" checked={personal} onChange={e=>setPersonal(e.target.checked)}/>Personal spaces</label></div>
+      <label>Visibility<select value={visibility} onChange={e=>setVisibility(e.target.value)}><option value="">All</option>{["default","open","closed","private","personal"].map(v=><option key={v} value={v}>{visibilityLabel(v)}</option>)}</select></label><label><input type="checkbox" checked={membership} onChange={e=>setMembership(e.target.checked)}/>My memberships</label><label><input type="checkbox" checked={personal} onChange={e=>setPersonal(e.target.checked)}/>Personal spaces</label></div>
       <RequestState
         loading={spaces.loading}
         error={spaces.error}
         retry={spaces.reload}
       >
-        <ul className="settings-list">
+        <ul className="settings-list row-list">
           {spaces.data?.items.filter(s=>(!visibility||s.visibility===visibility)&&(!personal||s.visibility==="personal")&&(!membership||navigation.data?.containers.some(c=>c.id===s.id))).map((space) => (
             <li key={space.id}>
               <button className="space-choice" aria-pressed={selected === space.id} onClick={() => setSelected(space.id)}>

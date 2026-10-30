@@ -4,8 +4,8 @@
 .slate-app .create-menu > button, .slate-app .create-menu > a { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; text-align: left; border-radius: 4px; }
 .slate-app .create-menu > :hover, .slate-app .create-menu > :focus-visible { background: var(--slate-sidebar-hover); }
 .slate-app .personal-home { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 16px; margin-top: 24px; }
-.slate-app .personal-home > section { padding: 18px 20px; border-radius: 10px; background: var(--slate-wash); }
-.slate-app .personal-home h2 { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+.slate-app .personal-home > section { min-width: 0; }
+.slate-app .personal-home > section > .section-label { margin-top: 0; }
 .slate-app .personal-home h3 { font-size: var(--text-small); font-weight: 500; color: var(--slate-ink-muted); margin: 14px 0 4px; }
 .slate-app .personal-home ul { list-style: none; padding: 0; margin: 0; }
 .slate-app .navigation-backdrop { display: none; }

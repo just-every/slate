@@ -19,7 +19,9 @@ export async function touchManagementJourney(state,touch){
  await checkpoint(page,'space details saved');
 
  await page.goto(origin+'/app/templates',{waitUntil:'networkidle'});
+ await tap(page.getByRole('button',{name:'Filter templates',exact:true}));
  await type(page,page.getByRole('textbox',{name:'Category',exact:true}),'Meetings');
+ await page.keyboard.press('Escape');
  await tap(page.locator('.template-choice').filter({has:page.getByRole('heading',{name:'Meeting notes',exact:true})}));
  await expect(page.locator('.template-preview')).toContainText('Action items');
  await checkpoint(page,'template preview');

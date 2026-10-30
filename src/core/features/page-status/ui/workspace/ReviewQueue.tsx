@@ -4,6 +4,7 @@ import { RequestState } from "../../../../app/ui/RequestState";
 import { TopBar } from "../../../../app/ui/header/TopBar";
 import { PageTitle } from "../../../../app/ui/header/PageTitle";
 import { displayDate } from "../../../../app/ui/displayDate";
+import { SectionLabel } from "../../../../app/ui/SectionLabel";
 import type { ReviewCounts, ReviewFilter, ReviewItem } from "../../review";
 import { BulkVerifyDialog } from "./BulkVerifyDialog";
 import { RequestedReviewQueue } from "./RequestedReviewQueue";
@@ -57,21 +58,18 @@ export function ReviewQueue() {
       <TopBar trail={[{ label: "Needs review" }]} />
       <section className="main review-workspace">
         <PageTitle>Needs review</PageTitle>
-        <p className="page-lede">
-          Pages whose verification has lapsed, lapses within 14 days, or was made before the page last changed.
-          Nothing here renews by itself: a person reviews the page and verifies it again.
-        </p>
+        <p className="page-lede">Pages whose verification has lapsed, lapses within 14 days, or predates their last change.</p>
         <RequestedReviewQueue/>
-        <h2>Verification health</h2>
+        <SectionLabel>Verification health</SectionLabel>
         <div className="tabs" role="group" aria-label="Whose verifications">
           {tab("mine", "Mine", counts?.mine)}
           {tab("everyone", "Everyone", counts?.everyone)}
           {counts?.noVerifier !== null && counts?.noVerifier !== undefined ? tab("no-verifier", "No active verifier", counts.noVerifier) : null}
         </div>
-        {resource.data?.canBulkVerify ? <p><button type="button" disabled={!selected.length} onClick={() => setBulk(resource.data!.items.filter(i => selected.includes(i.pageId) && i.canVerify && i.openedCurrent))}>Verify selected opened revisions</button> Open each current revision before selecting it.</p> : null}
+        {resource.data?.canBulkVerify && selected.length ? <div className="control-row"><button type="button" className="secondary-button" onClick={() => setBulk(resource.data!.items.filter(i => selected.includes(i.pageId) && i.canVerify && i.openedCurrent))}>Verify selected opened revisions</button></div> : null}
         <RequestState loading={resource.loading} error={resource.error} retry={resource.reload}>
           {resource.data?.items.length ? (
-            <ul className="archive-list review-list">
+            <ul className="archive-list review-list row-list">
               {resource.data.items.map((item) => (
                 <li key={item.pageId} data-state={item.state}>
                   {resource.data?.canBulkVerify ? <label><input type="checkbox" aria-label={`Select ${item.title}`} disabled={!item.canVerify || !item.openedCurrent} checked={selected.includes(item.pageId)} onChange={e => setSelected(e.target.checked ? [...selected, item.pageId] : selected.filter(id => id !== item.pageId))}/>Select</label> : null}
@@ -95,10 +93,10 @@ export function ReviewQueue() {
           ) : (
             <p>{filter === "mine" ? "None of your verifications needs review." : filter === "no-verifier" ? "Every verified page has an active verifier." : "Nothing needs review."}</p>
           )}
-          <div className="editor-actions">
-            {cursors.length ? <button type="button" onClick={() => setCursors([])}>First page</button> : null}
-            {resource.data?.nextCursor ? <button type="button" onClick={() => setCursors([...cursors, resource.data!.nextCursor!])}>Next page</button> : null}
-          </div>
+          {cursors.length || resource.data?.nextCursor ? <div className="list-paging">
+            {cursors.length ? <button type="button" className="text-button" onClick={() => setCursors([])}>First page</button> : null}
+            {resource.data?.nextCursor ? <button type="button" className="text-button" onClick={() => setCursors([...cursors, resource.data!.nextCursor!])}>Next page</button> : null}
+          </div> : null}
         </RequestState>
         {bulk?.length ? <BulkVerifyDialog items={bulk} onClose={() => setBulk(undefined)} onSaved={async () => { setSelected([]); await resource.reload(); reviewChanged(); }}/> : null}
         {verifying ? (

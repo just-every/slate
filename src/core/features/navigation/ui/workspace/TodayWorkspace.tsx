@@ -5,6 +5,8 @@ import { RequestState } from "../../../../app/ui/RequestState";
 import { mutate, operationKey } from "../../../../client/transport";
 import { TopBar } from "../../../../app/ui/header/TopBar";
 import { PageTitle } from "../../../../app/ui/header/PageTitle";
+import { SectionLabel } from "../../../../app/ui/SectionLabel";
+import { displayDate } from "../../../../app/ui/displayDate";
 interface Notice {
   id: string;
   title: string | null;
@@ -54,7 +56,7 @@ function FlagshipToday() {
               <h3>{item.title ?? "Workspace update"}</h3>
               {item.detail?.outcome ? <p>{item.detail.outcome}</p> : null}
               <time dateTime={item.createdAt}>
-                {new Date(item.createdAt).toLocaleString()}
+                {displayDate(item.createdAt, true)}
               </time>
               <span className="outcome-arrow" aria-hidden="true">
                 ↗
@@ -81,7 +83,7 @@ function FlagshipToday() {
         >
           {empty ? (
             <div className="empty-start">
-              <a href="/app/settings?section=portability">
+              <a href="/app/settings/portability">
                 Import your knowledge
               </a>
               <p className="muted">
@@ -92,13 +94,13 @@ function FlagshipToday() {
           ) : null}
           {data?.decisions.length ? (
             <section className="today-section">
-              <h2>Ready for your decision</h2>
+              <SectionLabel>Ready for your decision</SectionLabel>
               {rows(data.decisions)}
             </section>
           ) : null}
           {data?.contradictions.length ? (
             <section className="today-section">
-              <h2>Something needs a closer look</h2>
+              <SectionLabel>Something needs a closer look</SectionLabel>
               {rows(data.contradictions)}
             </section>
           ) : null}
@@ -110,7 +112,7 @@ function FlagshipToday() {
           ))}
           {data?.notices.length ? (
             <section className="today-section">
-              <h2>For you</h2>
+              <SectionLabel>For you</SectionLabel>
               {rows(data.notices)}
             </section>
           ) : null}

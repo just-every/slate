@@ -28,7 +28,7 @@ export function FileCardBlock({block}:{block:FileCardBlockData}){
    </dl><p className="mt-2 text-small">You can open this file.</p>
   </>:value?.state==='request-access'?<>
    <a href={block.url} rel="noreferrer" target="_blank" className="text-accent underline">Request access</a>
-   {value.connect?<p className="text-small"><a href="/app/settings?section=portability" className="text-accent underline">Connect to view</a></p>:null}
+   {value.connect?<p className="text-small"><a href="/app/settings/portability" className="text-accent underline">Connect to view</a></p>:null}
   </>:value?.state==='unavailable'?<p>File unavailable.</p>:value?.state==='failed'?<p role="status">File access could not be checked.</p>:<p role="status">Checking file access…</p>}
   <Button variant="ghost" size="sm" onClick={()=>setRefresh(n=>n+1)}>Refresh file</Button>
  </section>;

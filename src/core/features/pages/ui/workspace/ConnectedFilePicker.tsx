@@ -28,7 +28,7 @@ export function ConnectedFilePicker({onPick,onClose}:{onPick:(reference:FileRefe
     {items.map(item=>item.folder?<button className="break-words text-left" key={item.fileId} type="button" onClick={()=>void browse(item.provider==='sharepoint'?item.fileId.split('/')[1]:item.fileId)}>Open folder: {item.title}</button>:<label key={item.fileId} className="min-w-0"><input type="radio" name="file" value={item.fileId} checked={selected===item.fileId} onChange={()=>setSelected(item.fileId)}/><span className="break-words">{item.title}</span></label>)}
    </div>
    {more?<p>More files exist. Open a folder or enter its ID to narrow the selection.</p>:null}
-  </>:connections?<p>No connected file accounts. <a href="/app/settings?section=portability">Connect your account</a></p>:<p role="status">Loading your accounts…</p>}
+  </>:connections?<p>No connected file accounts. <a href="/app/settings/portability">Connect your account</a></p>:<p role="status">Loading your accounts…</p>}
   {error?<p role="alert">{errorMessage(error)}</p>:null}
  </ActionDialog>;
 }
