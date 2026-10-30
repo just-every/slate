@@ -26,6 +26,7 @@ import { analyticsJourney } from './analytics-journey.mjs';
 import { reactionsJourney } from './reactions-journey.mjs';
 import { pageDisplayJourney } from './page-display-journey.mjs';
 import { createInPlaceJourney } from './create-in-place-journey.mjs';
+import { statusProfileJourney } from './status-profile-journey.mjs';
 import assert from 'node:assert/strict';
 import { journeyTest as test } from './journey-shard.mjs';
 import { expect } from '@playwright/test';
@@ -94,6 +95,7 @@ for (const width of [390, 1440]) {
         // Finish earlier page notifications before connecting the chat journey destinations.
         await state.runScheduled();
         await chatJourney(state, width);
+        await step('STAT-005 — status profiles preserve vocabulary and page revisions', () => statusProfileJourney(state, width));
         if (width === 390) {
           await step('DB-012 populated record fields, comments, history and parity', () => recordDetailJourney(state, width));
           await templateCaptureJourney(state);

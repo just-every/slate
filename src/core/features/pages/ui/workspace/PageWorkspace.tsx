@@ -331,6 +331,12 @@ function LoadedPage({
           {(document as DocumentView&{schedule?:{state:string;publishAt:string;failure?:string}}).schedule?.state==='scheduled'?<p role="status">Scheduled for {new Date((document as DocumentView&{schedule:{publishAt:string}}).schedule.publishAt).toLocaleString()}</p>:null}
           {(document as DocumentView&{schedule?:{state:string;publishAt:string;failure?:string}}).schedule?.state==='failed'?<p role="alert">Scheduled publication needs attention: {(document as DocumentView&{schedule:{failure?:string}}).schedule.failure??'Open publication options to review and reschedule.'}</p>:null}
           <PageAppearance document={document}/>
+          <div className="page-title-row">
+            {document.policyProfile["page.status.v1"] === "verification-only" ? (
+              <div className="page-title-actions">
+                <button type="button" className="tool" aria-expanded={detail === "status"} onClick={() => {setSelection(undefined);setDetail(detail === "status" ? null : "status");}}>Status</button>
+              </div>
+            ) : null}
           <textarea
             ref={titleInput}
             rows={1}
@@ -348,6 +354,7 @@ function LoadedPage({
               }
             }}
           />
+          </div>
           {newPage && document.permissions.canEdit ? <script dangerouslySetInnerHTML={{__html:newPageArrivalScript}}/> : null}
           <PageReadMetadata document={document} />
           {recovered.current && title!==savedTitle ? <SaveStatus state="unsaved" recoveredDraft onRetry={()=>void saveTitle()}/> : null}

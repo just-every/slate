@@ -20,12 +20,20 @@
 .slate-app .search-context button { flex-shrink: 0; text-decoration: underline; }
 .slate-app [data-slate-editable] a { color: var(--slate-accent); text-decoration: underline; text-underline-offset: 3px; }
 ::highlight(search-match), .slate-app mark { background: var(--slate-hl-yellow); color: var(--slate-ink); }
-/* verification-only puts the status chip beside the breadcrumb; narrow screens hide the breadcrumb, so the byline carries it there. */
-.slate-app .byline-status-narrow { display: none; }
+.slate-app .page-title-row { position: relative; }
+.slate-app .page-title-actions { display: flex; position: absolute; bottom: 100%; right: 0; opacity: 0; pointer-events: none; }
+.slate-app .page-title-row:is(:hover, :focus-within) .page-title-actions { opacity: 1; pointer-events: auto; }
+.slate-app .status-colour { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+@media (hover: none) {
+  .slate-app .page-title-actions { opacity: 1; pointer-events: auto; }
+}
 @media (max-width: 700px) {
-  .slate-app .byline-status-narrow { display: inline; }
-  .slate-app .topbar.page-topbar { flex-wrap: nowrap; gap: 8px; }
-  .slate-app .page-topbar .crumbs { display: none; }
+  .slate-app .topbar.page-topbar { flex-wrap: wrap; gap: 8px; }
+  .slate-app .page-topbar .crumbs { flex-basis: 100%; }
+  .slate-app .page-topbar .crumbs li:not(:last-child) { display: none; }
+  .slate-app .page-topbar .crumbs li:last-child { flex-wrap: wrap; }
+  .slate-app .page-topbar .crumbs li:last-child::before { display: none; }
+  .slate-app .page-topbar .page-status-chip { margin: 0; }
   .slate-app .page-topbar .tools { width: 100%; justify-content: flex-end; }
   .slate-app .page-topbar .desktop-page-tool { display: none; }
   .slate-app .page-topbar .tool { white-space: nowrap; }
