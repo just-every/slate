@@ -30,6 +30,7 @@
 @media (max-width: 700px) {
   .slate-app .topbar.page-topbar { flex-wrap: wrap; gap: 8px; }
   .slate-app .page-topbar .crumbs { flex-basis: 100%; }
+  .slate-app .page-topbar .crumbs:not(:has(.page-status-chip)) { display: none; }
   .slate-app .page-topbar .crumbs li:not(:last-child) { display: none; }
   .slate-app .page-topbar .crumbs li:last-child { flex-wrap: wrap; }
   .slate-app .page-topbar .crumbs li:last-child::before { display: none; }

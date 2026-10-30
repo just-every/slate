@@ -26,21 +26,21 @@ export async function statusProfileJourney(state, width) {
   const route = id => `${origin}/app/pages/${id}`;
   const openPanel = async id => {
     await page.goto(route(id) + '?detail=status', { waitUntil: 'networkidle' });
-    await expect(page.getByLabel('Set page status', { exact: true })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Set page status', exact: true })).toBeVisible();
   };
-  const options = () => page.getByLabel('Set page status', { exact: true }).locator('option:not([disabled])').evaluateAll(nodes => nodes.map(node => node.value));
+  const options = () => page.getByRole('combobox', { name: 'Set page status', exact: true }).locator('option:not([disabled])').evaluateAll(nodes => nodes.map(node => node.value));
   const vocabulary = async () => (await get('/api/status')).items.sort((a, b) => a.key.localeCompare(b.key));
   const snapshots = async () => Promise.all([main.pageId, other.pageId].map(async id => {
     const doc = await get(`/api/pages/${id}`);
     return { page: doc.page, properties: doc.properties, blocks: doc.blocks, workingRevisionId: doc.workingRevisionId,
-      publishedRevisionId: doc.publishedRevisionId, history: await get(`/api/revisions/${id}`) };
+      publishedRevisionId: doc.publishedRevisionId, verification: doc.verification, history: await get(`/api/revisions/${id}`) };
   }));
   const switchProfile = async value => {
     const before = await get('/api/workspace');
     await page.goto(origin + '/app/settings', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Edit workspace & policies', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Workspace settings', exact: true });
-    await dialog.getByLabel('Page status', { exact: true }).selectOption(value);
+    await dialog.getByRole('combobox', { name: 'Page status', exact: true }).selectOption(value);
     await dialog.getByRole('button', { name: 'Save settings', exact: true }).click();
     await expect(dialog).toBeHidden();
     await page.reload({ waitUntil: 'networkidle' });
@@ -54,7 +54,7 @@ export async function statusProfileJourney(state, width) {
   await expect(page.getByRole('button', { name: 'Create a custom status', exact: true })).toHaveCount(0);
   await expect(page.getByLabel('Custom status label')).toHaveCount(0);
   await expect(page.locator('input[type="color"]')).toHaveCount(0);
-  await page.getByLabel('Set page status', { exact: true }).selectOption('verified');
+  await page.getByRole('combobox', { name: 'Set page status', exact: true }).selectOption('verified');
   const verify = page.getByRole('dialog', { name: 'Verify this exact revision', exact: true });
   await verify.getByLabel('No expiry', { exact: true }).check();
   await verify.getByRole('button', { name: 'I reviewed this revision', exact: true }).click();
@@ -71,18 +71,27 @@ export async function statusProfileJourney(state, width) {
   await page.getByRole('textbox', { name: 'Page title', exact: true }).hover();
   await expect(titleRow.locator('.page-title-actions')).toHaveCSS('opacity', '1');
   await statusAction.click();
-  await expect(page.getByLabel('Set page status', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Set page status', exact: true })).toBeVisible();
   await closeDetails(page);
   await statusAction.focus();
   await expect(titleRow.locator('.page-title-actions')).toHaveCSS('opacity', '1');
   await page.keyboard.press('Enter');
-  await expect(page.getByLabel('Set page status', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Set page status', exact: true })).toBeVisible();
   await closeDetails(page);
   const crumb = page.getByRole('navigation', { name: 'Location', exact: true }).locator('li').last();
   await expect(crumb.locator('[aria-current="page"]')).toHaveText('Status profile handbook');
   await expect(crumb.locator('.page-status-chip')).toContainText('Verified · Alex Owner · no expiry');
   await expect(crumb.locator('.page-status-chip')).toBeInViewport();
   await expect(page.locator('.page-byline .page-status-chip')).toHaveCount(0);
+  for (const icon of await page.locator('.page-topbar .icon-action:visible').all()) {
+    assert.ok(await icon.getAttribute('data-tooltip'), 'Every visible icon action has a tooltip.');
+  }
+  const comments = page.locator('.page-topbar').getByRole('button', { name: 'Comments', exact: true });
+  await comments.hover();
+  await expect.poll(() => comments.evaluate(element => getComputedStyle(element, '::after').opacity)).toBe('1');
+  await page.mouse.move(0, 0);
+  await comments.focus();
+  assert.equal(await comments.evaluate(element => getComputedStyle(element, '::after').opacity), '1', 'Keyboard focus shows the tooltip immediately.');
   await accessible(page, 'human verification profile');
   await page.screenshot({ path: `.artifacts/ui-convergence/status-profile-verification-${width}.png`, fullPage: true });
 
@@ -137,7 +146,7 @@ export async function statusProfileJourney(state, width) {
     assert.deepEqual(await snapshots(), before, 'A refused attestation changes nothing.');
     await bob.page.goto(route(main.pageId) + '?detail=status', { waitUntil: 'networkidle' });
     await expect(bob.page.getByRole('button', { name: 'Create a custom status', exact: true })).toHaveCount(0);
-    assert.deepEqual((await bob.page.getByLabel('Set page status', { exact: true }).locator('option:not([disabled])').evaluateAll(nodes => nodes.map(node => node.value))).sort(), [...storedVocabulary.map(entry => entry.key), '__clear'].sort());
+    assert.deepEqual((await bob.page.getByRole('combobox', { name: 'Set page status', exact: true }).locator('option:not([disabled])').evaluateAll(nodes => nodes.map(node => node.value))).sort(), [...storedVocabulary.map(entry => entry.key), '__clear'].sort());
   });
 
   await switchProfile('verification-only');

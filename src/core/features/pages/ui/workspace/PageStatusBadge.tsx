@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type {DocumentView} from '../../../../client/content';
 import {useResource} from '../../../../client/useResource';
 import {displayDate} from '../../../../app/ui/displayDate';
@@ -6,6 +7,9 @@ interface Verification {state:'current'|'changed'|'lapsed'|null;ownerDisplayName
 export function PageStatusBadge({document}:{document:DocumentView}){
  const key=(document.properties as {statusKey?:string})?.statusKey;
  const statuses=useResource<{items:{key:string;label:string;color:string;requiresVerification:boolean}[]}>(key?'/api/status':null);
+ const previousKey=useRef(key);
+ // A custom entry can be created after this chip loaded the vocabulary.
+ useEffect(()=>{if(previousKey.current && key && previousKey.current!==key)void statuses.reload();previousKey.current=key;},[key,statuses.reload]);
  const status=statuses.data?.items.find(s=>s.key===key);
  const verificationOnly=document.policyProfile['page.status.v1']==='verification-only';
  const verification=document.verification as Verification|undefined;
