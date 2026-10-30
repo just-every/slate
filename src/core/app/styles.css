@@ -12,6 +12,7 @@
 @import "./styles/controls.css";
 @import "./styles/shell.css";
 @import "./styles/header.css";
+@import "./styles/hierarchy.css";
 @import "./styles/popover.css";
 @import "./styles/database.css";
 @import "./styles/work-items.css";

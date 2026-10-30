@@ -1,0 +1,185 @@
+/*
+ * Slate's hierarchy rules, shared by every main screen. Under the one page title (header.css): the section label, the meta
+ * step and the avatar beside a name; three separator weights (the page rule where controls end and content begins, the
+ * section label's own hairline, and the hairline between rows, never after the last); two surfaces (the sunk filter band and
+ * applied-filter chips); one control row whose Filter control opens the screen's filters in place; and list rows open on
+ * white, never cards.
+ */
+
+/* Section label: 13px caps with its count, and its own hairline running to the right edge on the label's line. */
+.slate-app .section-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 40px 0 4px;
+  color: var(--slate-ink-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.slate-app .section-label::after { content: ""; flex: 1; border-top: 1px solid var(--slate-line); }
+
+/* Meta: who, when and where, one quiet step under the body. */
+.slate-app .meta { color: var(--slate-ink-muted); font-size: 14px; line-height: 20px; }
+.slate-app .meta-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--slate-accent);
+  color: var(--slate-accent-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+/* Open rows on white: a hairline between rows, none before the first or after the last. */
+.slate-app .row-list { margin: 0; padding: 0; list-style: none; }
+.slate-app .row-list > li + li { border-top: 1px solid var(--slate-line); }
+
+/* The one control row of a screen, and the page rule under it where the controls end and the content begins. */
+.slate-app .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0; }
+.slate-app .control-row > .control-count { margin: 0 0 0 auto; }
+.slate-app .page-rule { padding-bottom: 12px; border-bottom: 1px solid var(--slate-line-strong); }
+
+/* The Filter control and the menu it opens in place. */
+.slate-app .filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: max(var(--slate-tap-target, 0px), 40px);
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--slate-line-strong);
+  border-radius: 8px;
+  background-color: var(--slate-main);
+  color: var(--slate-ink-strong);
+  font-size: 15px;
+  font-weight: 500;
+}
+.slate-app .filter-button:hover, .slate-app .filter-button[aria-expanded="true"] { background-color: var(--slate-wash); }
+.slate-app .filter-button svg { width: 17px; height: 17px; color: var(--slate-ink-muted); }
+.slate-app .filter-menu {
+  z-index: 50;
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(var(--radix-popover-content-available-height, 640px), 640px);
+  overflow: auto;
+  padding: 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--slate-main);
+  color: var(--slate-ink);
+  box-shadow: var(--slate-shadow-popover);
+  font-size: 15px;
+}
+.slate-app .filter-menu:focus-visible { outline: none; }
+.slate-app .filter-menu-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.slate-app .filter-menu-fields > label:not(:has(> input[type="checkbox"])) { display: grid; align-content: start; gap: 4px; min-width: 0; color: var(--slate-ink-muted); font-size: 13px; line-height: 16px; }
+.slate-app .filter-menu-fields > label > :is(select, input:not([type="checkbox"])) { width: 100%; min-width: 0; min-height: max(var(--slate-tap-target, 0px), 40px); color: var(--slate-ink); font-size: 15px; }
+.slate-app .filter-menu-fields > label:has(> input[type="checkbox"]) { display: flex; align-items: center; gap: 8px; min-height: max(var(--slate-tap-target, 0px), 40px); color: var(--slate-ink); font-size: 15px; }
+.slate-app .filter-menu-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--slate-line); }
+.slate-app .filter-menu-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Quiet text buttons: paging and secondary steps that sit under a list. */
+.slate-app .text-button { min-height: max(var(--slate-tap-target, 0px), 36px); padding: 0 8px; border: 0; background-color: transparent; color: var(--slate-ink); font-size: 15px; font-weight: 500; }
+.slate-app .text-button:not(:disabled):hover { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
+.slate-app .list-paging { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0 -8px; }
+
+/* Applied filters: a soft fill with the accent's text, full radius, each removable. */
+.slate-app .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.slate-app .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding: 0 4px 0 14px;
+  border-radius: 999px;
+  background: var(--slate-accent-soft);
+  color: var(--slate-accent);
+  font-size: 14px;
+  font-weight: 500;
+}
+.slate-app .chip > button {
+  display: inline-grid;
+  place-items: center;
+  width: max(var(--slate-tap-target, 0px), 28px);
+  min-width: max(var(--slate-tap-target, 0px), 28px);
+  height: max(var(--slate-tap-target, 0px), 28px);
+  min-height: max(var(--slate-tap-target, 0px), 28px);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background-color: transparent;
+  color: inherit;
+}
+.slate-app .chip > button:hover { background-color: color-mix(in srgb, var(--slate-accent) 12%, transparent); }
+.slate-app .chip > button svg { width: 15px; height: 15px; }
+
+/* The sunk filter band (the one surface a list may keep open at rest): borderless fields divided by hairlines, each
+   showing focus as a 2px ring on its own cell. */
+.slate-app .filter-band { display: flex; align-items: stretch; margin: 24px 0 0; padding: 12px 16px; border-radius: 10px; background: var(--slate-wash); }
+.slate-app .filter-band > .band-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  align-self: center;
+  gap: 8px;
+  min-height: max(var(--slate-tap-target, 0px), 40px);
+  margin-right: 12px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--slate-ink-strong);
+  font-size: 15px;
+  font-weight: 500;
+}
+.slate-app .filter-band > .band-toggle:hover { background-color: var(--slate-sidebar-hover); }
+.slate-app .band-toggle .band-tile { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 6px; background: var(--slate-sidebar-hover); }
+.slate-app .band-toggle svg { width: 17px; height: 17px; color: var(--slate-ink-muted); }
+.slate-app .band-fields { display: flex; flex: 1; min-width: 0; margin: 0; }
+.slate-app .band-fields > label {
+  position: relative;
+  display: grid;
+  flex: 1 1 0;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 12px;
+  border-radius: 8px;
+  color: var(--slate-ink-muted);
+  font-size: 13px;
+  line-height: 16px;
+}
+.slate-app .band-fields > label + label::before { content: ""; position: absolute; top: 6px; bottom: 6px; left: 0; width: 1px; background: var(--slate-line); }
+.slate-app .band-fields > label:focus-within { box-shadow: 0 0 0 2px var(--slate-accent); }
+.slate-app .band-fields > label > :is(select, input) {
+  width: 100%;
+  min-width: 0;
+  min-height: max(var(--slate-tap-target, 0px), 28px);
+  padding: 0 28px 0 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--slate-ink-strong);
+  font-size: 15px;
+  line-height: 22px;
+}
+.slate-app .band-fields > label > select:not([multiple], [size]:not([size="1"])) { padding-inline-end: 28px; background-position: right 10px center, right 4px center; }
+.slate-app .band-fields > label > input { padding-right: 0; }
+.slate-app .band-fields > label > :is(select, input):focus-visible { outline: none; }
+
+@media (max-width: 700px) {
+  .slate-app .filter-menu-fields { grid-template-columns: minmax(0, 1fr); }
+  .slate-app .filter-band { flex-direction: column; align-items: stretch; padding: 8px; }
+  .slate-app .filter-band > .band-toggle { align-self: flex-start; margin: 0; }
+  /* Beside the toggle, where the folded band is empty, so the tip never covers the first field. */
+  .slate-app .filter-band > .band-toggle[data-tooltip]::after { top: 50%; left: calc(100% + 8px); transform: translateY(-50%); }
+  .slate-app .band-fields { flex-direction: column; margin-top: 4px; }
+  .slate-app .band-fields > label { padding: 8px 10px; }
+  .slate-app .band-fields > label + label::before { top: 0; right: 10px; bottom: auto; left: 10px; width: auto; height: 1px; }
+}
