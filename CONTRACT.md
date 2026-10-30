@@ -3974,13 +3974,13 @@ Contributed tree node kinds beyond pages, databases, cards and posts, and cross-
 
 ## Status
 
-Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
+Judged from the code and tests at commit `b945e29d7af7dd9d8b1367fcbabc6eb136e5cc6e` (30 October 2026); SHARE-004 native general-access proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4045,7 +4045,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `SHARE-001` | Grants | published | partial | `tests/qualification/backend/emitted.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/backend/emitted.mjs`. |
 | `SHARE-002` | What the levels mean | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "`full` may read, edit, comment, share and change access; `edit` may read, edit and comment; `comment` may read and comment; `view` may read only."<br>No validated CI-run proof for this acceptance point: "Every server operation checks the level for the acting member (`BASE-ACCESS-004`), and no interface offers an action the level does not carry." |
 | `SHARE-003` | Inheritance | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A page inherits its parent's grants, and a child added later inherits the parent's grants at that moment."<br>No validated CI-run proof for this acceptance point: "A page may add grants or be restricted, and a restriction is shown on the page and on every descendant it affects."<br>No validated CI-run proof for this acceptance point: "Removing a restriction restores inheritance rather than copying the parent's grants." |
-| `SHARE-004` | General access | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a populated general-access change journey that reads the changed grant and activity and tries the forbidden widening; the cited test parses archive records only. |
+| `SHARE-004` | General access | published | done | `tests/qualification/ui-convergence/journeys.test.mjs` — "real core-wiki and touch-member journeys at 1440px" and "real core-wiki and touch-member journeys at 390px", through `tests/qualification/ui-convergence/general-access-journey.mjs` — "generalAccessJourney": acceptance 1 checks named-only reads and both-profile personal refusal; acceptance 2 reconciles native changes with one activity entry under replay; acceptance 3 checks singleton grants after each commit and reload, removal and refused widening. | |
 | `SHARE-005` | Access profile | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a two-profile grant journey that changes policy and reads retained grants and hidden levels; the cited test parses an incumbent archive only. |
 | `SHARE-006` | Sharing with a person who is not a member | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Granting access to an address that belongs to no member creates a guest invitation (`WORK-010`, `MAIL-001`) and the grant takes effect when it is accepted."<br>No validated CI-run proof for this acceptance point: "Until then the page shows the pending grant, and revoking it cancels the invitation." |
 | `SHARE-007` | Access changes take effect at once | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Removing or narrowing a grant applies to the next request from every existing session, closes an open editor with an explanation rather than silently discarding the writer's unsaved text, and removes the page from that member's search results, tree, inbox items and AI answers within 5 seconds." |
