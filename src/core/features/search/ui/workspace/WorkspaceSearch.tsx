@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import {searchLocation,submittedSearch} from "./searchLocation";
 import { useResource } from "../../../../client/useResource";
 import { RequestState } from "../../../../app/ui/RequestState";
+import { useSettled } from "../../../../app/ui/useSettled";
 import {
   errorMessage,
 } from "../../../../client/transport";
@@ -69,7 +70,7 @@ export function WorkspaceSearch() {
   const clearAll=()=>change({kind:"",archived:false,value:emptyRefinements});
   const chips=searchFilterChips({kind,archived,value:refinements},searchOptions,change);
   const filterDescription = [kind,archived?"Including archive":"",...Object.entries(refinements).filter(([,value])=>value!==""&&value!==false).map(([key,value])=>`${key}: ${value}`)].filter(Boolean).join(" · ") || "None";
-  const results=resource.data;
+  const results=useSettled(resource.data);
   return (
     <>
       <TopBar trail={[{ label: "Search" }]} />
@@ -106,7 +107,7 @@ export function WorkspaceSearch() {
           {results?<p className="control-count meta" role="status">{results.total} result{results.total===1?"":"s"}</p>:null}
         </div>
         <RequestState
-          loading={resource.loading}
+          loading={resource.loading && !results}
           error={resource.error}
           retry={resource.reload}
         >
