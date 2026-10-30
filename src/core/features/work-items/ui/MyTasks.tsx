@@ -10,6 +10,7 @@ import { recordDate } from '../../../client/recordDates';
 import { useWorkspace } from '../../../app/ui/WorkspaceContext';
 import { mutate, operationKey, errorMessage } from '../../../client/transport';
 import { TaskRows } from './TaskRows';
+import { useSettled } from '../../../app/ui/useSettled';
 import { PersonalReminders } from './PersonalReminders';
 import type { TaskItem, TaskList } from './taskTypes';
 
@@ -50,7 +51,7 @@ export function MyTasks() {
     ...(to?[{key:'to',label:`Due through ${recordDate(to)}`,remove:'Remove through date',onRemove:()=>change(setTo,'')}]:[]),
     ...(sort!=='due'?[{key:'sort',label:`Sort: ${sorts[sort]}`,remove:'Remove sort',onRemove:()=>change(setSort,'due')}]:[]),
   ];
-  const items=resource.data?.items;
+  const list=useSettled(resource.data),items=list?.items;
   return <><TopBar trail={[{label:'My tasks'}]}/><section className="main tasks-workspace"><PageTitle>My tasks</PageTitle><p className="page-lede">Follow through on the work in your pages.</p>
     <div className="tabs" role="tablist" aria-label="Task ownership">{[['assigned','Assigned to me'],['created','Created by me']].map(([value,label])=><button key={value} type="button" role="tab" aria-selected={tab===value} onClick={()=>change(setTab,value)}>{label}</button>)}</div>
     <div className="filter-band" data-open={bandOpen} data-choice={bandChoice===null?'default':'set'}>
@@ -63,10 +64,10 @@ export function MyTasks() {
         <label>Sort<select value={sort} onChange={event=>change(setSort,event.target.value)}>{Object.entries(sorts).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       </div>
     </div>
-    <SectionLabel count={items?`${items.length}${resource.data?.nextCursor?'+':''}`:undefined}>{states[state]} tasks</SectionLabel>
-    {error?<p role="alert">{errorMessage(error)}</p>:null}<RequestState loading={resource.loading} error={resource.error} retry={resource.reload}>
+    <SectionLabel count={items?`${items.length}${list?.nextCursor?'+':''}`:undefined}>{states[state]} tasks</SectionLabel>
+    {error?<p role="alert">{errorMessage(error)}</p>:null}<RequestState loading={resource.loading&&!list} error={resource.error} retry={resource.reload}>
       {items?.length?<TaskRows items={items} pending={pending} onComplete={task=>void complete(task)}/>:<div className="list-empty"><p>No tasks in this view</p><p className="meta">Assign a to-do on a page, or change your filters.</p></div>}
-      {cursor||resource.data?.nextCursor?<div className="list-paging">{cursor?<button type="button" className="text-button" onClick={()=>setCursor(undefined)}>First page</button>:null}{resource.data?.nextCursor?<button type="button" className="text-button" onClick={()=>setCursor(resource.data!.nextCursor)}>More tasks →</button>:null}</div>:null}
+      {cursor||list?.nextCursor?<div className="list-paging">{cursor?<button type="button" className="text-button" onClick={()=>setCursor(undefined)}>First page</button>:null}{list?.nextCursor?<button type="button" className="text-button" onClick={()=>setCursor(list.nextCursor)}>More tasks →</button>:null}</div>:null}
     </RequestState><PersonalReminders/>
   </section></>;
 }
