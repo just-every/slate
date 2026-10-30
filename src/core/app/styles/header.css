@@ -5,7 +5,8 @@
  */
 .slate-app {
   --topbar-height: 56px;
-  --col-gutter: clamp(16px, 4vw, 40px);
+  --col-gutter: clamp(16px, 4vw, 56px);
+  --col-content: 1040px;
   --col-reading: 880px;
   --col-wide: 1120px;
 }
@@ -72,54 +73,59 @@
 .slate-app [data-tooltip]:hover::after { opacity: 1; transition-delay: 300ms; }
 .slate-app [data-tooltip]:focus-visible::after { opacity: 1; transition: none; }
 .slate-app [data-tooltip][data-tooltip-dismissed]::after { opacity: 0; transition-delay: 0ms; transition-duration: 0ms; }
+/* A control whose menu is open lets the menu speak: its tip stays hidden until the menu closes. */
+.slate-app [data-tooltip][aria-haspopup][aria-expanded="true"]::after { opacity: 0; transition: none; }
 .slate-app [data-tooltip-align="end"]::after { right: 0; left: auto; transform: none; }
 .slate-app [data-tooltip-align="right"]::after { top: 50%; left: calc(100% + 8px); transform: translateY(-50%); }
 
 /* Title and content column */
 .slate-app .main {
   width: 100%;
-  max-width: calc(var(--col-reading) + 2 * var(--col-gutter));
+  max-width: calc(var(--col-content) + 2 * var(--col-gutter));
   margin-inline: auto;
-  padding: 40px var(--col-gutter) 96px;
+  padding: 32px var(--col-gutter) 96px;
 }
 .slate-app .main[data-layout="wide"] { max-width: calc(var(--col-wide) + 2 * var(--col-gutter)); }
+/* A page keeps its reading measure on the shared left edge. */
+.slate-app .main.page-document:not(.page-full-width) > * { max-width: var(--col-reading); }
+/* The one page-title step: Lyon Text 36px on every destination and at every width. */
 .slate-app .page-title {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   color: var(--slate-ink-strong);
-  font: 400 2.5rem/1.15 var(--slate-serif);
+  font: 400 36px/1.15 var(--slate-serif);
   letter-spacing: -0.01em;
   text-wrap: balance;
 }
 .slate-app textarea.page-title-input { display: block; width: 100%; min-height: max(var(--slate-tap-target), 1.15em); padding: 0; border: 0; background: transparent; resize: none; overflow: hidden; field-sizing: content; }
-.slate-app .page-title:has(+ .page-lede) { margin-bottom: 8px; }
+.slate-app .page-title:has(+ .page-lede) { margin-bottom: 6px; }
 .slate-app .page-title + .tabs { margin-top: 0; }
-.slate-app .page-lede { margin: 0 0 24px; color: var(--slate-ink-muted); font-size: 15px; line-height: 1.6; }
+.slate-app .page-lede { margin: 0 0 24px; color: var(--slate-ink-muted); font-size: 16px; line-height: 1.5; }
 
-/* Tabs: the one tab style (settings sections, saved views, space and archive tabs). */
-.slate-app .tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-block: 16px; }
+/* Tabs: the one tab style (view switches, saved views, space and archive tabs). Selection is the soft fill, never a line. */
+.slate-app .tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-block: 16px; }
 .slate-app .tabs > :is(button, a) {
   display: inline-flex;
   align-items: center;
-  min-height: max(var(--slate-tap-target, 0px), 36px);
-  padding: 0 14px;
+  min-height: max(var(--slate-tap-target, 0px), 40px);
+  padding: 0 16px;
   border: 0;
-  border-radius: 6px;
-  background-color: var(--slate-canvas);
-  color: var(--slate-ink-muted);
-  font-size: 14px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--slate-ink);
+  font-size: 16px;
   font-weight: 500;
   white-space: nowrap;
 }
-.slate-app .tabs > :is(button, a):not(:disabled):hover { background-color: var(--slate-sidebar-hover); color: var(--slate-ink-strong); }
-.slate-app .tabs > :is([aria-pressed="true"], [aria-current="page"], [aria-expanded="true"], [aria-selected="true"]) { background-color: var(--slate-accent-soft); color: var(--slate-accent); font-weight: 600; }
+.slate-app .tabs > :is(button, a):not(:disabled):hover { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
+.slate-app .tabs > :is([aria-pressed="true"], [aria-current="page"], [aria-expanded="true"], [aria-selected="true"]),
+.slate-app .tabs > :is([aria-pressed="true"], [aria-current="page"], [aria-expanded="true"], [aria-selected="true"]):not(:disabled):hover { background-color: var(--slate-accent-soft); color: var(--slate-ink-strong); }
 .slate-app .tabs-rule { padding-bottom: 12px; border-bottom: 1px solid var(--slate-line); }
 
 @media (max-width: 700px) {
   .slate-app .tabs.settings-tabs { flex-wrap: nowrap; overflow-x: auto; margin-bottom: 8px; scrollbar-width: auto; }
   .slate-app .topbar { flex-wrap: wrap; row-gap: 4px; min-height: 61px; padding: 8px 16px; }
   .slate-app .crumbs { flex: 1 1 auto; }
-  .slate-app .main { padding-top: 28px; }
-  .slate-app .page-title { font-size: 2rem; }
+  .slate-app .main { padding-top: 24px; }
 }
 
 @media (max-width: 700px) {

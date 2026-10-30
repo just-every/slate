@@ -4,7 +4,8 @@
 .slate-app button { font: inherit; cursor: pointer; }
 .slate-app a { color: inherit; text-decoration: none; }
 .slate-app .center { min-width: 0; }
-.slate-app .eyebrow { margin: 0 0 4px; color: var(--slate-ink-muted); font-size: var(--text-small); letter-spacing: 1.2px; text-transform: uppercase; }
+/* The type-label step: what an item is (PAGE, RECORD, COMMENT), above its title. */
+.slate-app .eyebrow { margin: 0 0 4px; color: var(--slate-ink-muted); font-size: 13px; font-weight: 500; line-height: 16px; letter-spacing: 0.08em; text-transform: uppercase; }
 .slate-app .intro { font-size: 18px; line-height: 1.65; margin: 0 0 24px; }
 .slate-app .finding { border-bottom: 1px solid var(--slate-line); padding-block: 24px; }
 .slate-app .finding summary { display: flex; align-items: center; gap: 14px; }
