@@ -29,16 +29,17 @@ try {
    await page.goto(r.origin+'/app/search?containerId='+container.id,{waitUntil:'commit'});
    const query=page.getByRole('searchbox',{name:'Search your workspace',exact:true});
    await query.waitFor();
-   await page.locator('.search-options > summary').click();
-   const earlyActions=Promise.all([
-    page.getByRole('combobox',{name:'Look in',exact:true}).selectOption('page'),query.fill(title)
-   ]);
+   // The kind sits in the Filter menu, which opens once its handlers exist; the query is typed early.
+   const earlyActions=query.fill(title);
    // Exercise a slow real script delivery. No response is replaced and no product deadline changes.
    await new Promise(resolve=>setTimeout(resolve,250));release();
-   await Promise.all([ready,earlyActions]);
+   await earlyActions;
+   await page.getByRole('button',{name:'Filter results',exact:true}).click();
+   await page.getByRole('combobox',{name:'Look in',exact:true}).selectOption('page');
+   await ready;
    await page.getByRole('button',{name:'Search',exact:true}).click();
    await expect(query).toHaveValue(title);
-   await expect(page.getByRole('combobox',{name:'Look in',exact:true})).toHaveValue('page');
+   await expect(page.locator('.search-filter-summary')).toContainText('Pages');
    await page.getByText('No matches for “'+title+'”.',{exact:true}).waitFor();
    assert.match(await page.getByText(/^Filters:/).innerText(),/page.*containerId:/);
    for(const width of [1440,390]){
@@ -70,11 +71,10 @@ try {
    const params=new URLSearchParams({q:query,kind:'page',containerId:container.id,contributorId:'qualification-owner',includeArchived:'true',updatedFrom:'2020-01-01',updatedTo:'2099-01-01',includeTrashed:'true',isAdmin:'true',results:'forged private text'});
    await page.goto(r.origin+'/app/search?'+params);
    const result=page.locator('.search-results a').filter({hasText:query});await result.waitFor();
-   await page.locator('.search-options > summary').click();
+   await page.getByRole('button',{name:'Filter results',exact:true}).click();
    await expect(page.getByRole('searchbox',{name:'Search your workspace',exact:true})).toHaveValue(query);
    await expect(page.getByRole('combobox',{name:'Look in',exact:true})).toHaveValue('page');
    await expect(page.getByRole('checkbox',{name:'Include archive',exact:true})).toBeChecked();
-   await page.getByText('Refine your search',{exact:true}).click();
    await expect(page.getByRole('combobox',{name:'Space',exact:true})).toHaveValue(container.id);
    await expect(page.getByRole('combobox',{name:'Contributor',exact:true})).toHaveValue('qualification-owner');
    await expect(page.getByLabel('Updated from',{exact:true})).toHaveValue('2020-01-01');
@@ -85,7 +85,7 @@ try {
    await result.click();await page.waitForURL('**/app/pages/*?highlight=*');const destination=page.url();
    await page.goBack();await result.waitFor();assert.equal(page.url(),retained);
    await expect(page.getByRole('searchbox',{name:'Search your workspace',exact:true})).toHaveValue(query);
-   await page.locator('.search-options > summary').click();
+   await page.getByRole('button',{name:'Filter results',exact:true}).click();
    await expect(page.getByRole('combobox',{name:'Look in',exact:true})).toHaveValue('page');
    await page.goForward();await page.waitForURL(destination);
   } finally {await page.close();}

@@ -5,8 +5,5 @@
 .similar-pages { margin:.6rem 0; font-size:.85rem; }
 .similar-pages summary { cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 .similar-pages ul { list-style:none; padding:0 0 0 1rem; }
-.search-results .similar-pages li { padding:.65rem 0; border:0; }
-.search-results .similar-pages a { padding:0; font-size:.9rem; }
 .saved-search-query { padding:.8rem; border:1px solid var(--slate-line); border-radius:.3rem; }
 
-.slate-app .search-workspace .search-next-results { margin-inline-end: 8px; }

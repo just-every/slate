@@ -97,7 +97,7 @@ for (const profile of ['core-wiki', 'flagship']) {
       await page.getByRole('heading', { name: 'Search your workspace', exact: true }).waitFor();
       assert.equal(await page.evaluate(() => performance.timeOrigin), returningOrigin);
       assert.equal(await page.getByRole('button', { name: 'Open navigation', exact: true }).isVisible(), true);
-      await page.locator('.search-options > summary').click();
+      await page.getByRole('button', { name: 'Filter results', exact: true }).click();
       assert.equal(await page.getByRole('combobox', { name: 'Look in', exact: true }).isVisible(), true);
       await page.getByRole('combobox', { name: 'Look in', exact: true }).selectOption('page');
       await capture('search-mobile');
@@ -111,8 +111,7 @@ for (const profile of ['core-wiki', 'flagship']) {
       await page.waitForURL(url => url.pathname === '/app' && !url.hash);
       assert.equal(await page.evaluate(() => performance.timeOrigin), returningOrigin);
       await page.goto(runtime.baseUrl + '/app/search?containerId=' + encodeURIComponent(containers[0].id));
-      await page.getByText('Search options & saved searches', { exact: true }).click();
-      await page.getByText('Refine your search', { exact: true }).click();
+      await page.getByRole('button', { name: 'Filter results', exact: true }).click();
       await page.getByRole('combobox', { name: 'Space', exact: true }).locator(`option[value="${containers[0].id}"]`).waitFor({ state: 'attached' });
       assert.equal(await page.getByRole('combobox', { name: 'Space', exact: true }).inputValue(), containers[0].id);
       await page.goto(runtime.baseUrl + '/app/settings', { waitUntil: 'networkidle' });

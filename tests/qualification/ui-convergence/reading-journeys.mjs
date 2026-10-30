@@ -21,19 +21,21 @@ export async function searchJourney(state, pageId) {
   await expect(result.locator('.eyebrow')).toHaveText('Page');
   const markColor = await result.locator('mark').first().evaluate(element => getComputedStyle(element).backgroundColor);
   assert.notEqual(markColor, 'rgb(255, 255, 0)', 'Search matches use the application highlight treatment.');
-  await page.locator('.search-options summary').first().click();
+  await page.getByRole('button', { name: 'Filter results', exact: true }).click();
   const archive = page.getByLabel('Include archive', { exact: true });
   await expect(archive).toBeVisible();
   const checkboxLayout = await archive.evaluate(element => { const label = element.closest('label'); return { display: getComputedStyle(label).display, gap: parseFloat(getComputedStyle(label).gap), height: label.getBoundingClientRect().height }; });
   assert.ok(['flex', 'inline-flex'].includes(checkboxLayout.display) && checkboxLayout.gap >= 4, 'Archive checkbox is separated and styled.');
   const saveSearch = await page.getByRole('button', { name: 'Save this search', exact: true }).boundingBox();
   assert.ok(saveSearch && saveSearch.height >= 32, 'Save search has a button affordance.');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.filter-menu')).toHaveCount(0);
   const searchLayout = await page.evaluate(() => ({
     input: document.querySelector('.search-form').getBoundingClientRect().bottom,
+    controls: document.querySelector('.search-controls').getBoundingClientRect(),
     result: document.querySelector('.search-results').getBoundingClientRect().top,
-    options: document.querySelector('.search-options').getBoundingClientRect().top,
   }));
-  assert.ok(searchLayout.result >= searchLayout.input && searchLayout.result < searchLayout.options, 'Results follow the search input before options disclosures.');
+  assert.ok(searchLayout.controls.top >= searchLayout.input && searchLayout.result >= searchLayout.controls.bottom, 'Results follow the search input and its one control row; the options stay folded behind Filter.');
   await accessible(page, 'search results');
   await result.click();
   await expect(page).toHaveURL(new RegExp(`/app/pages/${pageId}\\?`));

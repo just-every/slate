@@ -114,37 +114,3 @@
 .slate-app .reaction-controls select {
   min-width: 46px;
 }
-.slate-app .search-form {
-  display: flex;
-  gap: 12px;
-  margin-block: 24px;
-}
-.slate-app .search-form input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--slate-line);
-  border-radius: 4px;
-}
-.slate-app .search-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.slate-app .search-refinements {
-  margin-bottom: 12px;
-}
-.slate-app .search-results {
-  list-style: none;
-  padding: 0;
-  margin-block: 24px;
-}
-.slate-app .search-results li {
-  padding-block: 16px;
-  border-block-end: 1px solid var(--slate-line);
-}
-.slate-app .search-results h2 {
-  font-size: 22px;
-  font-weight: 600;
-  margin-block: 4px 8px;
-}

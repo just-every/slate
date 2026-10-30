@@ -1,11 +1,13 @@
 import {SearchResults,type SearchResultView} from "./SearchResults";
 import {TopBar} from "../../../../app/ui/header/TopBar";
 import {PageTitle} from "../../../../app/ui/header/PageTitle";
+import {FilterChips,FilterMenu} from "../../../../app/ui/FilterMenu";
 import {RetainedSearchAnswer} from "./RetainedSearchAnswer";
 import {useCreatePage} from "../../../../app/ui/useCreatePage";
 import {useInferredSpace} from "../../../../app/ui/useInferredSpace";
 import {DEFAULT_PAGE_TITLE,type SpaceChoice} from "../../../../app/ui/pageDestination";
-import {SearchRefinements,SearchFilterSummary,useSearchOptions,emptyRefinements} from "./SearchRefinements";
+import {SearchFilterFields,searchFilterChips,useSearchOptions,emptyRefinements,type Refinements,type SearchScope} from "./SearchRefinements";
+import {SearchField} from "./SearchField";
 import {SavedSearches} from "./SavedSearches";
 import {SaveSearchDialog} from "./SaveSearchDialog";
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +23,10 @@ interface Results {
   nextCursor?: string;
   facets: { kind: Record<string, number> };
 }
+/**
+ * Search (search-9): the title, the field row, one control row (Filter with every option and the saved searches in its
+ * menu, applied filters as chips, the count) closed by the page rule, then the results.
+ */
 export function WorkspaceSearch() {
   const [initial]=useState(()=>searchLocation(""));
   const [ready,setReady]=useState(false);
@@ -29,6 +35,7 @@ export function WorkspaceSearch() {
   const searchOptions=useSearchOptions();
   const [savedVersion,setSavedVersion]=useState(0);
   const [saving,setSaving]=useState(false);
+  const [filtersOpen,setFiltersOpen]=useState(false);
   const extra=new URLSearchParams(Object.entries(refinements).filter(([,value])=>value!==""&&value!==false).map(([key,value])=>[key,String(value)])).toString();
   const creation=useCreatePage();
   const spaces=useResource<{items:SpaceChoice[]}>("/api/containers");
@@ -53,7 +60,16 @@ export function WorkspaceSearch() {
       ? null
       : `/api/search?q=${encodeURIComponent(submitted)}&kind=${encodeURIComponent(kind)}&includeArchived=${archived}&${extra}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
   );
+  const change=(next:Partial<SearchScope>&{value?:Refinements})=>{
+    if(next.kind!==undefined)setKind(next.kind);
+    if(next.archived!==undefined)setArchived(next.archived);
+    if(next.value)setRefinements(next.value);
+    setCursor(undefined);
+  };
+  const clearAll=()=>change({kind:"",archived:false,value:emptyRefinements});
+  const chips=searchFilterChips({kind,archived,value:refinements},searchOptions,change);
   const filterDescription = [kind,archived?"Including archive":"",...Object.entries(refinements).filter(([,value])=>value!==""&&value!==false).map(([key,value])=>`${key}: ${value}`)].filter(Boolean).join(" · ") || "None";
+  const results=resource.data;
   return (
     <>
       <TopBar trail={[{ label: "Search" }]} />
@@ -71,101 +87,51 @@ export function WorkspaceSearch() {
           <label className="sr-only" htmlFor="workspace-query">
             Search your workspace
           </label>
-          <div className="search-input-wrap"><input
-            ref={queryInput}
-            disabled={!ready}
-            id="workspace-query"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search pages, records and conversations…"
-          />
-          {query ? <button type="button" className="search-clear" aria-label="Clear search" data-tooltip="Clear search" data-tooltip-align="end" onClick={() => {setQuery("");queryInput.current?.focus();}}>×</button> : null}</div>
+          <SearchField inputRef={queryInput} value={query} disabled={!ready} onChange={setQuery}/>
           <button className="primary-button" type="submit" disabled={!ready}>
             Search
           </button>
         </form>
-        <details className="search-language-help"><summary>Search tips</summary><p>Use a quoted phrase or combine terms with AND, OR and a minus sign to exclude a term.</p><p><code>label:launch AND verified:current</code></p><p>Fields: title, label, in (space), by (contributor), owner, status, verified, before, after and type. Use a colon after the field, such as <code>title:"release checklist"</code>.</p></details>
+        <div className={submitted===undefined?"control-row search-controls":"control-row search-controls page-rule"}>
+          <FilterMenu open={filtersOpen} onOpenChange={setFiltersOpen} label="Filter results" disabled={!ready} foot={<>
+            <div className="filter-menu-actions">
+              {submitted!==undefined?<button type="button" className="secondary-button" onClick={()=>{setFiltersOpen(false);setSaving(true);}}>Save this search</button>:null}
+              {chips.length?<button type="button" className="text-button" onClick={clearAll}>Clear filters</button>:null}
+            </div>
+            <SavedSearches version={savedVersion} onChoose={value=>{setQuery(value.query??"");setSubmitted(value.query??"");setKind(value.kind??"");setArchived(value.includeArchived??false);setRefinements({...emptyRefinements,...value});setCursor(undefined);setFiltersOpen(false);}}/>
+          </>}>
+            <SearchFilterFields scope={{kind,archived,value:refinements}} options={searchOptions} disabled={!ready} onChange={change}/>
+          </FilterMenu>
+          <FilterChips className="search-filter-summary" items={chips}/>
+          {results?<p className="control-count meta" role="status">{results.total} result{results.total===1?"":"s"}</p>:null}
+        </div>
         <RequestState
           loading={resource.loading}
           error={resource.error}
           retry={resource.reload}
         >
-          {resource.data ? (
+          {results ? (
             <>
-              {resource.data.total>0 && submitted ? <RetainedSearchAnswer query={submitted}/>:null}
-              <p className="muted">
-                {resource.data.total} result
-                {resource.data.total === 1 ? "" : "s"} within your access.
-              </p>
-              {resource.data.items.length>0?<SearchFilterSummary kind={kind} archived={archived} value={refinements} options={searchOptions}/>:null}
-              {resource.data.items.length === 0 ? (
-                <section className="search-empty"><p>No matches for “{submitted}”.</p><p>Filters: {filterDescription}</p>{kind || archived || Object.values(refinements).some(value => value !== "" && value !== false) ? <button className="secondary-button" onClick={()=>{setKind("");setArchived(false);setRefinements(emptyRefinements);setCursor(undefined);}}>Clear all filters</button> : null}<button className="primary-button" aria-busy={creation.pending||undefined} onClick={()=>{const title=submitted||DEFAULT_PAGE_TITLE;void creation.create(async()=>({containerId:(await destination.resolve())?.id??null,title}));}}>Create a page titled “{submitted}”</button></section>
+              {results.total>0 && submitted ? <RetainedSearchAnswer query={submitted}/>:null}
+              {results.items.length === 0 ? (
+                <section className="search-empty"><p>No matches for “{submitted}”.</p><p>Filters: {filterDescription}</p>{chips.length ? <button className="secondary-button" onClick={clearAll}>Clear all filters</button> : null}<button className="primary-button" aria-busy={creation.pending||undefined} onClick={()=>{const title=submitted||DEFAULT_PAGE_TITLE;void creation.create(async()=>({containerId:(await destination.resolve())?.id??null,title}));}}>Create a page titled “{submitted}”</button></section>
               ) : (
-                <SearchResults items={resource.data.items}/>
+                <SearchResults items={results.items} spaceName={id=>searchOptions.spaces.data?.items.find(item=>item.id===id)?.name} statusLabel={key=>searchOptions.statuses.data?.items.find(item=>item.key===key)?.label}/>
               )}
-              {resource.data.nextCursor ? (
-                <button
-                  className="search-next-results"
-                  type="button"
-                  onClick={() => setCursor(resource.data!.nextCursor)}
-                >
-                  Next results →
-                </button>
+              {results.nextCursor ? (
+                <div className="list-paging">
+                  <button
+                    className="text-button search-next-results"
+                    type="button"
+                    onClick={() => setCursor(results.nextCursor)}
+                  >
+                    Next results →
+                  </button>
+                </div>
               ) : null}
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setSaving(true)}
-              >
-                Save this search
-              </button>
             </>
-          ) : (
-            <p className="muted">
-              Search only includes content you can currently read.
-            </p>
-          )}
+          ) : null}
         </RequestState>
-        <details className="search-options"><summary>Search options & saved searches</summary>
-        <div className="search-filters">
-          <label><span>Look in</span>
-            <select
-              disabled={!ready}
-              value={kind}
-              onChange={(event) => {
-                setKind(event.target.value);
-                setCursor(undefined);
-              }}
-            >
-              <option value="">Everything you can read</option>
-              {[
-                "page",
-                "record",
-                "container",
-                "template",
-                "comment-thread",
-              ].map((value) => (
-                <option key={value} value={value}>{({page:"Pages",record:"Records",container:"Spaces",template:"Templates","comment-thread":"Comments"} as Record<string,string>)[value]}</option>
-              ))}
-            </select>
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              disabled={!ready}
-              checked={archived}
-              onChange={(event) => {
-                setArchived(event.target.checked);
-                setCursor(undefined);
-              }}
-            />
-            Include archive
-          </label>
-        </div>
-        <SearchRefinements disabled={!ready} value={refinements} options={searchOptions} activeCount={Number(Boolean(kind))+Number(archived)} onChange={value=>{setRefinements(value);setCursor(undefined);}} />
-        <SavedSearches version={savedVersion} onChoose={value=>{setQuery(value.query??"");setSubmitted(value.query??"");setKind(value.kind??"");setArchived(value.includeArchived??false);setRefinements({...emptyRefinements,...value});setCursor(undefined);}}/>
-        </details>
         {saving?<SaveSearchDialog query={{...Object.fromEntries(Object.entries(refinements).filter(([,value])=>value!=="")),query:submitted??"",...(kind?{kind}:{}),includeArchived:archived}} onClose={()=>setSaving(false)} onSaved={()=>setSavedVersion(value=>value+1)}/>:null}
         {creation.prompt}
         {creation.error ? <p role="alert">{errorMessage(creation.error)}</p> : null}
