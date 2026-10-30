@@ -5,6 +5,7 @@ import { RequestState } from "../../../app/ui/RequestState";
 import { TopBar } from "../../../app/ui/header/TopBar";
 import { PageTitle } from "../../../app/ui/header/PageTitle";
 import { useWorkspace } from "../../../app/ui/WorkspaceContext";
+import { displayDate } from "../../../app/ui/displayDate";
 interface Notice {
   id: string;
   title: string | null;
@@ -65,7 +66,7 @@ export function WorkspaceInbox() {
       <TopBar trail={[{ label: "Inbox" }]} />
       <section className="main">
         <PageTitle>For your attention.</PageTitle><p className="page-lede">{resource.data?.unreadCount??0} unread notifications</p>
-        <div className="editor-actions">
+        <div className="control-row page-rule inbox-controls">
           <select
             aria-label="Notification audience"
             value={audience}
@@ -92,7 +93,7 @@ export function WorkspaceInbox() {
         >
           {[...periods].map(([period, items]) => (
             <section key={period} aria-label={`Notifications for ${period}`}>
-              <h2 className="inbox-period"><time dateTime={period}>{new Date(`${period}T12:00:00Z`).toLocaleDateString(undefined, { dateStyle: "long", timeZone: "UTC" })}</time></h2>
+              <h2 className="inbox-period section-label"><time dateTime={period}>{new Date(`${period}T12:00:00Z`).toLocaleDateString(undefined, { dateStyle: "long", timeZone: "UTC" })}</time></h2>
               <ul className="outcome-list">
                 {items.map((item) => (
                   <li key={item.id}>
@@ -104,7 +105,7 @@ export function WorkspaceInbox() {
                       <h3>{item.title ?? (item.detail?.verificationRules ? rulesSummary(item.detail.verificationRules) : "Workspace update")}</h3>
                       {item.detail?.verificationRules ? <p>{item.detail.verificationRules.pages.map(page => `${page.title} (${page.change})`).join(", ")}</p> : null}
                       {localDevelopment && item.detail?.outcome ? <p>{item.detail.outcome}</p> : null}
-                      <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time>
+                      <time dateTime={item.createdAt}>{displayDate(item.createdAt, true)}</time>
                     </a>
                   </li>
                 ))}
@@ -115,12 +116,13 @@ export function WorkspaceInbox() {
             <p>You’re all caught up.</p>
           ) : null}
           {resource.data?.nextCursor ? (
-            <button
+            <div className="list-paging"><button
               type="button"
+              className="text-button"
               onClick={() => setCursor(resource.data!.nextCursor)}
             >
               Older notifications →
-            </button>
+            </button></div>
           ) : null}
         </RequestState>
         {error ? <p role="alert">{errorMessage(error)}</p> : null}

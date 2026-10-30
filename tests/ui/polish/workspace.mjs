@@ -41,7 +41,7 @@ export async function spacesJourney({ page }) {
   await control(favourite, 'Space Favourite'); await control(exporting, 'Export space'); await separated([favourite, exporting], 'Space actions');
   await capture(page, 'space', { fullPage: true });
   // Every tab changes the selected state and exposes its real application pane.
-  const panes = [spaces.getByRole('region', { name: 'Space home', exact: true }), spaces.getByLabel('Filter page titles', { exact: true }), spaces.getByRole('region', { name: 'Blog', exact: true }), spaces.getByRole('heading', { name: 'Space settings', exact: true }), spaces.getByRole('combobox', { name: 'Show', exact: true }), spaces.getByText('Archived pages retain their history. Permanently deleting trash is irreversible.', { exact: true }), spaces.getByRole('heading', { name: 'Bulk tools', exact: true })];
+  const panes = [spaces.getByRole('region', { name: 'Space home', exact: true }), spaces.getByLabel('Filter page titles', { exact: true }), spaces.getByRole('region', { name: 'Blog', exact: true }), spaces.getByRole('heading', { name: 'Space settings', exact: true }), spaces.getByRole('button', { name: 'Filter templates', exact: true }), spaces.getByRole('group', { name: 'Archive and trash', exact: true }), spaces.getByRole('heading', { name: 'Bulk tools', exact: true })];
   for (let i = 0; i < names.length; i++) {
     if (names[i] === 'Templates') {
       const collectionRequest = page.waitForRequest(request => {
@@ -52,6 +52,7 @@ export async function spacesJourney({ page }) {
       const response = await (await collectionRequest).response();
       assert.ok(response?.ok(), 'Templates receive collection options from their real resource response');
       const collections = await response.json();
+      await spaces.getByRole('button', { name: 'Filter templates', exact: true }).click();
       const collection = spaces.getByRole('combobox', { name: 'Collection', exact: true });
       const expectedOptions = [
         { value: '', label: 'Workspace templates' },
@@ -61,6 +62,7 @@ export async function spacesJourney({ page }) {
         () => collection.locator('option').evaluateAll(options => options.map(option => ({ value: option.value, label: option.textContent.trim() }))),
         { timeout: 15_000 },
       ).toEqual(expectedOptions);
+      await page.keyboard.press('Escape');
     } else {
       await buttons[i].click();
     }
@@ -119,7 +121,7 @@ export async function settingsJourney({ page, origin }, width) {
   const appearance = tabs.getByRole('link', { name: 'Appearance', exact: true });
   await expect(appearance).toHaveAttribute('aria-current', 'page');
   await settingsTab(page, tabs, 'Developer access', width);
-  assert.equal(new URL(page.url()).searchParams.get('section'), 'developer');
+  assert.equal(new URL(page.url()).pathname, '/app/settings/developer');
   await expect(page.getByRole('heading', { name: 'Developer access', exact: true })).toBeVisible();
   await settingsTab(page, tabs, 'Import & export', width);
   await expect(page.getByRole('button', { name: 'Export workspace', exact: true })).toBeVisible();
@@ -140,7 +142,7 @@ export async function settingsJourney({ page, origin }, width) {
   await labelsDoNotOverlap(page.locator('.settings-workspace'));
   await capture(page, 'settings', { fullPage: true });
   await settingsTab(page, tabs, 'Import & export', width);
-  assert.equal(new URL(page.url()).searchParams.get('section'), 'portability');
+  assert.equal(new URL(page.url()).pathname, '/app/settings/portability');
   const restore = page.locator('summary').filter({ hasText: /^Restore into an empty deployment$/ });
   await expect(restore).toBeVisible();
   await capture(page, 'settings-portability', { fullPage: true, prepare: () => restore.scrollIntoViewIfNeeded(), requiredControls: ['Export workspace', 'Restore into an empty deployment'] });

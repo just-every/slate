@@ -13,7 +13,7 @@ export async function starterTemplatesJourney(state) {
   const width = page.viewportSize().width;
   const shot = label => page.screenshot({ path: path.join(root, `.artifacts/ui-convergence/starter-templates-${width}-${label}.png`), fullPage: true });
   const choice = title => page.locator('.template-choice').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
-  const gallery = async () => { await page.goto(origin + '/app/templates', { waitUntil: 'networkidle' }); return page.getByLabel('Category', { exact: true }); };
+  const gallery = async () => { await page.goto(origin + '/app/templates', { waitUntil: 'networkidle' }); await page.getByRole('button', { name: 'Filter templates', exact: true }).click(); return page.getByLabel('Category', { exact: true }); };
   let category = await gallery();
   for (const [title, name] of Object.entries(starters)) {
     await category.fill(name);
@@ -21,6 +21,7 @@ export async function starterTemplatesJourney(state) {
     await expect(choice(title)).toContainText(name);
   }
   await category.fill('Meetings');
+  await page.keyboard.press('Escape');
   await choice('Meeting notes').click();
   const preview = page.locator('.template-preview');
   await expect(preview.getByRole('heading', { name: 'Meeting notes', exact: true, level: 2 })).toBeVisible();
@@ -42,6 +43,7 @@ export async function starterTemplatesJourney(state) {
 
   category = await gallery();
   await category.fill('Meetings');
+  await page.keyboard.press('Escape');
   await choice('Retrospective').click();
   const shipped = (await api('/api/templates?category=Meetings')).items.find(item => item.title === 'Retrospective');
   const before = await api(`/api/templates/${shipped.id}`);

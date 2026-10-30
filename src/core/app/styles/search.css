@@ -30,7 +30,6 @@
   background-color: var(--slate-main);
   color: var(--slate-ink-muted);
 }
-.slate-app .search-field-action + .search-field-action { margin-left: -4px; }
 .slate-app .search-field-action:hover, .slate-app .search-field-action:focus-visible, .slate-app .search-field-action[aria-expanded="true"] { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
 .slate-app .search-field-action svg { width: 18px; height: 18px; }
 .slate-app .search-form > .primary-button { min-height: 48px; padding: 0 22px; border-radius: 8px; font-size: 16px; font-weight: 500; }
@@ -82,7 +81,7 @@
 @media (max-width: 700px) {
   .slate-app .search-form { gap: 8px; }
   .slate-app .search-field > .search-field-icon { display: none; }
-  .slate-app .search-field-action { width: 44px; min-width: 44px; height: 44px; margin-right: 1px; }
+  .slate-app .search-field-action { width: 44px; min-width: 44px; height: 44px; margin-right: 4px; }
   .slate-app .search-form > .primary-button { padding: 0 16px; }
   .slate-app .search-results > li { grid-template-columns: minmax(0, 1fr); }
   .slate-app .result-meta { margin-top: 6px; }

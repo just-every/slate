@@ -122,7 +122,6 @@
 .slate-app .tabs-rule { padding-bottom: 12px; border-bottom: 1px solid var(--slate-line); }
 
 @media (max-width: 700px) {
-  .slate-app .tabs.settings-tabs { flex-wrap: nowrap; overflow-x: auto; margin-bottom: 8px; scrollbar-width: auto; }
   .slate-app .topbar { flex-wrap: wrap; row-gap: 4px; min-height: 61px; padding: 8px 16px; }
   .slate-app .crumbs { flex: 1 1 auto; }
   .slate-app .main { padding-top: 24px; }

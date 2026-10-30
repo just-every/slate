@@ -33,7 +33,11 @@
 .slate-app .spaces-workspace .action-row > button { align-self: center; height: 44px; }
 .slate-app .settings-panel label:has(input[type="checkbox"]) { flex-direction: row; align-items: center; gap: 8px; }
 .slate-app .settings-panel input[type="checkbox"] { flex: 0 0 18px; height: 18px; padding: 0; margin: 0; }
-.slate-app .spaces-workspace .space-choice { width: 100%; text-align: left; min-height: 44px; padding: 8px 12px; border: 1px solid var(--slate-line); border-radius: 6px; background: var(--slate-surface); }
+.slate-app .spaces-workspace .space-choice { width: 100%; text-align: left; min-height: 44px; padding: 12px; border: 0; border-radius: 8px; background-color: transparent; }
+.slate-app .spaces-workspace .space-choice:not([aria-pressed="true"]):hover { background-color: var(--slate-wash); }
+.slate-app .spaces-workspace .space-choice strong { color: var(--slate-ink-strong); font-size: 17px; font-weight: 500; }
+.slate-app .spaces-workspace .space-choice p { margin: 2px 0 0; color: var(--slate-ink-muted); font-size: 14px; }
+.slate-app .spaces-workspace .action-row.page-rule { margin-bottom: 8px; }
 .slate-app .space-detail { margin-top: 24px; }
 .slate-app .space-detail > h3 { margin: 0 0 12px; font-size: 20px; font-weight: 600; line-height: 1.3; }
 .slate-app .space-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
@@ -57,12 +61,23 @@
 .slate-app .template-filters { align-items: flex-end; margin-block: 20px; }
 .slate-app .template-filters label { display: grid; gap: 6px; flex: 1 1 180px; min-width: 0; }
 .slate-app .template-filters input, .slate-app .template-filters select { width: 100%; min-height: max(var(--slate-tap-target, 0px), 40px); padding: 8px 10px; border: 1px solid var(--slate-line); border-radius: 6px; background: var(--slate-canvas); color: var(--slate-ink); }
-.slate-app .template-choice { display: block; width: 100%; text-align: left; padding: 16px 12px; border: 1px solid var(--slate-line); border-radius: 6px; background: var(--slate-surface); margin-block: 8px; }
-.slate-app .template-choice[aria-pressed="true"] { border-color: var(--slate-accent); background: var(--slate-accent-soft); }
+.slate-app .template-list { margin: 0; }
+.slate-app .template-list .template-choice { display: block; width: 100%; margin: 0; padding: 14px 12px; border: 0; border-radius: 8px; background-color: transparent; text-align: left; }
+.slate-app .template-list > li { padding-block: 4px; }
+.slate-app .template-list .template-choice:not([aria-pressed="true"]):hover { background-color: var(--slate-wash); }
+.slate-app .template-list .template-choice[aria-pressed="true"] { background-color: var(--slate-accent-soft); }
+.slate-app .template-list .template-choice h3 { margin: 0; color: var(--slate-ink-strong); font-size: 18px; font-weight: 500; line-height: 24px; }
+.slate-app .template-list .template-choice p { margin: 2px 0 0; color: var(--slate-ink); font-size: 15px; line-height: 22px; }
+.slate-app .template-search { flex: 1 1 260px; max-width: 420px; }
+.slate-app .template-search > input { width: 100%; min-height: max(var(--slate-tap-target, 0px), 40px); border-color: var(--slate-line-strong); border-radius: 8px; font-size: 15px; }
+.slate-app .templates-workspace .template-list { margin-top: 8px; }
 .slate-app .deleted-template-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 16px; }
 .slate-app .deleted-template-actions > p { flex-basis: 100%; }
-.slate-app .archive-list { list-style: none; padding: 0; }
-.slate-app .archive-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-block: 16px; border-bottom: 1px solid var(--slate-line); }
+.slate-app .archive-list { margin: 0; padding: 0; list-style: none; }
+.slate-app .archive-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-block: 16px; }
+.slate-app .archive-list > li + li { border-top: 1px solid var(--slate-line); }
+.slate-app .archive-list > li h2 { margin: 0; color: var(--slate-ink-strong); font-size: 18px; font-weight: 500; line-height: 24px; }
+.slate-app .archive-list > li h2 + p, .slate-app .archive-list > li p.muted { margin: 2px 0 0; color: var(--slate-ink-muted); font-size: 14px; }
 .slate-app .archive-list > li > div { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
 .slate-app .spaces-workspace .settings-list li { padding: 4px 0; border-bottom: 0; }
 .slate-app .space-actions button { display: inline-flex; align-items: center; gap: 6px; }
@@ -84,7 +99,7 @@
 .slate-app .nav-count { margin-left: auto; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--slate-accent-soft); color: var(--slate-accent); font-size: var(--text-small); font-weight: 600; text-align: center; }
 
 /* Long import reviews keep their section navigation available. */
-.slate-app .settings-section-navigation[data-portability="true"] { position: sticky; top: 0; z-index: 25; background: var(--slate-canvas); }
+.slate-app .settings-section-navigation[data-portability="true"] { position: sticky; top: 0; z-index: 25; background: var(--slate-main); }
 @media (max-width: 700px) { .slate-app .settings-section-navigation[data-portability="true"] { top: 65px; } }
 
 @media (max-width: 700px) {

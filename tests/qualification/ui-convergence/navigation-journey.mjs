@@ -22,7 +22,7 @@ export async function secondaryCreateDestinations({ page, origin }) {
   await page.getByRole('menuitem', { name: 'Page from template', exact: true }).click();
   await expect(page).toHaveURL(origin + '/app/templates');
   await expect(page.locator('.topbar').getByText('Templates', { exact: true })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Show', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filter templates', exact: true })).toBeVisible();
   await accessible(page, 'page from template destination');
   await page.goto(origin + '/app', { waitUntil: 'networkidle' });
   await openNavigation(page);

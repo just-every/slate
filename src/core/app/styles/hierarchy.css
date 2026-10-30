@@ -173,7 +173,26 @@
 .slate-app .band-fields > label > input { padding-right: 0; }
 .slate-app .band-fields > label > :is(select, input):focus-visible { outline: none; }
 
+/* A section list: one path per section, the current one in the soft fill; a column beside its content at desktop
+   width and one scrolling row on phones. */
+.slate-app .section-list { display: flex; flex-direction: column; gap: 4px; }
+.slate-app .section-list > a {
+  display: flex;
+  align-items: center;
+  min-height: max(var(--slate-tap-target, 0px), 40px);
+  padding: 0 12px;
+  border-radius: 8px;
+  background-color: var(--slate-canvas);
+  color: var(--slate-ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+.slate-app .section-list > a:hover { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
+.slate-app .section-list > a[aria-current="page"] { background-color: var(--slate-accent-soft); color: var(--slate-ink-strong); }
+
 @media (max-width: 700px) {
+  .slate-app .section-list { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 8px; }
+  .slate-app .section-list > a { flex: none; white-space: nowrap; }
   .slate-app .filter-menu-fields { grid-template-columns: minmax(0, 1fr); }
   .slate-app .filter-band { flex-direction: column; align-items: stretch; padding: 8px; }
   .slate-app .filter-band > .band-toggle { align-self: flex-start; margin: 0; }

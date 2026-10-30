@@ -19,7 +19,6 @@ import { Route as AppExportRouteImport } from './routes/app.export'
 import { Route as AppInboxRouteImport } from './routes/app.inbox'
 import { Route as AppReviewRouteImport } from './routes/app.review'
 import { Route as AppSearchRouteImport } from './routes/app.search'
-import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTasksRouteImport } from './routes/app.tasks'
 import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
@@ -34,6 +33,8 @@ import { Route as AppPagesPageIdRouteImport } from './routes/app.pages.$pageId'
 import { Route as AppProfileIndexRouteImport } from './routes/app.profile.index'
 import { Route as AppRecordsIndexRouteImport } from './routes/app.records.index'
 import { Route as AppRunsRunIdRouteImport } from './routes/app.runs.$runId'
+import { Route as AppSettingsIndexRouteImport } from './routes/app.settings.index'
+import { Route as AppSettingsSectionRouteImport } from './routes/app.settings.$section'
 import { Route as AppSpacesIndexRouteImport } from './routes/app.spaces.index'
 import { Route as AppTemplatesIndexRouteImport } from './routes/app.templates.index'
 import { Route as AppTemplatesTemplateIdRouteImport } from './routes/app.templates.$templateId'
@@ -88,11 +89,6 @@ const AppReviewRoute = AppReviewRouteImport.update({
 const AppSearchRoute = AppSearchRouteImport.update({
   id: '/search',
   path: '/search',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTasksRoute = AppTasksRouteImport.update({
@@ -166,6 +162,16 @@ const AppRunsRunIdRoute = AppRunsRunIdRouteImport.update({
   path: '/runs/$runId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsSectionRoute = AppSettingsSectionRouteImport.update({
+  id: '/settings/$section',
+  path: '/settings/$section',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSpacesIndexRoute = AppSpacesIndexRouteImport.update({
   id: '/spaces/',
   path: '/spaces/',
@@ -204,7 +210,6 @@ export interface FileRoutesByFullPath {
   '/app/inbox': typeof AppInboxRoute
   '/app/review': typeof AppReviewRoute
   '/app/search': typeof AppSearchRoute
-  '/app/settings': typeof AppSettingsRoute
   '/app/tasks': typeof AppTasksRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app/': typeof AppIndexRoute
@@ -214,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/app/inquiries/$inquiryId': typeof AppInquiriesInquiryIdRoute
   '/app/pages/$pageId': typeof AppPagesPageIdRoute
   '/app/runs/$runId': typeof AppRunsRunIdRoute
+  '/app/settings/$section': typeof AppSettingsSectionRoute
   '/app/templates/$templateId': typeof AppTemplatesTemplateIdRoute
   '/app/containers/': typeof AppContainersIndexRoute
   '/app/databases/': typeof AppDatabasesIndexRoute
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/app/pages/': typeof AppPagesIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
   '/app/records/': typeof AppRecordsIndexRoute
+  '/app/settings/': typeof AppSettingsIndexRoute
   '/app/spaces/': typeof AppSpacesIndexRoute
   '/app/templates/': typeof AppTemplatesIndexRoute
   '/app/databases/$databaseId/': typeof AppDatabasesDatabaseIdIndexRoute
@@ -234,7 +241,6 @@ export interface FileRoutesByTo {
   '/app/inbox': typeof AppInboxRoute
   '/app/review': typeof AppReviewRoute
   '/app/search': typeof AppSearchRoute
-  '/app/settings': typeof AppSettingsRoute
   '/app/tasks': typeof AppTasksRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app': typeof AppIndexRoute
@@ -244,6 +250,7 @@ export interface FileRoutesByTo {
   '/app/inquiries/$inquiryId': typeof AppInquiriesInquiryIdRoute
   '/app/pages/$pageId': typeof AppPagesPageIdRoute
   '/app/runs/$runId': typeof AppRunsRunIdRoute
+  '/app/settings/$section': typeof AppSettingsSectionRoute
   '/app/templates/$templateId': typeof AppTemplatesTemplateIdRoute
   '/app/containers': typeof AppContainersIndexRoute
   '/app/databases': typeof AppDatabasesIndexRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/app/pages': typeof AppPagesIndexRoute
   '/app/profile': typeof AppProfileIndexRoute
   '/app/records': typeof AppRecordsIndexRoute
+  '/app/settings': typeof AppSettingsIndexRoute
   '/app/spaces': typeof AppSpacesIndexRoute
   '/app/templates': typeof AppTemplatesIndexRoute
   '/app/databases/$databaseId': typeof AppDatabasesDatabaseIdIndexRoute
@@ -267,7 +275,6 @@ export interface FileRoutesById {
   '/app/inbox': typeof AppInboxRoute
   '/app/review': typeof AppReviewRoute
   '/app/search': typeof AppSearchRoute
-  '/app/settings': typeof AppSettingsRoute
   '/app/tasks': typeof AppTasksRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app/': typeof AppIndexRoute
@@ -277,6 +284,7 @@ export interface FileRoutesById {
   '/app/inquiries/$inquiryId': typeof AppInquiriesInquiryIdRoute
   '/app/pages/$pageId': typeof AppPagesPageIdRoute
   '/app/runs/$runId': typeof AppRunsRunIdRoute
+  '/app/settings/$section': typeof AppSettingsSectionRoute
   '/app/templates/$templateId': typeof AppTemplatesTemplateIdRoute
   '/app/containers/': typeof AppContainersIndexRoute
   '/app/databases/': typeof AppDatabasesIndexRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/app/pages/': typeof AppPagesIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
   '/app/records/': typeof AppRecordsIndexRoute
+  '/app/settings/': typeof AppSettingsIndexRoute
   '/app/spaces/': typeof AppSpacesIndexRoute
   '/app/templates/': typeof AppTemplatesIndexRoute
   '/app/databases/$databaseId/': typeof AppDatabasesDatabaseIdIndexRoute
@@ -301,7 +310,6 @@ export interface FileRouteTypes {
     | '/app/inbox'
     | '/app/review'
     | '/app/search'
-    | '/app/settings'
     | '/app/tasks'
     | '/docs/$slug'
     | '/app/'
@@ -311,6 +319,7 @@ export interface FileRouteTypes {
     | '/app/inquiries/$inquiryId'
     | '/app/pages/$pageId'
     | '/app/runs/$runId'
+    | '/app/settings/$section'
     | '/app/templates/$templateId'
     | '/app/containers/'
     | '/app/databases/'
@@ -318,6 +327,7 @@ export interface FileRouteTypes {
     | '/app/pages/'
     | '/app/profile/'
     | '/app/records/'
+    | '/app/settings/'
     | '/app/spaces/'
     | '/app/templates/'
     | '/app/databases/$databaseId/'
@@ -331,7 +341,6 @@ export interface FileRouteTypes {
     | '/app/inbox'
     | '/app/review'
     | '/app/search'
-    | '/app/settings'
     | '/app/tasks'
     | '/docs/$slug'
     | '/app'
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/app/inquiries/$inquiryId'
     | '/app/pages/$pageId'
     | '/app/runs/$runId'
+    | '/app/settings/$section'
     | '/app/templates/$templateId'
     | '/app/containers'
     | '/app/databases'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/app/pages'
     | '/app/profile'
     | '/app/records'
+    | '/app/settings'
     | '/app/spaces'
     | '/app/templates'
     | '/app/databases/$databaseId'
@@ -363,7 +374,6 @@ export interface FileRouteTypes {
     | '/app/inbox'
     | '/app/review'
     | '/app/search'
-    | '/app/settings'
     | '/app/tasks'
     | '/docs/$slug'
     | '/app/'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/app/inquiries/$inquiryId'
     | '/app/pages/$pageId'
     | '/app/runs/$runId'
+    | '/app/settings/$section'
     | '/app/templates/$templateId'
     | '/app/containers/'
     | '/app/databases/'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/app/pages/'
     | '/app/profile/'
     | '/app/records/'
+    | '/app/settings/'
     | '/app/spaces/'
     | '/app/templates/'
     | '/app/databases/$databaseId/'
@@ -464,13 +476,6 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/app/search'
       preLoaderRoute: typeof AppSearchRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/settings': {
-      id: '/app/settings'
-      path: '/settings'
-      fullPath: '/app/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/tasks': {
@@ -571,6 +576,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRunsRunIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings/': {
+      id: '/app/settings/'
+      path: '/settings'
+      fullPath: '/app/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings/$section': {
+      id: '/app/settings/$section'
+      path: '/settings/$section'
+      fullPath: '/app/settings/$section'
+      preLoaderRoute: typeof AppSettingsSectionRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/spaces/': {
       id: '/app/spaces/'
       path: '/spaces'
@@ -630,19 +649,20 @@ interface AppRouteChildren {
   AppInboxRoute: typeof AppInboxRoute
   AppReviewRoute: typeof AppReviewRoute
   AppSearchRoute: typeof AppSearchRoute
-  AppSettingsRoute: typeof AppSettingsRoute
   AppTasksRoute: typeof AppTasksRoute
   AppIndexRoute: typeof AppIndexRoute
   AppDecisionsDecisionIdRoute: typeof AppDecisionsDecisionIdRoute
   AppInquiriesInquiryIdRoute: typeof AppInquiriesInquiryIdRoute
   AppPagesPageIdRoute: typeof AppPagesPageIdRoute
   AppRunsRunIdRoute: typeof AppRunsRunIdRoute
+  AppSettingsSectionRoute: typeof AppSettingsSectionRoute
   AppTemplatesTemplateIdRoute: typeof AppTemplatesTemplateIdRoute
   AppDatabasesIndexRoute: typeof AppDatabasesIndexRoute
   AppDecisionsIndexRoute: typeof AppDecisionsIndexRoute
   AppPagesIndexRoute: typeof AppPagesIndexRoute
   AppProfileIndexRoute: typeof AppProfileIndexRoute
   AppRecordsIndexRoute: typeof AppRecordsIndexRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppSpacesIndexRoute: typeof AppSpacesIndexRoute
   AppTemplatesIndexRoute: typeof AppTemplatesIndexRoute
   AppDatabasesDatabaseIdIndexRoute: typeof AppDatabasesDatabaseIdIndexRoute
@@ -656,19 +676,20 @@ const AppRouteChildren: AppRouteChildren = {
   AppInboxRoute: AppInboxRoute,
   AppReviewRoute: AppReviewRoute,
   AppSearchRoute: AppSearchRoute,
-  AppSettingsRoute: AppSettingsRoute,
   AppTasksRoute: AppTasksRoute,
   AppIndexRoute: AppIndexRoute,
   AppDecisionsDecisionIdRoute: AppDecisionsDecisionIdRoute,
   AppInquiriesInquiryIdRoute: AppInquiriesInquiryIdRoute,
   AppPagesPageIdRoute: AppPagesPageIdRoute,
   AppRunsRunIdRoute: AppRunsRunIdRoute,
+  AppSettingsSectionRoute: AppSettingsSectionRoute,
   AppTemplatesTemplateIdRoute: AppTemplatesTemplateIdRoute,
   AppDatabasesIndexRoute: AppDatabasesIndexRoute,
   AppDecisionsIndexRoute: AppDecisionsIndexRoute,
   AppPagesIndexRoute: AppPagesIndexRoute,
   AppProfileIndexRoute: AppProfileIndexRoute,
   AppRecordsIndexRoute: AppRecordsIndexRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppSpacesIndexRoute: AppSpacesIndexRoute,
   AppTemplatesIndexRoute: AppTemplatesIndexRoute,
   AppDatabasesDatabaseIdIndexRoute: AppDatabasesDatabaseIdIndexRoute,

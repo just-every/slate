@@ -15,30 +15,15 @@ import { MembersPanel } from "./MembersPanel";
 import { SamlSettings } from "./SamlSettings";
 import { TopBar } from "../../../../app/ui/header/TopBar";
 import { PageTitle } from "../../../../app/ui/header/PageTitle";
-import { Link, useSearch } from "@tanstack/react-router";
-const sections = [
-  ["workspace", "Workspace"],
-  ["members", "People"],
-  ["saml", "SAML single sign-on"],
-  ["developer", "Developer access"],
-  ["appearance", "Appearance"],
-  ["preferences", "Preferences"],
-  ["activity", "Activity"],
-  ["automation", "Automations"],
-  ["statuses", "Statuses"],
-  ["spaces", "Spaces"],
-  ["chat", "Chat notifications"],
-  ["connections", "Connections"],
-  ["portability", "Import & export"],
-] as const;
+import { Link, useParams } from "@tanstack/react-router";
+import { settingsSection, settingsSections } from "./settingsSections";
 export function SettingsWorkspace() {
   const tabs = useRef<HTMLElement>(null);
   const [scrollReady, setScrollReady] = useState(false);
   // Links work from the server HTML; these controls need their React handlers.
   useEffect(() => setScrollReady(true), []);
   const flagship = useFlagshipEnabled();
-  const requested = useSearch({ from: "/app/settings" }).section;
-  const section = sections.some(([id]) => id === requested) ? requested : "workspace";
+  const section = settingsSection(useParams({ from: "/app/settings/$section" }).section);
   return (
     <>
       <TopBar trail={[{ label: "Settings" }]}>
@@ -46,13 +31,14 @@ export function SettingsWorkspace() {
       </TopBar>
       <section className="main settings-workspace">
         <PageTitle>Settings</PageTitle>
+        <div className="settings-layout">
         <div className="settings-section-navigation" data-portability={section === "portability"}>
-        <nav ref={tabs} className="tabs tabs-rule settings-tabs" aria-label="Settings sections">
-          {sections.filter(([id]) => flagship || id !== "connections").map(([id, label]) => (
+        <nav ref={tabs} className="section-list settings-tabs" aria-label="Settings sections">
+          {settingsSections.filter(([id]) => flagship || id !== "connections").map(([id, label]) => (
             <Link
               key={id}
-              to="/app/settings"
-              search={{ section: id }}
+              to="/app/settings/$section"
+              params={{ section: id }}
               replace
               aria-current={section === id ? "page" : undefined}
             >
@@ -61,11 +47,12 @@ export function SettingsWorkspace() {
           ))}
         </nav>
         <div className="settings-scroll-controls">
-          <button type="button" className="secondary-button" aria-label="Previous settings sections" data-tooltip="Previous sections" disabled={!scrollReady} onClick={() => tabs.current?.scrollBy({ left: -260, behavior: "smooth" })}>←</button>
+          <button type="button" className="secondary-button" aria-label="Previous settings sections" data-tooltip="Previous settings sections" disabled={!scrollReady} onClick={() => tabs.current?.scrollBy({ left: -260, behavior: "smooth" })}>←</button>
           <span>Scroll for more sections</span>
-          <button type="button" className="secondary-button" aria-label="More settings sections" data-tooltip="More sections" data-tooltip-align="end" disabled={!scrollReady} onClick={() => tabs.current?.scrollBy({ left: 260, behavior: "smooth" })}>→</button>
+          <button type="button" className="secondary-button" aria-label="More settings sections" data-tooltip="More settings sections" data-tooltip-align="end" disabled={!scrollReady} onClick={() => tabs.current?.scrollBy({ left: 260, behavior: "smooth" })}>→</button>
         </div>
         </div>
+        <div className="settings-section">
         {section === "developer" ? <DeveloperAccess /> : section === "chat" ? (
           <ChatNotifications />
         ) : section === "spaces" ? (
@@ -91,6 +78,8 @@ export function SettingsWorkspace() {
         ) : (
           <WorkspacePreferences />
         )}
+        </div>
+        </div>
       </section>
     </>
   );

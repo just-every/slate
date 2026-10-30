@@ -59,7 +59,7 @@
   box-shadow: none;
 }
 .slate-app .settings-panel :is(h2,h3) + button { margin-top: 8px; }
-.slate-app .space-choice[aria-pressed="true"] { border-color: var(--slate-accent); background: var(--slate-accent-soft); }
+.slate-app .space-choice[aria-pressed="true"] { background-color: var(--slate-accent-soft); }
 .slate-app .restore-workspace > summary { margin-top: 8px; }
 .slate-app .spaces-workspace .action-row > label:has(select) { display: flex; flex-direction: row; align-items: center; gap: 8px; }
 .slate-app .settings-panel > section > button + details { margin-top: 8px; }

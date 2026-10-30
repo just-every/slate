@@ -90,7 +90,7 @@ export function PageSharing({ document }: { document: DocumentView }) {
     <section>
       <h2>Share this page</h2>
       <p className="muted">Invite people to this page. Copying its link does not change who can access it.</p>
-      <p className="muted">Access changes stay in <a href="/app/settings?section=activity">Activity</a>; reviewing them does not restore access.</p>
+      <p className="muted">Access changes stay in <a href="/app/settings/activity">Activity</a>; reviewing them does not restore access.</p>
       <button className="secondary-button"
         type="button"
         onClick={() => {

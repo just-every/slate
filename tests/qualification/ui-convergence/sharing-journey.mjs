@@ -79,10 +79,10 @@ export async function shareJourney(state, pageId) {
   await ownerGrant.locator('details summary').click();
   await ownerGrant.getByRole('button', { name: 'Remove access', exact: true }).click();
   await expect.poll(async () => (await api(`/api/sharing/pages/${pageId}`)).items.find(item => item.principalId === 'browser-reader').revokedAt).not.toBeNull();
-  const activityLink = page.locator('a[href="/app/settings?section=activity"]');
+  const activityLink = page.locator('a[href="/app/settings/activity"]');
   await expect(activityLink).toBeVisible();
   await activityLink.click();
-  await page.waitForURL(url => url.pathname === '/app/settings' && url.searchParams.get('section') === 'activity');
+  await page.waitForURL(url => url.pathname === '/app/settings/activity');
   await expect(page.getByRole('heading', { name: 'What changed.', exact: true })).toBeVisible();
   assert.ok((await api(`/api/sharing/pages/${pageId}`)).items.find(item => item.principalId === 'browser-reader').revokedAt, 'Opening Activity leaves the removed page grant revoked.');
   await grantCorpusJourney(state);
