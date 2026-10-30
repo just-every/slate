@@ -601,7 +601,7 @@
       "id": "SHARE-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for SHARE-004 — General access. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "The generalAccessJourney helper in tests/qualification/ui-convergence/general-access-journey.mjs runs through sharing-journey.mjs in the existing real core-wiki and touch-member browser registrations at 1440 and 390. It changes general scope and level, removes access, reloads committed grants, reconciles one native activity receipt under request replay, exercises named-only restriction with an independent reader and refuses both general principals on a native personal page under both access profiles. The Workers-only registry does not count these browser assertions; independent release acceptance remains separate.",
       "supportingTests": []
     },
     {
