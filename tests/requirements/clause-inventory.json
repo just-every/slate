@@ -208,7 +208,7 @@
       "id": "SAVE-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for SAVE-004 — Network loss. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "Native browser sanity journeys in tests/qualification/ui-convergence/journeys.test.mjs now cover unreachable-server typing, persisted title and body recovery after same-tab reload, explicit unsaved status, exclusion from canonical pages, tree, lists, search, decoded readable export and another reader until explicit retry, and committed retry read-back at desktop and phone widths. These Node browser journeys run in Verify outside the Workers-only supporting registry; independent judgment and guarded landing receipts remain separate.",
       "supportingTests": []
     },
     {

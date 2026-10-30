@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { accessible } from './browser-evidence.mjs';
+import { readablePage } from './draft-recovery-journey.mjs';
 import { blockText, call, caretAtEnd, editable, elapsedUntil, grant, ok, restrictedPage, savedAfterCommit, typeAtEnd } from './two-people-support.mjs';
 
 const text = async (page, blockId) => (await blockText(page, blockId).innerText()).replace(/\s+/g, ' ');
@@ -203,9 +204,8 @@ export async function concurrentEditingJourney(state, people) {
     assert.ok(!(await savedBlock(alice.context, origin, pageId, first)).includes(marker), 'The draft is not on the page.');
     assert.ok(!JSON.stringify(await ok(alice.context, origin, 'GET', '/api/pages')).includes(marker), 'The draft is in no tree or list.');
     assert.ok(!JSON.stringify(await ok(alice.context, origin, 'GET', `/api/search?q=${marker}`)).includes(pageId), 'The draft is in no search result.');
-    const exported = await alice.context.request.post(`${origin}/api/exports/readable`, { headers: { origin, 'content-type': 'application/json' }, data: JSON.stringify({ scope: 'page', id: pageId, format: 'markdown' }) });
-    assert.equal(exported.status(), 200);
-    assert.ok(!(await exported.text()).includes(marker), 'The draft is in no export.');
+    const exported = await readablePage(alice.context, origin, pageId, 'markdown');
+    assert.ok(!(JSON.stringify(exported.manifest) + exported.rendered).includes(marker), 'The draft is in neither the decoded export manifest nor rendered content.');
     assert.ok(!(await text(bob.page, first)).includes(marker), 'Bob never sees the unsent draft.');
   };
   await nowhere();

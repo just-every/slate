@@ -165,7 +165,7 @@ function LoadedPage({
   const titleAttempt = useRef<{title:string; revision:string; key:string} | undefined>(recovered.current??undefined);
   const titleDirty=useRef(false);
   function changeTitle(value:string){
-    titleDirty.current=true;recovered.current=null;
+    titleDirty.current=true;
     setTitle(value);
     const attempt={title:value,revision:titleAttempt.current?.revision??editor.revision,key:operationKey()};
     titleAttempt.current=attempt;localStorage.setItem(titleKey,JSON.stringify(attempt));
@@ -273,7 +273,9 @@ function LoadedPage({
   const titleCanLeave=useRef(false);
   titleCanLeave.current=document.permissions.canEdit && !titleFailure && !titleConflict && !recovered.current;
   useEffect(()=>{
-    if(!titleDirty.current || title===savedTitle || titleSaving || titleFailure || titleConflict || !document.permissions.canEdit)return;
+    // A recovered title remains recovery data until the person explicitly retries,
+    // including when they focus it or revise it before that retry.
+    if(recovered.current || !titleDirty.current || title===savedTitle || titleSaving || titleFailure || titleConflict || !document.permissions.canEdit)return;
     const timer=setTimeout(()=>void saveTitleRef.current(),500);
     return()=>clearTimeout(timer);
   },[title,savedTitle,titleSaving,titleFailure,titleConflict,document.permissions.canEdit]);
@@ -328,11 +330,11 @@ function LoadedPage({
             readOnly={!document.permissions.canEdit}
             value={title}
             onChange={event=>changeTitle(event.target.value)}
-            onBlur={() => { if (!titleFailure) void saveTitle(); }}
+            onBlur={() => { if (!titleFailure && !recovered.current) void saveTitle(); }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                 event.preventDefault();
-                if (!titleFailure) void saveTitle();
+                if (!titleFailure && !recovered.current) void saveTitle();
                 event.currentTarget.closest('article')?.querySelector<HTMLElement>('[data-page-editor] [data-slate-editable]')?.focus();
               }
             }}
