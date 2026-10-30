@@ -58,6 +58,7 @@ export async function publicProfileJourney(state) {
     // This inventory is the user's editable exposure, not a pin of unrelated copy.
     assert.deepEqual(await dialog.locator('input, select, textarea').evaluateAll(items => items.map(item => item.name)),
       ['host','slug','theme','indexable','duplicate','header','header','header','socialTitle','socialDescription']);
+    for (const control of await dialog.locator('input, select, textarea').all()) await expect(control).toBeVisible();
     await expect(dialog.getByLabel('Host', {exact:true})).toHaveValue(new URL(origin).host);
     await dialog.getByLabel('Public address', {exact:true}).fill(slug);
     await dialog.locator('select[name="theme"]').selectOption('dark');
