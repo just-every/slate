@@ -2720,8 +2720,13 @@
       "id": "SEARCH-010",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Public HTTP operator, permission, saved-query, trust and duplicate grouping journeys support implementation. Independent requirement acceptance remains unproven.",
-      "supportingTests": []
+      "unmetReason": "The loaded Indexed search Workers journey checks each advanced operator and combination for two members with different grants. The existing core-wiki browser journeys call savedSearchJourney to save and reopen criteria, insert and reload a saved-search content query, and reconcile results with current reader grants and revocation. Independent guarded landing and requirement judgment remain separate.",
+      "supportingTests": [
+        {
+          "file": "tests/e2e/search/fts-permissions.test.ts",
+          "testName": "Indexed search uses current native authority for literal matches, totals, facets and cursors"
+        }
+      ]
     },
     {
       "id": "SEARCH-011",

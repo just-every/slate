@@ -749,9 +749,10 @@
         "SEARCH-002",
         "SEARCH-003",
         "SEARCH-004",
-        "SEARCH-005"
+        "SEARCH-005",
+        "SEARCH-010"
       ],
-      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify."
+      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify. The shared discoveryJourney checks every advanced operator and Boolean combination over a two-member corpus, plus label filtering and current-authority saved criteria."
     },
     {
       "file": "tests/e2e/search/fts-upgrade.test.ts",

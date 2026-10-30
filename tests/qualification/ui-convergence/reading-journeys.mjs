@@ -7,6 +7,7 @@ import { accessible } from './browser-support.mjs';
 import { compactPage } from './browser-evidence.mjs';
 import {searchFiltersJourney} from './search-filters-journey.mjs';
 import {mixedSearchJourney} from './mixed-search-journey.mjs';
+import {savedSearchJourney} from './saved-search-journey.mjs';
 
 export async function searchJourney(state, pageId) {
   const {page,origin,journeyTitle,searchTerm}=state;
@@ -59,6 +60,7 @@ export async function searchJourney(state, pageId) {
   await accessible(page, 'search no match');
   await searchFiltersJourney(state);
   await mixedSearchJourney(state);
+  await savedSearchJourney(state);
 }
 
 export async function settingsJourney(state, width) {
