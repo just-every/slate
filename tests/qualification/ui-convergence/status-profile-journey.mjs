@@ -100,7 +100,7 @@ export async function statusProfileJourney(state, width) {
   assert.deepEqual(await vocabulary(), beforeVocabulary);
   assert.deepEqual(await snapshots(), beforePages, 'Exposing the vocabulary rewrites no page, content or revision.');
   await openPanel(main.pageId);
-  assert.deepEqual((await options()).sort(), [...entries.map(([key]) => key), '__clear'].sort());
+  assert.deepEqual((await options()).sort(), [...beforeVocabulary.filter(entry => !entry.retiredAt).map(entry => entry.key), '__clear'].sort(), 'Every active entry, including entries created by earlier native journeys, is exposed.');
   await expect(page.locator('.page-topbar .page-status-chip')).toHaveCount(0);
   await expect(statusAction).toHaveCount(0);
   await expect(page.locator('.page-byline .page-status-chip')).toContainText('Verified');
@@ -146,7 +146,7 @@ export async function statusProfileJourney(state, width) {
     assert.deepEqual(await snapshots(), before, 'A refused attestation changes nothing.');
     await bob.page.goto(route(main.pageId) + '?detail=status', { waitUntil: 'networkidle' });
     await expect(bob.page.getByRole('button', { name: 'Create a custom status', exact: true })).toHaveCount(0);
-    assert.deepEqual((await bob.page.getByRole('combobox', { name: 'Set page status', exact: true }).locator('option:not([disabled])').evaluateAll(nodes => nodes.map(node => node.value))).sort(), [...storedVocabulary.map(entry => entry.key), '__clear'].sort());
+    assert.deepEqual((await bob.page.getByRole('combobox', { name: 'Set page status', exact: true }).locator('option:not([disabled])').evaluateAll(nodes => nodes.map(node => node.value))).sort(), [...storedVocabulary.filter(entry => !entry.retiredAt).map(entry => entry.key), '__clear'].sort());
   });
 
   await switchProfile('verification-only');
