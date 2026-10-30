@@ -52,11 +52,11 @@ export async function trustRankingJourney({ page, context, origin }) {
   await expect(results.locator('h2')).toHaveText(['Crane procedure', 'Tide procedure', 'Pier procedure']);
   await expect(results.locator('.trust-state')).toHaveText(['Verified', 'Unverified', 'Lapsed']);
   for (const index of [0, 2]) {
-    await expect(results.nth(index).locator('.page-trust')).toContainText('by Alex Owner');
-    await expect(results.nth(index).locator('.page-trust')).toContainText('Expires');
+    await expect(results.nth(index).locator('.result-meta')).toContainText('Alex Owner');
+    await expect(results.nth(index).locator('.result-meta')).toContainText('Expires');
   }
-  await expect(results.nth(1).locator('.page-trust')).not.toContainText('Expires');
-  for (const index of [0, 1, 2]) await expect(results.nth(index).locator('.page-trust')).toContainText('Updated');
+  await expect(results.nth(1).locator('.result-meta')).not.toContainText('Expires');
+  for (const index of [0, 1, 2]) await expect(results.nth(index).locator('.result-meta')).toContainText('Updated');
   await accessible(page, 'verified-first search results');
   await shot(page, 'ranked');
 

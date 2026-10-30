@@ -8,14 +8,14 @@ export async function traceSearch(context, directory) {
  await context.addInitScript(() => {
   const read = () => {
    const input = document.querySelector('#workspace-query');
-   const kind = document.querySelector('.search-filters select');
+   const kind = document.querySelector('.filter-menu select');
    const props = input && Object.keys(input).find(key => key.startsWith('__reactProps$'));
    return {url:location.pathname + location.search, query:input?.value, kind:kind?.value,
     disabled:input?.disabled, react:!!props, reactQuery:props ? input[props].value : undefined};
   };
   const record = (type, extra={}) => window.__recordSearchTrace({time:performance.now(),type,...read(),...extra});
   for(const type of ['input','change','submit']) document.addEventListener(type,event=>{
-   if(event.target.closest('.search-form,.search-filters,.search-refinements')) void record(type,{target:event.target.tagName});
+   if(event.target.closest('.search-form,.filter-menu')) void record(type,{target:event.target.tagName});
   },true);
   let previous='';
   const sample=()=>{const value=JSON.stringify(read());if(value!==previous){previous=value;void record('state');}requestAnimationFrame(sample);};

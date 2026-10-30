@@ -135,11 +135,11 @@ export async function controlPolishJourney({ page, context, origin, api }, width
     const next = page.getByRole('button', { name: 'Next results →', exact: true });
     const save = page.getByRole('button', { name: 'Save this search', exact: true });
     await expect(next).toBeVisible();
-    const a = await next.boundingBox(), b = await save.boundingBox();
-    assert.ok(b.x - a.x - a.width >= 8, 'SL33 paging and save have a real 8px gap');
-    assert.ok(Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height), 'SL33 actions share one row');
+    const a = await next.boundingBox(), last = await page.locator('.search-results > li').last().boundingBox();
+    assert.ok(a.y >= last.y + last.height, 'SL33 paging sits under the last result');
     await next.click();
     await expect(next).toHaveCount(0);
+    await page.getByRole('button', { name: 'Filter results', exact: true }).click();
     await save.click();
     await expect(page.getByRole('dialog')).toBeVisible();
   } else {
