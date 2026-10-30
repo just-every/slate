@@ -708,13 +708,8 @@
       "id": "WEB-007",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "CONTRACT.md owns clause status. The loaded native browser journey covers both public profiles, exact controls, anonymous reads, full-access refusal and retained imported exposure metadata across settings saves and reload.",
-      "supportingTests": [
-        {
-          "file": "tests/qualification/ui-convergence/journeys.test.mjs",
-          "testName": "page creation destinations and editor locks preserve readable content at 1440px"
-        }
-      ]
+      "unmetReason": "This legacy inventory classifies Workers supporting tests only; CONTRACT.md owns clause status. The loaded native browser publicProfileJourney covers both profiles, exact controls, anonymous reads, full-access refusal and retained imported exposure metadata across native saves and reload.",
+      "supportingTests": []
     },
     {
       "id": "REV-001",

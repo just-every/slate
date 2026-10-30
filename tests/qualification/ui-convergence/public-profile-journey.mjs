@@ -98,7 +98,7 @@ export async function publicProfileJourney(state) {
     const linkSwitch = page.getByRole('switch', {name:'Public link', exact:true});
     await expect(linkSwitch).not.toBeChecked();
     assert.equal((await api(`/api/publishing/${freshId}`)).exposure, null);
-    await linkSwitch.check();
+    await linkSwitch.click();
     await expect(linkSwitch).toBeChecked();
     const fresh = (await api(`/api/publishing/${freshId}`)).exposure;
     assert.ok(fresh.slug);
@@ -114,7 +114,8 @@ export async function publicProfileJourney(state) {
     const freshResponse = await fetch(freshUrl);
     assert.equal(freshResponse.status, 200);
     assert.match(await freshResponse.text(), /Synthetic link-only page/);
-    await linkSwitch.uncheck();
+    await linkSwitch.click();
+    await expect(linkSwitch).not.toBeChecked();
     await expect.poll(async () => (await fetch(freshUrl)).status).toBe(404);
 
     await open();
@@ -126,13 +127,13 @@ export async function publicProfileJourney(state) {
     await expect(settings.getByRole('button')).toHaveText(['Stop public access']);
     await page.screenshot({path:path.join(directory,'link-settings.png'), fullPage:true});
     const indexing = settings.getByRole('checkbox', {name:'Allow search engines to index this page', exact:true});
-    await indexing.check();
+    await indexing.click();
     await expect.poll(read).toEqual({...retained,indexable:true});
     await anonymous(200, true);
     await page.reload({waitUntil:'networkidle'});
     await showSettings();
     await expect(indexing).toBeChecked();
-    await indexing.uncheck();
+    await indexing.click();
     await expect.poll(read).toEqual(retained);
     await anonymous(200);
 
@@ -150,13 +151,13 @@ export async function publicProfileJourney(state) {
     await expect(revoke).not.toBeVisible();
     await expect(settings.getByRole('switch', {name:'Public link', exact:true})).not.toBeChecked();
     await anonymous(404);
-    await settings.getByRole('switch', {name:'Public link', exact:true}).check();
+    await settings.getByRole('switch', {name:'Public link', exact:true}).click();
     await expect.poll(read).toEqual(retained);
     await anonymous(200);
-    await settings.getByRole('switch', {name:'Public link', exact:true}).uncheck();
+    await settings.getByRole('switch', {name:'Public link', exact:true}).click();
     await expect.poll(async () => !!(await read()).revokedAt).toBe(true);
     await anonymous(404);
-    await settings.getByRole('switch', {name:'Public link', exact:true}).check();
+    await settings.getByRole('switch', {name:'Public link', exact:true}).click();
     await expect.poll(read).toEqual(retained);
 
     await profile('site');
