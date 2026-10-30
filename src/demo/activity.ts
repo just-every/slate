@@ -4,7 +4,8 @@ import { slateSessions } from '../core/features/session/auth';
 import { createMemberRepository } from '../core/features/session/repository';
 import { saveGrant } from '../core/features/sharing/grants';
 import { createComment } from '../core/features/comments/service';
-import { openRecent, setFavourite, setWatch } from '../core/features/navigation/service';
+import { openRecent, setWatch } from '../core/features/navigation/service';
+import { setFavourite } from '../core/features/navigation/favourites';
 
 /** Populate the owner's actual navigation and inbox through ordinary commands. */
 export async function seedActivity(ctx: FeatureContext, config: RuntimeConfig, containerId: string, databaseId: string) {

@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { accessible } from './browser-evidence.mjs';
 import { openPageAction } from './browser-support.mjs';
-import { grant, ok } from './two-people-support.mjs';
+import { call, grant, ok } from './two-people-support.mjs';
+import { favouritesJourney } from './favourites-journey.mjs';
 
 /** Populated personal Home, real destinations, and current access after revocation. */
 export async function homeJourney(state, people) {
@@ -47,7 +48,8 @@ export async function homeJourney(state, people) {
   assert.ok(!beforeVisit.recents.some(item => item.id === created.pageId));
   assert.ok(!beforeVisit.favourites.some(item => item.id === created.pageId));
   await bob.page.goto(`${origin}/app/pages/${created.pageId}`, { waitUntil: 'networkidle' });
-  await ok(bob.context, origin, 'PUT', '/api/navigation/favourites', { operationKey: randomUUID(), kind: 'page', id: created.pageId, enabled: true });
+  const capturedFavourite = { operationKey: randomUUID(), kind: 'page', id: created.pageId, enabled: true };
+  await ok(bob.context, origin, 'PUT', '/api/navigation/favourites', capturedFavourite);
   await bob.page.goto(origin + '/app', { waitUntil: 'networkidle' });
   await expect(bob.page.getByRole('main').getByRole('link', { name: title, exact: true })).toHaveCount(2);
   // A second member's visit never becomes this member's recent or workspace feed.
@@ -56,6 +58,8 @@ export async function homeJourney(state, people) {
   await alice.page.goto(`${origin}/app/pages/${privatePage}`, { waitUntil: 'networkidle' });
   await grant(alice.context, origin, created.pageId, bob.id, 'view', { id: shared.value.id, revoke: true });
   await bob.page.reload({ waitUntil: 'networkidle' });
+  const replay = await call(bob.context, origin, 'PUT', '/api/navigation/favourites', capturedFavourite);
+  assert.equal(replay.status, 404, 'Replaying a committed favourite after revocation cannot restore access or disclose its receipt.');
   const navigation = await ok(bob.context, origin, 'GET', '/api/navigation');
   assert.ok(!navigation.recents.some(item => item.id === created.pageId || item.id === privatePage));
   assert.ok(!navigation.favourites.some(item => item.id === created.pageId));
@@ -72,4 +76,5 @@ export async function homeJourney(state, people) {
   await bob.page.reload({ waitUntil: 'networkidle' });
   await expect(bob.page.getByRole('region', { name: 'Following', exact: true })).not.toContainText(unwatchedTitle);
   assert.ok(!(await ok(bob.context, origin, 'GET', '/api/navigation/following')).items.some(item => item.pageId === unwatched), 'Readable but unwatched activity does not become a workspace feed.');
+  await favouritesJourney(state, people);
 }

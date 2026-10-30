@@ -65,6 +65,7 @@ import { myTasksJourney } from './my-tasks-journey.mjs';
 import { trustRankingJourney } from './trust-ranking-journey.mjs';
 import { chatJourney } from './chat-journey.mjs';
 import { todayOutcomesJourney } from './today-outcomes-journey.mjs';
+import { homeJourney } from './home-journey.mjs';
 
 // Retain both responsive branches: desktop sidebar visibility and horizontal
 // column geometry are unique assertions, while the phone case checks stacking.
@@ -95,6 +96,7 @@ for (const width of [390, 1440]) {
         if (width === 390) {
           await templateCaptureJourney(state);
           await withSecondPerson(state, width, people => step('DB-015 — template handover and revoked-saver pause on a phone', () => recordTemplatesJourney(state, people)));
+          await withSecondPerson(state, width, people => step('personal Home and favourite controls on a phone', () => homeJourney(state, people)));
           // One phone smoke visits the main screens; functional journeys use desktop
           // except where an assertion distinguishes the phone layout or touch input.
           for (const route of ['/app', `/app/pages/${pageId}`, '/app/search', '/app/inbox', '/app/tasks', '/app/review', '/app/templates', '/app/settings']) {

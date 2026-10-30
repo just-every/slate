@@ -27,5 +27,4 @@ export async function navigation(ctx:FeatureContext){const subject=await current
  return {isGuest:subject.isGuest,recents:readableRecent,favourites:readableFavourites,containers:readableContainers,watches:readableWatches,containerWatches:containerWatches.results.filter(r=>containerAccess.has(r.id)).map(r=>r.id),preferences:personal,configuration};
 }
 export function openRecent(ctx:FeatureContext,input:{operationKey:string;pageId:string}) {requiredId(input.pageId);return personalMutation(ctx,{operationKey:input.operationKey,action:'recent.open',request:input,authorize:()=>requirePageLevel(ctx,input.pageId,'view').then(()=>{}),build:async()=>({statements:[ctx.db.prepare('INSERT INTO recent_pages(member_id,page_id,opened_at) VALUES (?,?,?) ON CONFLICT(member_id,page_id) DO UPDATE SET opened_at=excluded.opened_at').bind(ctx.actor.id,input.pageId,ctx.now)],value:{pageId:input.pageId,openedAt:ctx.now}})});}
-export { setFavourite } from './favourites';
 export { setWatch, implicitWatchStatement } from './watches';
