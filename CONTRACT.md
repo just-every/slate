@@ -3974,13 +3974,13 @@ Contributed tree node kinds beyond pages, databases, cards and posts, and cross-
 
 ## Status
 
-Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
+Judged from the code and tests at commit `b160fa142014d0fc3ead903882fb3c4d73fb4b36` (30 October 2026); SAVE-004 native recovery source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4003,7 +4003,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `SAVE-001` | Durable save state | published | partial | `tests/qualification/interface/routed.browser.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/routed.browser.mjs`. |
 | `SAVE-002` | Failed writes | published | done | `tests/qualification/ui-convergence/failed-save-journey.mjs` — "failedSaveJourney" |  |
 | `SAVE-003` | Revision conflicts | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every edit is submitted with the revision it began from: the block's revision for a body edit, the page's for a title, property, structure or order change."<br>No validated CI-run proof for this acceptance point: "An edit against a superseded revision is rejected with 409, keeps the local draft, and offers compare, reload, or explicit overwrite."<br>No validated CI-run proof for this acceptance point: "Slate never resolves a conflict by last write wins." |
-| `SAVE-004` | Network loss | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "While the server is unreachable the editor shows Offline and keeps the unsent draft in browser storage as recovery only."<br>No validated CI-run proof for this acceptance point: "A recovered draft is labeled unsaved and never appears in the tree, in lists, in search, or in export as workspace data." |
+| `SAVE-004` | Network loss | published | done | Acceptance 1–2: `tests/qualification/ui-convergence/journeys.test.mjs` — "two people edit at once, lose access mid-edit and restore history at 1440px" and "real core-wiki and touch-member journeys at 390px", through `tests/qualification/ui-convergence/draft-recovery-journey.mjs` — draftRecoveryJourney: native offline typing, persisted title and body journals, same-tab reload, explicitly unsaved recovery, canonical page and tree and list and search exclusions, decoded readable manifest and rendered-content exclusions, another reader, focus and Enter without committing, and explicit retry with durable read-back. The desktop caller retains `tests/qualification/ui-convergence/two-people-editing.mjs` — concurrentEditingJourney including unreachable-server recovery. | |
 | `SAVE-005` | Operation keys | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every mutation accepts an operation key."<br>No validated CI-run proof for this acceptance point: "Repeating a key with the same body within 24 hours returns the first response and creates no second record, notification, AI run, publish, import, or activity entry; repeating it with a different body is rejected with 409." |
 | `SAVE-006` | Concurrent editing and optional co-editing | published | partial | `tests/qualification/ui-convergence/two-people-editing.mjs` | live co-editing only under the flagship opt-in; see COLLAB-001 |
 | `PAGE-001` | What a page is | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a page creation, metadata editing and round-trip journey that reads the complete page identity and labels; the cited incumbent-archive test calls the parser and does not exercise the page door. |
