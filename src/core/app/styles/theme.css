@@ -102,6 +102,8 @@
 [data-theme="light"] {
   --slate-canvas: #f9faf8;
   --slate-surface: #fdfefd;
+  /* The signed-in app's main content column: pure white in light (owner, 30 Oct 2026). */
+  --slate-main: #ffffff;
   --slate-wash: #f2f5f1;
   --slate-sidebar: #f0f2ef;
   --slate-sidebar-hover: #e2e8e2;
@@ -150,6 +152,7 @@
   :root:not([data-theme="light"]) {
     --slate-canvas: #090e0d;
     --slate-surface: #0d1411;
+    --slate-main: #0d1411;
     --slate-wash: #111a15;
     --slate-sidebar: #0d1411;
     --slate-sidebar-hover: #202a21;
@@ -195,6 +198,7 @@
 [data-theme="dark"] {
   --slate-canvas: #090e0d;
   --slate-surface: #0d1411;
+  --slate-main: #0d1411;
   --slate-wash: #111a15;
   --slate-sidebar: #0d1411;
   --slate-sidebar-hover: #202a21;

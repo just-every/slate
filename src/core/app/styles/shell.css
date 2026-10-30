@@ -9,7 +9,9 @@
   --row-inset: 10px;
   --row-height: 36px;
 }
-.slate-app .app { display: grid; grid-template-columns: var(--rail-width) minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--slate-sidebar) var(--rail-width), var(--slate-surface) var(--rail-width)); }
+.slate-app .app { display: grid; grid-template-columns: var(--rail-width) minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--slate-sidebar) var(--rail-width), var(--slate-main) var(--rail-width)); }
+/* The main content column is one plain white ground on every signed-in screen; areas inside it use the sunk tone or a hairline. */
+.slate-app .app > .center { background: var(--slate-main); }
 .slate-app .sidebar {
   position: sticky;
   top: 0;
@@ -99,7 +101,7 @@
 .slate-app .member-initials { display: grid; flex: none; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--slate-accent); color: var(--slate-accent-ink); font-size: var(--text-small); font-weight: 600; }
 
 /* Collapsed: a 72px rail holding the mark and the button that opens it again. */
-.slate-app .app:has(.sidebar[data-collapsed="true"]) { grid-template-columns: 72px minmax(0, 1fr); background: linear-gradient(to right, var(--slate-sidebar) 72px, var(--slate-surface) 72px); }
+.slate-app .app:has(.sidebar[data-collapsed="true"]) { grid-template-columns: 72px minmax(0, 1fr); background: linear-gradient(to right, var(--slate-sidebar) 72px, var(--slate-main) 72px); }
 .slate-app .sidebar[data-collapsed="true"] { padding-inline: 20px; }
 .slate-app .sidebar[data-collapsed="true"] .sidebar-header { flex-direction: column; gap: 14px; padding-left: 0; }
 .slate-app .sidebar[data-collapsed="true"] .sidebar-content { display: none; }
@@ -110,7 +112,7 @@
   .slate-app { --rail-width: 260px; }
 }
 @media (max-width: 700px) {
-  .slate-app .app, .slate-app .app:has(.sidebar[data-collapsed="true"]) { display: block; background: var(--slate-surface); }
+  .slate-app .app, .slate-app .app:has(.sidebar[data-collapsed="true"]) { display: block; background: var(--slate-main); }
   .slate-app .mobile-bar { display: flex; position: sticky; top: 0; z-index: 30; align-items: center; gap: 15px; padding: 10px 16px; background: var(--slate-sidebar); border-bottom: 1px solid var(--slate-line); }
   .slate-app { --row-height: 44px; }
   .slate-app .sidebar-header a, .slate-app .mobile-bar a, .slate-app .skip-link { display: inline-flex; align-items: center; min-height: 44px; }
