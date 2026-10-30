@@ -1,7 +1,7 @@
 import {TemplateSnapshotPreview,type TemplatePreviewSnapshot} from './TemplateSnapshotPreview';
 import {DeletedTemplateActions} from './DeletedTemplateActions';
 import { TemplateActions } from "./TemplateActions";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useResource } from "../../../../client/useResource";
 import { mutate, operationKey } from "../../../../client/transport";
 import { RequestState } from "../../../../app/ui/RequestState";
@@ -41,6 +41,9 @@ export function TemplatesWorkspace({ templateId,defaultContainerId,embedded }: {
   const items = useResource<{ items: Template[] }>(
     `/api/templates?state=${state}&query=${encodeURIComponent(settledFilters.query)}&category=${encodeURIComponent(settledFilters.category)}&containerId=${encodeURIComponent(container)}`,
   );
+  // A filter change refetches; the list stays in place until the new one arrives (U9).
+  const shown = useRef<Template[]>(undefined);
+  if (items.data) shown.current = items.data.items;
   const [selected, setSelected] = useState<string | undefined>(templateId);
   const preview = useResource<Template>(
     selected&&state!=="deleted" ? `/api/templates/${selected}` : null,
@@ -93,12 +96,12 @@ export function TemplatesWorkspace({ templateId,defaultContainerId,embedded }: {
           ]}/>
         </div>
         <RequestState
-          loading={items.loading}
+          loading={items.loading && !shown.current}
           error={items.error}
           retry={items.reload}
         >
           <ul className="template-list row-list">
-            {items.data?.items.map((item) => (
+            {shown.current?.map((item) => (
               <li key={item.id}>
                 <button className="template-choice" aria-pressed={selected === item.id} onClick={() => setSelected(item.id)}>
                   <span className="eyebrow">{item.category}</span>
@@ -108,7 +111,7 @@ export function TemplatesWorkspace({ templateId,defaultContainerId,embedded }: {
               </li>
             ))}
           </ul>
-          {items.data?.items.length === 0 ? (
+          {shown.current?.length === 0 ? (
             <p className="muted">
               No templates match this search.
             </p>

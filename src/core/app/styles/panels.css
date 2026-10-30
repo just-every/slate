@@ -33,8 +33,11 @@
 .slate-app .spaces-workspace .action-row > button { align-self: center; height: 44px; }
 .slate-app .settings-panel label:has(input[type="checkbox"]) { flex-direction: row; align-items: center; gap: 8px; }
 .slate-app .settings-panel input[type="checkbox"] { flex: 0 0 18px; height: 18px; padding: 0; margin: 0; }
-.slate-app .spaces-workspace .space-choice { width: 100%; text-align: left; min-height: 44px; padding: 12px; border: 0; border-radius: 8px; background-color: transparent; }
+.slate-app .spaces-workspace .space-choice { width: 100%; text-align: left; min-height: 44px; padding: 12px; border: 0; border-radius: 8px; background-color: var(--slate-canvas); }
 .slate-app .spaces-workspace .space-choice:not([aria-pressed="true"]):hover { background-color: var(--slate-wash); }
+.slate-app .spaces-workspace .space-choice[aria-pressed="true"] { background-color: var(--slate-accent-soft); }
+/* A chosen row takes its fill at once, not through the shared hover fade. */
+.slate-app .spaces-workspace .space-choice, .slate-app .template-list .template-choice { transition: none; }
 .slate-app .spaces-workspace .space-choice strong { color: var(--slate-ink-strong); font-size: 17px; font-weight: 500; }
 .slate-app .spaces-workspace .space-choice p { margin: 2px 0 0; color: var(--slate-ink-muted); font-size: 14px; }
 .slate-app .spaces-workspace .action-row.page-rule { margin-bottom: 8px; }
@@ -62,7 +65,7 @@
 .slate-app .template-filters label { display: grid; gap: 6px; flex: 1 1 180px; min-width: 0; }
 .slate-app .template-filters input, .slate-app .template-filters select { width: 100%; min-height: max(var(--slate-tap-target, 0px), 40px); padding: 8px 10px; border: 1px solid var(--slate-line); border-radius: 6px; background: var(--slate-canvas); color: var(--slate-ink); }
 .slate-app .template-list { margin: 0; }
-.slate-app .template-list .template-choice { display: block; width: 100%; margin: 0; padding: 14px 12px; border: 0; border-radius: 8px; background-color: transparent; text-align: left; }
+.slate-app .template-list .template-choice { display: block; width: 100%; margin: 0; padding: 14px 12px; border: 0; border-radius: 8px; background-color: var(--slate-canvas); text-align: left; }
 .slate-app .template-list > li { padding-block: 4px; }
 .slate-app .template-list .template-choice:not([aria-pressed="true"]):hover { background-color: var(--slate-wash); }
 .slate-app .template-list .template-choice[aria-pressed="true"] { background-color: var(--slate-accent-soft); }
