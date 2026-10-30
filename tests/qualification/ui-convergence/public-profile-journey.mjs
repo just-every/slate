@@ -27,10 +27,14 @@ export async function publicProfileJourney(state) {
   });
   const id = created.value.pageId;
   const read = async () => (await api(`/api/publishing/${id}`)).exposure;
+  const showSettings = async () => {
+    // Reload retains the panel in the route. Opening it again would close it.
+    if (!await page.locator('.publication-settings').isVisible()) await openPageAction(page, 'Public access');
+    await expect(page.locator('.publication-settings')).toBeVisible();
+  };
   const open = async () => {
     await page.goto(`${origin}/app/pages/${id}`, {waitUntil:'networkidle'});
-    await openPageAction(page, 'Public access');
-    await expect(page.locator('.publication-settings')).toBeVisible();
+    await showSettings();
   };
   const post = (data, who=context) => call(who, origin, 'POST', `/api/publishing/${id}`, data);
   const slug = 'synthetic-slate-public-profile';
@@ -56,7 +60,7 @@ export async function publicProfileJourney(state) {
       ['host','slug','theme','indexable','duplicate','header','header','header','socialTitle','socialDescription']);
     await expect(dialog.getByLabel('Host', {exact:true})).toHaveValue(new URL(origin).host);
     await dialog.getByLabel('Public address', {exact:true}).fill(slug);
-    await dialog.getByLabel('Theme', {exact:true}).selectOption('dark');
+    await dialog.locator('select[name="theme"]').selectOption('dark');
     await dialog.locator('input[name="duplicate"]').check();
     await dialog.locator('input[name="header"][value="search"]').check();
     await dialog.locator('input[name="header"][value="duplicate"]').check();
@@ -84,6 +88,35 @@ export async function publicProfileJourney(state) {
     const grantsBefore = await api(`/api/sharing/pages/${id}`);
     const versionsBefore = await api(`/api/revisions/${id}`);
     await profile('link');
+
+    // A page with no exposure can be published directly with the one toggle.
+    const freshId = (await ok(context, origin, 'POST', '/api/pages', {
+      operationKey:crypto.randomUUID(), containerId:container.id, title:'Synthetic link-only page',
+    })).value.pageId;
+    await page.goto(`${origin}/app/pages/${freshId}`, {waitUntil:'networkidle'});
+    await showSettings();
+    const linkSwitch = page.getByRole('switch', {name:'Public link', exact:true});
+    await expect(linkSwitch).not.toBeChecked();
+    assert.equal((await api(`/api/publishing/${freshId}`)).exposure, null);
+    await linkSwitch.check();
+    await expect(linkSwitch).toBeChecked();
+    const fresh = (await api(`/api/publishing/${freshId}`)).exposure;
+    assert.ok(fresh.slug);
+    assert.equal(fresh.host, new URL(origin).host);
+    assert.equal(fresh.indexable, false);
+    assert.ok(fresh.theme);
+    assert.deepEqual(fresh.headerControls, []);
+    assert.equal(fresh.duplicateAsTemplate, false);
+    assert.deepEqual(fresh.socialPreview, {});
+    assert.equal(fresh.revokedAt, null);
+    const freshUrl = `${origin}/p/${fresh.slug}`;
+    await expect(page.getByRole('link', {name:freshUrl, exact:true})).toHaveAttribute('href', freshUrl);
+    const freshResponse = await fetch(freshUrl);
+    assert.equal(freshResponse.status, 200);
+    assert.match(await freshResponse.text(), /Synthetic link-only page/);
+    await linkSwitch.uncheck();
+    await expect.poll(async () => (await fetch(freshUrl)).status).toBe(404);
+
     await open();
     const settings = page.locator('.publication-settings');
     await expect(page.getByRole('complementary', {name:'Live public site', exact:true})).toHaveCount(0);
@@ -97,7 +130,7 @@ export async function publicProfileJourney(state) {
     await expect.poll(read).toEqual({...retained,indexable:true});
     await anonymous(200, true);
     await page.reload({waitUntil:'networkidle'});
-    await openPageAction(page, 'Public access');
+    await showSettings();
     await expect(indexing).toBeChecked();
     await indexing.uncheck();
     await expect.poll(read).toEqual(retained);
@@ -131,7 +164,7 @@ export async function publicProfileJourney(state) {
     await expect(page.getByRole('complementary', {name:'Live public site', exact:true})).toBeVisible();
     await page.getByRole('button', {name:'Edit public settings', exact:true}).click();
     await expect(dialog.getByLabel('Public address', {exact:true})).toHaveValue(slug);
-    await expect(dialog.getByLabel('Theme', {exact:true})).toHaveValue('dark');
+    await expect(dialog.locator('select[name="theme"]')).toHaveValue('dark');
     await expect(dialog.locator('input[name="duplicate"]')).toBeChecked();
     await expect(dialog.locator('input[name="header"][value="search"]')).toBeChecked();
     await expect(dialog.locator('input[name="header"][value="duplicate"]')).toBeChecked();
