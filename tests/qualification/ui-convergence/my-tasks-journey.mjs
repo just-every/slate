@@ -50,7 +50,7 @@ export async function myTasksJourney(state, people) {
   await expect(bob.page.getByRole('tab', { name: 'Assigned to me', exact: true })).toHaveAttribute('aria-selected', 'true');
   await expect(bob.page.locator('.task-filters label').filter({ hasText: /^State/ }).locator('select')).toHaveValue('open');
   await expect(bob.page.locator('.task-filters label').filter({ hasText: /^Sort/ }).locator('select')).toHaveValue('due');
-  const rows = bob.page.locator('.task-list > li a[href*="#block-"]');
+  const rows = bob.page.locator('.task-list > li a.task-title');
   await expect(rows).toHaveText(['Confirm the vendor contract', 'Draft the rollout notes', 'Book the review room']);
   await accessible(bob.page, 'my tasks open by due date');
   await shot(bob.page, 'three-open');

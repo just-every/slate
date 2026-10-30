@@ -3,9 +3,6 @@
 .task-metadata button { padding:.15rem .2rem; text-decoration:underline; text-underline-offset:3px; }
 .task-overdue { color:var(--slate-danger,#a13e2c); font-weight:600; }
 .task-date-picker { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; font-size: var(--text-small); }
-.task-filters { display:flex; flex-wrap:wrap; align-items:end; gap:.75rem; margin:1.2rem 0 1.5rem; }
-.task-filters label { display:flex; flex-direction:column; gap:.3rem; font-size: var(--text-small); color:var(--slate-ink-muted); flex:1 1 120px; min-width:0; }
-.task-filters input,.task-filters select { width:100%; min-width:0; }
 .task-list { margin:0; padding:0; list-style:none; }
 .task-list li { display:flex; gap:1rem; align-items:start; padding:1.2rem 0; border-bottom:1px solid var(--slate-line); }
 .task-list li>div { flex:1; min-width:0; overflow-wrap:anywhere; }
@@ -14,11 +11,51 @@
 .task-list p { font-size: var(--text-small); color:var(--slate-ink-muted); margin:.3rem 0 0; }
 .task-list time,.task-list li>span { font-size: var(--text-small); padding-top:.15rem; }
 .task-completed { text-decoration:line-through; color:var(--slate-ink-muted); }
-.reminder-list { list-style:none; padding:0; }
-.reminder-list li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.5rem; padding:.75rem 0; border-bottom:1px solid var(--slate-line); font-size:.85rem; }
+.reminder-list { margin:0; padding:0; list-style:none; }
+.reminder-list li { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:.5rem; padding:.75rem 0; font-size:15px; }
 .home-tasks { margin:0 0 1.5rem; }
-@media(max-width:600px) { .task-filters { gap:.65rem; } .task-list li { flex-wrap:wrap; gap:.5rem .75rem; } .task-list li>div { flex-basis:calc(100% - 3.5rem); } .task-list time,.task-list li>span { margin-left:3.5rem; } }
+@media(max-width:600px) { .task-list li { flex-wrap:wrap; gap:.5rem .75rem; } .task-list li>div { flex-basis:calc(100% - 3.5rem); } .task-list time,.task-list li>span { margin-left:3.5rem; } }
 
 @media (max-width: 700px) {
   .slate-app .task-list li > div > a { display: inline-flex; align-items: center; min-height: var(--slate-tap-target); }
+}
+
+/* My tasks: open rows of a 20px box, the task, one meta line and a chevron; the hairlines come from the row list. */
+.slate-app .tasks-workspace .filter-band:is([data-open="false"]) .band-fields { display: none; }
+.slate-app .tasks-workspace .filter-band:is([data-open="false"]) > .chips { align-self: center; }
+.slate-app .task-rows > li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 0 20px; padding: 18px 0; border-bottom: 0; }
+.slate-app .task-rows > li > input[type="checkbox"] {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 0;
+  border: 1px solid var(--slate-line-strong);
+  border-radius: 5px;
+  background-color: var(--slate-main);
+}
+.slate-app .task-rows > li > input[type="checkbox"]:checked { border-color: var(--slate-accent); background-color: var(--slate-accent); }
+.slate-app .task-rows > li > input[type="checkbox"]:checked::after { content: ""; width: 5px; height: 10px; margin-top: -2px; border: solid var(--slate-accent-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.slate-app .task-rows > li > input[type="checkbox"]:disabled { opacity: .5; }
+.slate-app .task-rows .task-title { color: var(--slate-ink-strong); font-size: 17px; font-weight: 400; line-height: 24px; }
+.slate-app .task-rows .task-title.task-completed { color: var(--slate-ink-muted); }
+.slate-app .task-rows .task-title:hover, .slate-app .task-rows p.meta > a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.slate-app .task-rows p.meta { margin: 2px 0 0; color: var(--slate-ink-muted); font-size: 14px; line-height: 20px; }
+.slate-app .task-rows p.meta time { padding: 0; font-size: inherit; }
+.slate-app .task-rows .row-open { border-color: transparent; background-color: transparent; color: var(--slate-ink-muted); }
+.slate-app .task-rows .row-open:hover { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
+.slate-app .list-empty { margin: 16px 0 0; }
+.slate-app .list-empty > p { margin: 0; color: var(--slate-ink); font-size: 15px; line-height: 22px; }
+.slate-app .list-empty > p.meta { margin-top: 2px; color: var(--slate-ink-muted); font-size: 14px; }
+.slate-app .reminders > .section-label { margin-top: 48px; }
+.slate-app .list-hint { display: flex; align-items: center; gap: 12px; margin: 16px 0 0; color: var(--slate-ink-muted); font-size: 15px; line-height: 22px; }
+.slate-app .list-hint > svg { flex: none; width: 18px; height: 18px; }
+@media (max-width: 700px) {
+  .slate-app .tasks-workspace .filter-band[data-choice="default"] .band-fields { display: none; }
+  .slate-app .task-rows > li { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 0 8px; padding: 10px 0; }
+  .slate-app .task-rows > li > input[type="checkbox"] { width: 44px; height: 44px; min-height: 44px; border: 12px solid transparent; border-radius: 16px; background-clip: padding-box; box-shadow: inset 0 0 0 1px var(--slate-line-strong); }
+  .slate-app .task-rows > li > input[type="checkbox"]:checked { border-color: transparent; box-shadow: none; }
+  .slate-app .task-rows > li > input[type="checkbox"]:focus-visible { outline-offset: -10px; }
 }
