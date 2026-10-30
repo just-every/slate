@@ -88,7 +88,7 @@
 .slate-app .main[data-layout="wide"] { max-width: calc(var(--col-wide) + 2 * var(--col-gutter)); }
 /* A page keeps its reading measure on the shared left edge. */
 .slate-app .main.page-document:not(.page-full-width) > * { max-width: var(--col-reading); }
-/* The one page-title step: Lyon Text 36px on every destination and at every width. */
+/* The one page-title step: Lyon Text 36px on every destination, 32px at phone width so content starts in the first half. */
 .slate-app .page-title {
   margin: 0 0 16px;
   color: var(--slate-ink-strong);
@@ -110,7 +110,7 @@
   padding: 0 16px;
   border: 0;
   border-radius: 8px;
-  background-color: transparent;
+  background-color: var(--slate-canvas);
   color: var(--slate-ink);
   font-size: 16px;
   font-weight: 500;
@@ -126,6 +126,7 @@
   .slate-app .topbar { flex-wrap: wrap; row-gap: 4px; min-height: 61px; padding: 8px 16px; }
   .slate-app .crumbs { flex: 1 1 auto; }
   .slate-app .main { padding-top: 24px; }
+  .slate-app .page-title { font-size: 32px; }
 }
 
 @media (max-width: 700px) {
