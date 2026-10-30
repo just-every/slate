@@ -708,8 +708,13 @@
       "id": "WEB-007",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for WEB-007 — Public-link profile. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "CONTRACT.md owns clause status. The loaded native browser journey covers both public profiles, exact controls, anonymous reads, full-access refusal and retained imported exposure metadata across settings saves and reload.",
+      "supportingTests": [
+        {
+          "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+          "testName": "page creation destinations and editor locks preserve readable content at 1440px"
+        }
+      ]
     },
     {
       "id": "REV-001",

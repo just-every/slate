@@ -1,4 +1,5 @@
 import {contentQueryJourney} from './content-query-journey.mjs';
+import {publicProfileJourney} from './public-profile-journey.mjs';
 import { publicationJourney } from './publication-journey.mjs';
 import {unpublishedChangesJourney} from './unpublished-changes-journey.mjs';
 import {pageDetailsJourney} from './page-details-journey.mjs';
@@ -258,6 +259,7 @@ for (const width of [1440]) {
       await step('TREE-005 — create in place names root and child destinations', () => createInPlaceJourney(state));
       await state.switchIdentity('owner');
       await step('review, publish, edit and cancel a scheduled publication', () => publicationJourney(state));
+      await step('WEB-007 — public profiles retain exposure and current publication authority', () => publicProfileJourney(state));
       await state.switchIdentity('owner');
       await withSecondPerson(state, width, people => step('PAGE-015 — locks protect content while editors comment and unlock', () => pageLockBrowserJourney(state, people)));
     }, {}, {scheduled:true});

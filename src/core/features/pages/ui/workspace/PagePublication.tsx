@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DocumentView } from "../../../../client/content";
-import { mutate, operationKey } from "../../../../client/transport";
+import { errorMessage, mutate, operationKey } from "../../../../client/transport";
 import { useResource } from "../../../../client/useResource";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import { RequestState } from "../../../../app/ui/RequestState";
@@ -29,6 +29,8 @@ export function PagePublication({
   );
   const [action, setAction] = useState<"edit" | "revoke" | null>(null);
   const [key, setKey] = useState("");
+  const [savingLink, setSavingLink] = useState(false);
+  const [linkError, setLinkError] = useState<unknown>();
   if (!document.permissions.canShare) return null;
   const exposure = resource.data?.exposure;
   const site = document.policyProfile["page.public-access.v1"] === "site";
@@ -38,6 +40,25 @@ export function PagePublication({
   const open = (value: "edit" | "revoke") => {
     setKey(operationKey());
     setAction(value);
+  };
+  const saveLink = async (changes: { revoke?: boolean; indexable?: boolean }) => {
+    setSavingLink(true);
+    setLinkError(undefined);
+    try {
+      await mutate(`/api/publishing/${document.page.id}`, {
+        operationKey: operationKey(),
+        expectedRevisionId: revision,
+        host: exposure?.host ?? window.location.host,
+        slug: exposure?.slug ?? crypto.randomUUID(),
+        ...changes,
+      });
+      await resource.reload();
+      window.dispatchEvent(new Event("slate:public-page-changed"));
+    } catch (cause) {
+      setLinkError(cause);
+    } finally {
+      setSavingLink(false);
+    }
   };
   return (
     <section className="publication-settings">
@@ -51,7 +72,39 @@ export function PagePublication({
         error={resource.error}
         retry={resource.reload}
       >
-        {exposure && !exposure.revokedAt ? (
+        {!site ? (
+          <>
+            <label>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={!!exposure && !exposure.revokedAt}
+                disabled={blocked || resource.loading || savingLink}
+                onChange={(event) => void saveLink({ revoke: !event.currentTarget.checked })}
+              />
+              Public link
+            </label>
+            {blocked ? <p>Publish a workspace revision first.</p> : null}
+            {exposure && !exposure.revokedAt ? (
+              <>
+                <a href={`${window.location.protocol}//${exposure.host}/p/${exposure.slug}`} target="_blank" rel="noreferrer">
+                  {`${window.location.protocol}//${exposure.host}/p/${exposure.slug}`}
+                </a>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={exposure.indexable}
+                    disabled={savingLink}
+                    onChange={(event) => void saveLink({ indexable: event.currentTarget.checked })}
+                  />
+                  Allow search engines to index this page
+                </label>
+                <button disabled={savingLink} onClick={() => open("revoke")}>Stop public access</button>
+              </>
+            ) : null}
+            {linkError ? <p role="alert">{errorMessage(linkError)}</p> : null}
+          </>
+        ) : exposure && !exposure.revokedAt ? (
           <>
             <a
               href={`${window.location.protocol}//${exposure.host}/p/${exposure.slug}`}
@@ -87,7 +140,7 @@ export function PagePublication({
           onSubmit={async (data) => {
             const settings =
               action === "revoke"
-                ? exposure!
+                ? { host: exposure!.host, slug: exposure!.slug }
                 : {
                     host: site ? String(data.get("host")) : exposure?.host ?? window.location.host,
                     slug: site ? String(data.get("slug")) : exposure?.slug ?? crypto.randomUUID(),
