@@ -3976,11 +3976,13 @@ Contributed tree node kinds beyond pages, databases, cards and posts, and cross-
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
 
+IMP-005 source reviewed at commit `f9473f297817db032e997eef963df8f87ec4c788` (31 October 2026); the exact candidate is named by branch Verify and the guarded lander.
+
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4146,7 +4148,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `IMP-003` | Confluence import | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public Confluence, Word and Google Docs import journey that opens the resulting tree, versions, links and loss report; the cited incumbent-export test calls parsers directly. |
 | `IMP-016` | Imported Confluence principal and restriction mapping | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public reviewed-mapping journey that applies active and unresolved restrictions and tries unsafe principal mapping without widening; the cited incumbent-export test reads parsed source restrictions only. |
 | `IMP-004` | Import safety | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public import journey that records network requests for an archive with missing and hostile media and reads the retained links and losses; the cited parser checks do not go through the import door. |
-| `IMP-005` | Importing into a page | published | partial | `tests/flagship/federation/federation.test.ts` | Missing a public page-import journey covering Markdown, HTML, Word, PDF, EPUB, plain text and CSV with headings, tables and losses; the cited federation flow invokes import services directly for a narrower document set. |
+| `IMP-005` | Importing into a page | published | done | `tests/flagship/federation/federation.test.ts` — "durable imports and federation imports, source authority and portable archives persist exactly through failure and recovery", calling `tests/flagship/federation/document-import-journey.ts` — "documentImportJourney": acceptance 1 reads original bytes, stored loss reports and sanitized blocks, checks supplied media without network requests, and refuses invalid uploads, stale destinations, non-editors, revoked access and revoked-session replay without changing content; acceptance 2 imports all seven formats through native multipart and streaming uploads, reads exact headings, table cells and typed CSV records, retains existing append content and child hierarchy, and refuses CSV flattening. `tests/e2e/imports/parsers.test.ts` — "explicit import formats preserve their content and relationships" retains the format regressions. | |
 | `PORT-001` | Export contents | published | partial | `tests/qualification/erasure-metadata/atomic-custody.test.ts` — "Erasure ARCH-006 BASE-DATA-003 PORT-001 PORT-002: atomic page and member custody erasure survives cleanup failure, restore and re-export" | Missing a public export journey that populates and opens every promised wiki record family, revisions, grants and original files; the cited erasure flow checks retained import custody through service-level export. |
 | `PORT-002` | Referential restore | published | partial | `tests/qualification/erasure-metadata/atomic-custody.test.ts` — "Erasure ARCH-006 BASE-DATA-003 PORT-001 PORT-002: atomic page and member custody erasure survives cleanup failure, restore and re-export" | Missing a public empty-install restore journey that opens all restored permanent links, revisions, grants, comments, public slugs and files; the cited erasure flow restores and checks a limited custody fixture through services. |
 | `PORT-003` | Visible jobs | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Export and import show Queued, Running, Completed or Failed with record counts and, on failure, a report naming what failed."<br>No validated CI-run proof for this acceptance point: "A failed job is never shown as complete." |
