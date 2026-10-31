@@ -63,6 +63,11 @@ export async function groupingHttpJourney(database: { id: string }, owner: strin
     expect(normalized(query.groups[0].groups)).toEqual(normalized(expected.map(([value, pageIds]) => ({ value, count: pageIds.length, pageIds }))));
     const reader = (await call('GET', base + '/views/' + view.id, viewer)).body;
     expect(reader.records.map((r: any) => r.pageId).sort()).toEqual([first.pageId, empty.pageId].sort());
+    const declared = ['select', 'status', 'checkbox'].includes(fields.find(item => item.id === field)!.type);
+    const expectedReader = expected.map(([value, ids]) => ({ value, pageIds: ids.filter(id => id !== second.pageId) }))
+      .filter(group => group.pageIds.length || group.value === null || declared)
+      .map(group => ({ ...group, count: group.pageIds.length }));
+    expect(normalized(reader.groups[0].groups)).toEqual(normalized(expectedReader));
     for (const group of reader.groups[0].groups) {
       expect(group.pageIds).not.toContain(second.pageId);
       expect(group.count).toBe(group.pageIds.length);

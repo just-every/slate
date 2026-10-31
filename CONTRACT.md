@@ -190,7 +190,7 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 - `DB-003`: *Tier:* Core
 - `DB-004`: *Tier:* Core
 - `DB-005`: *Tier:* Core
-- `DB-006`: *Tier:* Core
+- `DB-006`: *Tier:* Core · *Cites:* BASE-ACCESS-004
 - `DB-007`: *Tier:* Core
 - `DB-008`: *Tier:* Core
 - `DB-009`: *Tier:* Core
@@ -3978,9 +3978,9 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4096,7 +4096,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `DB-003` | Views | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A database has several named views over one set of records."<br>No validated CI-run proof for this acceptance point: "A view is saved for everyone who can see the database, is renamed, duplicated and deleted by anyone with edit access, and never changes the records it shows." |
 | `DB-004` | Layouts | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A view is a table, a board, a list, a gallery, a calendar or a timeline."<br>No validated CI-run proof for this acceptance point: "A board or calendar requires the field it groups or dates by, and offers to create it rather than failing when it is missing." |
 | `DB-005` | Filter and sort | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A view carries filter rules over any field, combined with and or or, and an ordered list of sorts."<br>No validated CI-run proof for this acceptance point: "Both are stored on the view, are shown in force above the records, and are cleared in one action." |
-| `DB-006` | Group | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A view groups its records by a select, status, person, checkbox or date field, shows the count in each group, allows a record to be moved between groups where the field permits it, and hides empty groups on request." |
+| `DB-006` | Group | published | done | Acceptance 1–2: `tests/qualification/ui-convergence/database-grouping-journey.mjs` — databaseGroupingJourney, called by databaseJourney in the existing spreadsheet tables journey; `tests/flagship/structured/http.test.ts` — Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input, with groupingHttpJourney. Native saved views cover all five groupable types, exact authorized membership and counts, typed moves, retained other assignees, empty groups, reload and viewer refusal. | |
 | `DB-007` | Calculations | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Each column in a table view carries a calculation under it — count, filled, empty, sum, average, minimum, maximum, range or percent — computed over the view's filtered records and updated within 2 seconds of a change." |
 | `DB-008` | Charts | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A chart is built over one view, showing counts or a numeric field aggregated by a grouping field, and can be embedded in a page (`DB-011`)."<br>No validated CI-run proof for this acceptance point: "It reads the same filtered records the view shows and states which view it reads." |
 | `DB-009` | Lock structure | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A database's structure can be locked, which rejects field, view, filter, sort and layout changes while allowing record edits, names who locked it, and is unlocked by anyone with `full` access." |

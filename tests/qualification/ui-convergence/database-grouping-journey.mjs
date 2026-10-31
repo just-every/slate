@@ -37,6 +37,14 @@ export async function databaseGroupingJourney(state) {
   const names = new Map([[first.pageId, 'First task'], [second.pageId, 'Second task'], [empty.pageId, 'Unassigned task']]);
   const canonical = async () => (await api(base + '/records/' + first.pageId)).values;
   const group = label => page.getByRole('region', { name: label, exact: true });
+  async function capture(label) {
+    await mkdir('.artifacts/ui-convergence/grouping', { recursive: true });
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
+      await page.screenshot({ path: `.artifacts/ui-convergence/grouping/${label}-${width}.png`, fullPage: true });
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+  }
   const label = value => value == null ? 'No value' : ({
     'browser-owner': 'Alex Owner', 'browser-reader': 'Morgan Reader', 'synthetic-slate-person': 'Sam Contributor',
     '2040-06-01': '01 Jun 2040', '2040-06-02': '02 Jun 2040',
@@ -60,7 +68,8 @@ export async function databaseGroupingJourney(state) {
     await page.getByRole('button', { name: 'View options', exact: true }).click();
     await page.getByRole('menuitem', { name: 'View settings', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'View settings', exact: true });
-    await dialog.getByLabel('Group by', { exact: true }).selectOption(field);
+    await dialog.getByRole('combobox', { name: /^Group by/ }).selectOption(field);
+    if (field === 'selection') await capture('view-settings');
     await dialog.getByRole('button', { name: 'Save view', exact: true }).click();
     await expect(dialog).not.toBeVisible();
     await page.reload({ waitUntil: 'networkidle' });
@@ -69,8 +78,10 @@ export async function databaseGroupingJourney(state) {
   }
   async function move(from, to, expectedValue, field) {
     const trigger = group(from).getByRole('button', { name: 'Move First task to another group', exact: true });
+    await page.keyboard.press('Tab');
     await trigger.focus();
-    await expect(trigger).toHaveAttribute('data-tooltip', 'Move group');
+    await expect.poll(() => trigger.evaluate(element => getComputedStyle(element, '::after').opacity)).toBe('1');
+    await expect(trigger).toHaveAttribute('data-tooltip', /\S+\s+\S+/);
     await trigger.click();
     const receipt = page.waitForResponse(response => new URL(response.url()).pathname === base + '/records/' + first.pageId
       && response.request().method() === 'PATCH');
@@ -98,12 +109,18 @@ export async function databaseGroupingJourney(state) {
     console.log(`PROBE DB-006 ${field}: saved board and native move -> typed value, exact membership and counts retained after reload`);
     if (field === 'selection') {
       const toggle = page.getByRole('switch', { name: 'Hide empty groups', exact: true });
-      await toggle.check();
+      let saved = page.waitForResponse(response => new URL(response.url()).pathname === base + '/views' && response.request().method() === 'POST');
+      await toggle.click();
+      assert.equal((await saved).status(), 200);
+      await expect(toggle).toBeChecked();
       await page.reload({ waitUntil: 'networkidle' });
       await expect(group('Unused')).toHaveCount(0);
       await expect(group('Alpha')).toHaveCount(0);
       assert.equal((await api(base)).views.find(item => item.id === view.id).groups[0].hideEmpty, true);
-      await toggle.uncheck();
+      saved = page.waitForResponse(response => new URL(response.url()).pathname === base + '/views' && response.request().method() === 'POST');
+      await toggle.click();
+      assert.equal((await saved).status(), 200);
+      await expect(toggle).not.toBeChecked();
       await page.reload({ waitUntil: 'networkidle' });
       await reconcile(moved);
     }
@@ -140,10 +157,5 @@ export async function databaseGroupingJourney(state) {
   await state.switchIdentity('owner');
   assert.deepEqual(await canonical(), snapshot);
   await page.reload({ waitUntil: 'networkidle' });
-  await mkdir('.artifacts/ui-convergence/grouping', { recursive: true });
-  for (const width of [1440, 390]) {
-    await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
-    await page.screenshot({ path: `.artifacts/ui-convergence/grouping/board-${width}.png`, fullPage: true });
-  }
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await capture('board');
 }
