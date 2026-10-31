@@ -1,4 +1,5 @@
 import {runFoldCases} from '../fold-cases';
+import {documentImportJourney} from './document-import-journey';
 import {scheduledBackupJourney} from '../../e2e/imports/scheduled-backup-journey';
 import {contract} from '../../e2e/contract';
 import {applyReviewedSpace} from '../../e2e/imports/reviewed-space';
@@ -23,6 +24,7 @@ afterEach(()=>{vi.unstubAllGlobals();});
 describe('durable imports and federation',()=>{
  it("imports, source authority and portable archives persist exactly through failure and recovery", async () => {
   await runFoldCases([
+{name:"native document imports retain formatted content and current destination authority",before:async()=>{await reset();},run:documentImportJourney},
 {name:"durable imports and federation persists a real Google Docs export, retains original, searchable canonical content, and replays without duplicate pages",before:async()=>{await reset();},run:async()=>{
 try {
 const ctx=await context();const bytes=new Uint8Array(await(await (env as typeof env & {TEST_IMPORT_FIXTURES:Fetcher}).TEST_IMPORT_FIXTURES.fetch('https://fixtures/google-docs-download.docx')).arrayBuffer());const job=await startImport(ctx,{operationKey:'real-google-docx',format:'google-docx',source:{name:'google.docx',bytes}});const complete=await runImport(ctx,job.id);expect(complete.state).toBe('completed');const pages=await ctx.db.prepare('SELECT id,title FROM pages WHERE workspace_id=?').bind(ctx.actor.workspaceId).all();expect(pages.results.length).toBeGreaterThan(0);expect(await ctx.db.prepare('SELECT count(*) AS count FROM page_blocks').first<number>('count')).toBeGreaterThan(0);await runImport(ctx,job.id);expect((await ctx.db.prepare('SELECT id FROM pages WHERE workspace_id=?').bind(ctx.actor.workspaceId).all()).results.length).toBe(pages.results.length);expect(await ctx.files.get(complete.archive_key)).not.toBeNull();await expect(startImport(ctx,{operationKey:'real-google-docx',format:'text',source:{name:'different.txt',bytes:new TextEncoder().encode('different')}})).rejects.toMatchObject({code:'OPERATION_KEY_CONFLICT'});

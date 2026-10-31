@@ -91,7 +91,10 @@ export function parseCsvDocument(source: ImportSourceFile, options?: ImportParse
         sourceId: recordId,
         sourceIdentityKind: "path-derived" as const,
         databaseSourceId: databaseId,
-        fields: Object.fromEntries(header.map((name, field) => [name, record[field] ?? ""])),
+        fields: Object.fromEntries(fields.map((field, index) => {
+          const value = record[index] ?? "";
+          return [field.name, field.type === "number" ? (value ? Number(value) : null) : field.type === "checkbox" ? (value ? /^true$/i.test(value) : null) : value];
+        })),
         blocks: [csvTableBlock([header, record], recordId)],
         labels: [],
       };

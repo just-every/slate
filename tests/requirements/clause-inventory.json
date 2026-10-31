@@ -1580,7 +1580,7 @@
       "id": "IMP-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of IMP-005 — Importing into a page. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This legacy inventory classifies supporting registrations only; CONTRACT.md owns clause status. The loaded federation registration now invokes documentImportJourney through native HTTP uploads and runs for every named document format, with exact persisted content, reports, media, hierarchy and unsafe-case readback. It makes no claim about live external providers or unrelated import clauses.",
       "supportingTests": [
         {
           "file": "tests/flagship/federation/federation.test.ts",

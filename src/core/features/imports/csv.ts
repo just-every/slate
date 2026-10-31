@@ -54,7 +54,7 @@ function inferFieldType(values: string[]): string {
   const present = values.filter(Boolean);
   if (!present.length) return "text";
   if (present.every((value) => /^(true|false)$/i.test(value))) return "checkbox";
-  if (present.every((value) => /^-?(?:\d+|\d*\.\d+)$/.test(value))) return "number";
+  if (present.every((value) => /^-?(?:\d+|\d*\.\d+)$/.test(value) && !/^-?0\d/.test(value) && Number.isFinite(Number(value)) && (!/^-?\d+$/.test(value) || Number.isSafeInteger(Number(value))))) return "number";
   if (present.every((value) => /^\d{4}-\d{2}-\d{2}(?:[T ].*)?$/.test(value))) return "date";
   return "text";
 }
