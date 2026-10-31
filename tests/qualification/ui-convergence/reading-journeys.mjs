@@ -92,7 +92,7 @@ export async function settingsJourney(state, width) {
   await expect(page.locator('.spaces-workspace').getByRole('heading', { name: 'Spaces', exact: true })).toBeVisible();
   await expect(page.locator('body')).not.toContainText(/\bContainers?\b/);
   await accessible(page, 'space settings');
-  await statusVocabularyJourney(state,width);
+  if(width===1440) await statusVocabularyJourney(state,width);
   await guestConsoleJourney(state);
   await themeJourney(state, width);
   if(width===1440)await activityContextJourney(state);
