@@ -10440,7 +10440,7 @@
       "executable": false
     },
     "tests/e2e/imports/indexing-journey.ts": {
-      "sha256": "eba11e0db255fd8cb4f9586bd90d266c73af37de4bef8124a3bf619162c90643",
+      "sha256": "a791e89a159cbc682e0e74115a0eb86799e91cd7b94d4b8746dd1afb3dad75d3",
       "executable": false
     },
     "tests/e2e/imports/inflate-bounds.test.ts": {

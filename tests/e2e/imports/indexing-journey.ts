@@ -91,14 +91,23 @@ export async function indexingJourney(){
  }finally{await env.DB.exec('DROP TRIGGER IF EXISTS _slate_index_renew');}
 
  // With no dirty key left, a missing canonical projection still forbids
- // completion. Requeue that canonical page, then resume instead of republishing.
+ // completion. A stale record projection also must not satisfy the fence when
+ // the missing page is repaired. Neither fault changes the published source.
  const missing=pages.find(page=>page.page_kind==='page')!;
+ const stale=pages.find(page=>page.page_kind==='record'&&`record:${page.id}`!==renewedKey)!;
+ await env.DB.prepare("UPDATE search_text SET document_json=json_set(document_json,'$.revisionId','synthetic-slate-stale-1') WHERE key=? AND variant='working'").bind(`record:${stale.id}`).run();
  await env.DB.prepare('DELETE FROM search_text WHERE page_id=?').bind(missing.id).run();
  job=await call(`/${id}/resume`,{});expect(job.state).toBe('indexing');
  expect(await dirty()).toEqual([]);
  expect(await env.DB.prepare('SELECT key FROM search_text WHERE page_id=?').bind(missing.id).first()).toBeNull();
  expect((await call(`/${id}`)).state).toBe('indexing');
  await env.DB.prepare('UPDATE pages SET title=title WHERE id=?').bind(missing.id).run();
+ job=await call(`/${id}/resume`,{});expect(job.state).toBe('indexing');
+ expect(await dirty()).toEqual([]);
+ expect((await call(`/${id}`))).toMatchObject({state:'indexing',progress:{phase:'indexing',checkpoint:expected.length,total:expected.length}});
+ expect(JSON.parse((await projections()).find(row=>row.id===stale.id)!.document_json).revisionId).toBe('synthetic-slate-stale-1');
+ expect(await inventory()).toEqual(published);
+ await env.DB.prepare('UPDATE pages SET title=title WHERE id=?').bind(stale.id).run();
  job=await call(`/${id}/resume`,{});expect(job.state).toBe('completed');
  expect(job.progress).toEqual({phase:'indexing',checkpoint:expected.length,total:expected.length});
  expect(await dirty()).toEqual([]);
