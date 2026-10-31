@@ -1,5 +1,6 @@
 import {beforeEach,expect,it,vi} from 'vitest';
 import {env} from 'cloudflare:test';
+import {indexingJourney} from './indexing-journey';
 import {createApi} from '../../../src/core/app/hono';
 import {parseImport,type ImportFormat} from '../../../src/core/features/imports';
 import {seedWorkspace,seedMember,sessionFor} from '../setup/fixtures';
@@ -85,6 +86,7 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  expect((await app.request(`https://slate.example/api/pages/${independent!.id}`,{headers:{Cookie:cookie}},env)).status).toBe(404);
  expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM pages WHERE workspace_id=?').bind(workspaceId).first<number>('n')).toBeLessThan(pages.length);
  }
+ await resetCase();await indexingJourney();
 },120_000);
 
 it('erases historical and shared imported people through confirmed native removal, atomically retires custody and keeps unrelated Undo',async()=>{

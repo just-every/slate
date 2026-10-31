@@ -748,9 +748,10 @@
         "SEARCH-002",
         "SEARCH-003",
         "SEARCH-004",
-        "SEARCH-005"
+        "SEARCH-005",
+        "PORT-004"
       ],
-      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify."
+      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify. PORT-004 support is limited to the retained text-import canonical projection and dirty-generation readback before its first search; it does not establish complete imported-record search acceptance."
     },
     {
       "file": "tests/e2e/search/fts-upgrade.test.ts",
@@ -791,7 +792,7 @@
         "IMP-003",
         "IMP-016"
       ],
-      "reason": "Through actual Worker HTTP routes, the committed small anonymised export is previewed without target writes, explicitly applied and resumed, indexed before Completed, downloaded exactly and undone while preserving a native edit and reporting its conflict. This supports the listed flows only; it does not establish generated scale, hosted capacity, all UI states or complete product acceptance."
+      "reason": "Through actual Worker HTTP routes, the committed small anonymised export is previewed without target writes, explicitly applied and resumed, indexed before Completed, downloaded exactly and undone while preserving a native edit and reporting its conflict. This supports the listed flows only; it does not establish generated scale, hosted capacity, all UI states or complete product acceptance. The same registration also imports a bounded synthetic Notion archive containing ordinary pages and database records across multiple 100-key index batches. Before any search request, it reads durable Indexing progress through fresh job HTTP requests, interrupts a real D1 index transaction, renews a record dirty generation, withholds a page projection, repairs and resumes, and reconciles every expected canonical projection and absence of imported dirty keys while comparing unchanged native rows and import journals. This proves the bounded rebuild and completion fence only; full imported-record SEARCH-001 through SEARCH-006 satisfaction remains unproven."
     },
     {
       "file": "tests/e2e/imports/undo-cross-references.test.ts",
