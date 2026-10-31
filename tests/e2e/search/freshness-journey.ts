@@ -69,10 +69,10 @@ export async function freshnessJourney(f:Awaited<ReturnType<typeof searchFixture
  const imported=await request('POST','/imports',form);
  // A stale projection written during the text import's native rebuild must
  // keep this separate publication door Indexing, even with no dirty key left.
- await f.db.exec(`CREATE TRIGGER _slate_text_index_stale AFTER INSERT ON search_text
-  WHEN NEW.kind='page' AND NEW.text LIKE '%Freshness imported body%'
+ await f.db.exec(`CREATE TRIGGER _slate_text_index_stale AFTER DELETE ON search_dirty
+  WHEN EXISTS(SELECT 1 FROM search_text WHERE key=OLD.key AND kind='page' AND text LIKE '%Freshness imported body%')
   BEGIN UPDATE search_text SET document_json=json_set(document_json,'$.revisionId','synthetic-slate-stale-2')
-   WHERE key=NEW.key AND variant=NEW.variant; END`.replaceAll('\n',' '));
+   WHERE key=OLD.key AND variant='working'; END`.replaceAll('\n',' '));
  try{
   const indexed=await request('POST','/imports/'+imported.id+'/run',{});expect(indexed.state).toBe('indexing');
   expect((await request('GET','/imports/'+imported.id)).state).toBe('indexing');
