@@ -47,12 +47,14 @@ export function DatabaseWorkspace({ id }: { id: string }) {
     resource.data ? `/api/pages/${resource.data.database.page_id}` : null,
   );
   const [active, setActive] = useState<string>();
-  const view =
+  const selectedView =
     resource.data?.views.find((item) => item.id === active) ??
     resource.data?.views[0];
-  const query = useResource<QueryDto>(
-    view ? `/api/databases/${id}/views/${view.id}` : null,
+  const query = useResource<QueryDto & Pick<DatabaseDto, "database" | "fields"> & { view: ViewDto }>(
+    selectedView ? `/api/databases/${id}/views/${selectedView.id}` : null,
   );
+  // Keep the saved choice, typed fields and computed values from one query.
+  const view = query.data?.view ?? selectedView;
   const [fieldEdit, setFieldEdit] = useState<FieldDto>();
   const [fieldRemove, setFieldRemove] = useState<FieldDto>();
   const [mode, setMode] = useState<DatabaseMode>("records");
@@ -98,7 +100,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
     const { revisionId: _revisionId, ...input } = next;
     await mutate(`/api/databases/${id}/views`, {
       operationKey: operationKey(),
-      expectedRevisionId: resource.data.database.revision_id,
+      expectedRevisionId: query.data?.database.revision_id ?? resource.data.database.revision_id,
       view: input,
     });
     setActive(next.id);
@@ -125,7 +127,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
       stored = stored[0] ?? null;
     void saveValue(record, field, stored).catch(setError);
   }
-  const fields = resource.data?.fields ?? [];
+  const fields = query.data?.fields ?? resource.data?.fields ?? [];
   const references = useRecordReferences(fields, query.data?.records ?? []);
   const shown = fields.filter(
     (field) =>

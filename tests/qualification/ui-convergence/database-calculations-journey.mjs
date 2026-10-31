@@ -33,12 +33,12 @@ export async function databaseCalculationsJourney(state, { smoke = false } = {})
   const route = `${origin}/app/databases/${database.id}`;
   const queryPath = base + '/views/' + view.id;
   const footer = (screen, field = amount) => screen.locator('tfoot').getByRole('button').filter({ hasText: /./ }).and(screen.getByRole('button', { name: new RegExp(`(?:for ${field.name}:|total for ${field.name}$)`) }));
-  async function choose(field, kind, label) {
-    const saved = page.waitForResponse(response => new URL(response.url()).pathname === base + '/views' && response.request().method() === 'POST');
-    await footer(page, field).click();
-    await page.getByRole('menuitemradio', { name: label, exact: true }).click();
+  async function choose(field, kind, label, screen = page) {
+    const saved = screen.waitForResponse(response => new URL(response.url()).pathname === base + '/views' && response.request().method() === 'POST');
+    await footer(screen, field).click();
+    await screen.getByRole('menuitemradio', { name: label, exact: true }).click();
     assert.ok((await saved).ok());
-    await expect(footer(page, field)).toHaveAccessibleName(new RegExp(`^${label} for ${field.name}:`));
+    await expect(footer(screen, field)).toHaveAccessibleName(new RegExp(`^${label} for ${field.name}:`));
     assert.equal((await api(base)).views.find(item => item.id === view.id).calculations[field.id], kind);
   }
   await page.goto(route, { waitUntil: 'networkidle' });
@@ -70,6 +70,12 @@ export async function databaseCalculationsJourney(state, { smoke = false } = {})
       await expect(footer(person.page, note)).toHaveAccessibleName(`Percent for Note: ${person === reader ? 75 : 80}`);
     }
     if (!smoke) {
+      // A shared choice and its value must arrive as one authoritative query.
+      await choose(amount, 'count', 'Count', reader.page);
+      await expect(footer(page)).toHaveAccessibleName('Count for Amount: 5', { timeout: 2000 });
+      await expect(footer(reader.page)).toHaveAccessibleName('Count for Amount: 4');
+      await choose(amount, 'sum', 'Sum');
+      await expect(footer(reader.page)).toHaveAccessibleName('Sum for Amount: 4', { timeout: 2000 });
       async function edit(person, title, next, ownerTotal, readerTotal) {
         for (const [screen, total] of [[page, ownerTotal], [reader.page, readerTotal]]) await screen.evaluate(expected => {
           window.slateCalculation?.observer.disconnect();
