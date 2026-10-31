@@ -23,6 +23,7 @@ import { backupsJourney } from './backups-journey.mjs';
 import { presentationJourney } from './presentation-journey.mjs';
 import { analyticsJourney } from './analytics-journey.mjs';
 import { reactionsJourney } from './reactions-journey.mjs';
+import { pageAppearanceJourney } from './page-appearance-journey.mjs';
 import { pageDisplayJourney } from './page-display-journey.mjs';
 import { createInPlaceJourney } from './create-in-place-journey.mjs';
 import assert from 'node:assert/strict';
@@ -120,6 +121,8 @@ for (const width of [390]) {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await treeFilterJourney(state);
+      await state.switchIdentity('owner');
+      await withSecondPerson(state, width, people => pageAppearanceJourney(state, people));
       await state.switchIdentity('owner');
       await settingsJourney(state,width);
       await workspaceAuthorityJourney(state,width);
@@ -364,10 +367,13 @@ for (const width of [1440]) {
 }
 
 for (const width of [1440]) {
-  test(`page display settings are shared and survive export and import at ${width}px`, { timeout: 180000 }, async () => {
+  test(`page display settings are shared and survive export and import at ${width}px`, { timeout: 300000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
-      await withSecondPerson(state, width, people => pageDisplayJourney(state, people));
+      await withSecondPerson(state, width, async people => {
+        await pageDisplayJourney(state, people);
+        await pageAppearanceJourney(state, people);
+      });
     });
   });
 }

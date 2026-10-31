@@ -12,6 +12,13 @@
 .slate-app .page-appearance > .stored-page-icon { font-size: 36px; margin: 8px 0; }
 .slate-app .page-cover-image { width: 100%; height: 180px; object-fit: cover; border-radius: 4px; margin-bottom: 12px; }
 .slate-app .stored-page-icon { display: inline-block; width: 1.25em; height: 1.25em; object-fit: contain; }
+.slate-app .page-cover-thumbnail { display: block; width: 64px; height: 44px; object-fit: cover; border-radius: 4px; }
+.slate-app .page-cover-load { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 8px; border: 1px solid var(--slate-line); border-radius: 4px; }
+.slate-app .page-cover-load svg { width: 18px; height: 18px; }
+.slate-app .tree-cover { flex: none; margin-inline: 4px; }
+.slate-app .tree-cover .page-cover-thumbnail { width: 32px; height: 24px; }
+.slate-app .search-result-cover { float: right; margin-inline-start: 12px; }
+.slate-app .search-results .stored-page-icon { vertical-align: middle; }
 .slate-app .editor-save-status { font-size: var(--text-small); color: var(--slate-ink-muted); margin-block: 8px 14px; }
 .slate-app [data-page-editor] > section > [data-slate-editable] { min-height: 44px; cursor: text; }
 .slate-app [data-block-id] { margin-bottom: 10px; }

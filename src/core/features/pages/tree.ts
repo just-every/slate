@@ -13,7 +13,7 @@ import { createUlid } from '../../shared/ulid';
 import { currentSubject, requirePageLevel, requireContainerLevel, resolveCurrentAccess, resolveCurrentAccessMany } from '../sharing/current-access';
 import { pageRow, pageGuard, ref, revisionStatement, snapshot, contentEvent } from './repository';
 import { createPage, readPage, destination, prepareCreatePage } from './service';
-import type { PageRow } from './types';
+import type { PageRow, PageProperties } from './types';
 import { validatePlacement, prepareOrder, treeTopologyGuard, destinationGuards, type MovePlacement } from './tree-order';
 export async function descendants(ctx: FeatureContext, id: string) { return (await ctx.db.prepare('WITH RECURSIVE tree(id) AS (SELECT id FROM pages WHERE id=? AND workspace_id=? UNION SELECT p.id FROM pages p JOIN tree t ON p.parent_page_id=t.id WHERE p.deleted_at IS NULL) SELECT p.* FROM pages p JOIN tree t ON t.id=p.id').bind(id, ctx.actor.workspaceId).all<PageRow>()).results; }
 export async function listPages(ctx: FeatureContext, containerId?: string, label?:string) {
@@ -21,8 +21,8 @@ export async function listPages(ctx: FeatureContext, containerId?: string, label
     const subject = await currentSubject(ctx);
     const [profile, result] = await Promise.all([
         contentPolicy(ctx),
-        ctx.db.prepare('SELECT p.*,c.name AS containerLabel,r.id AS publishedRevision,r.properties_json AS publishedProperties FROM pages p LEFT JOIN containers c ON c.id=p.container_id LEFT JOIN page_revisions r ON r.page_id=p.id AND r.id=p.published_revision_id WHERE p.workspace_id=? AND p.deleted_at IS NULL AND p.archived_at IS NULL AND p.trashed_at IS NULL AND (? IS NULL OR p.container_id=?) ORDER BY p.tree_position,p.id')
-            .bind(ctx.actor.workspaceId, containerId ?? null, containerId ?? null).all<PageRow & {containerLabel:string|null;publishedRevision:string|null;publishedProperties:string|null}>()
+        ctx.db.prepare('SELECT p.*,c.name AS containerLabel,r.id AS publishedRevision,r.properties_json AS publishedProperties,w.properties_json AS workingProperties FROM pages p LEFT JOIN containers c ON c.id=p.container_id LEFT JOIN page_revisions r ON r.page_id=p.id AND r.id=p.published_revision_id LEFT JOIN page_revisions w ON w.page_id=p.id AND w.id=p.working_revision_id WHERE p.workspace_id=? AND p.deleted_at IS NULL AND p.archived_at IS NULL AND p.trashed_at IS NULL AND (? IS NULL OR p.container_id=?) ORDER BY p.tree_position,p.id')
+            .bind(ctx.actor.workspaceId, containerId ?? null, containerId ?? null).all<PageRow & {containerLabel:string|null;publishedRevision:string|null;publishedProperties:string|null;workingProperties:string|null}>()
     ]);
     const rows = result.results;
     const labels=new Map<string,string[]>();
@@ -45,16 +45,19 @@ export async function listPages(ctx: FeatureContext, containerId?: string, label
         const sharedWithMe = !subject.containerIds.includes(p.container_id) && grants.some(grant =>
             grant.principalKind === 'member' && grant.principalId === subject.memberId &&
             !grant.revokedAt && (!grant.expiresAt || grant.expiresAt > ctx.now));
-        let title = p.title, icon = p.icon, visibleLabels=labels.get(p.id)??[];
+        const working = p.workingProperties ? JSON.parse(p.workingProperties) as PageProperties : undefined;
+        let title = p.title, icon = p.icon, cover = working?.cover ?? null, coverFileId = p.cover_file_id, visibleLabels=labels.get(p.id)??[];
         if ((access.level === 'view' || access.level === 'comment') && p.published_revision_id && p.published_revision_id !== p.working_revision_id) {
             if (!p.publishedRevision) throw new ApiProblem(404, 'NOT_FOUND', 'Not found.');
             const props = JSON.parse(p.publishedProperties!);
             title = props.title;
             icon = props.icon;
+            cover = props.cover ?? null;
+            coverFileId = props.coverFileId ?? null;
             visibleLabels=props.labels??[];
         }
         if(label&&!visibleLabels.some(value=>value.toLocaleLowerCase()===label.toLocaleLowerCase()))continue;
-        out.push({ ...ref(p), ...schedules.get(p.id), title, icon, labels:visibleLabels, parentPageId: p.parent_page_id, treePosition: p.tree_position, pageKind: p.page_kind, containerLabel: p.containerLabel ?? '', sharedWithMe, permissions: { level: access.level!, canEdit: !p.locked_at && (access.level === 'edit' || access.level === 'full'), canUnlock: access.level === 'edit' || access.level === 'full' } });
+        out.push({ ...ref(p), ...schedules.get(p.id), title, icon, cover, coverFileId, labels:visibleLabels, parentPageId: p.parent_page_id, treePosition: p.tree_position, pageKind: p.page_kind, containerLabel: p.containerLabel ?? '', sharedWithMe, permissions: { level: access.level!, canEdit: !p.locked_at && (access.level === 'edit' || access.level === 'full'), canUnlock: access.level === 'edit' || access.level === 'full' } });
     }
     return { items: out };
 }

@@ -20,7 +20,7 @@ export async function discoveryJourney(f:Awaited<ReturnType<typeof searchFixture
  ];
  for(const d of corpus) {
   await page(d.id,d.body,{title:d.title,status:d.status,restricted:d.private});
-  const props={title:d.title,icon:null,coverFileId:null,ownerMemberId:d.owner,statusKey:d.status,labels:[d.label],typeface:'sans',smallText:false,fullWidth:false};
+  const props={title:d.title,icon:d.id==='discovery-a'?'📚':null,coverFileId:null,cover:d.id==='discovery-a'?{kind:'gallery',id:'ocean'}:null,ownerMemberId:d.owner,statusKey:d.status,labels:[d.label],typeface:'sans',smallText:false,fullWidth:false};
   await sql('INSERT INTO page_labels(page_id,label,created_at) VALUES(?,?,?)',d.id,d.label,now);
   await sql('INSERT INTO page_contributors VALUES(?,?,?)',d.id,d.by,now);
   await sql("INSERT INTO page_revisions(id,page_id,author_member_id,origin,content_hash,body_json,properties_json,created_at) VALUES(?,?,'owner','autosave','h',?,?,?)",'r-'+d.id,d.id,JSON.stringify([{id:'b-'+d.id,blockType:'paragraph',treePosition:'a',revisionId:'r',content:{text:d.body}}]),JSON.stringify(props),now);
@@ -68,12 +68,16 @@ export async function discoveryJourney(f:Awaited<ReturnType<typeof searchFixture
  const card=await request('/pages/discovery-a/link-card','reader');expect(card.status).toBe(200);expect(card.data).toMatchObject({title:'Discovery launch guide',trust:{state:'unverified',owner:{id:'owner'}}});
  const hiddenCard=await request('/pages/discovery-private/link-card','reader');expect(hiddenCard.status).toBe(404);expect(JSON.stringify(hiddenCard.data)).not.toContain('confidential');
  const historical=await request('/pages/discovery-a/link-card?revision=r-discovery-a','reader');expect(historical.status).toBe(200);expect(historical.data.title).toBe('Discovery launch guide');
- await sql("INSERT INTO page_revisions(id,page_id,author_member_id,origin,content_hash,body_json,properties_json,created_at) VALUES('discovery-unpublished','discovery-a','owner','autosave','new','[]',?,?)",JSON.stringify({title:'Unpublished private guidance',ownerMemberId:'reader',statusKey:'approved',labels:['internal-only'],icon:null,coverFileId:null,typeface:'default',smallText:false,fullWidth:false}),now);
+ await sql("INSERT INTO page_revisions(id,page_id,author_member_id,origin,content_hash,body_json,properties_json,created_at) VALUES('discovery-unpublished','discovery-a','owner','autosave','new','[]',?,?)",JSON.stringify({title:'Unpublished private guidance',ownerMemberId:'reader',statusKey:'approved',labels:['internal-only'],icon:'✦',cover:{kind:'link',url:'https://appearance.invalid/private.png'},coverFileId:null,typeface:'default',smallText:false,fullWidth:false}),now);
  await sql("UPDATE pages SET working_revision_id='discovery-unpublished',revision_id='discovery-unpublished',lifecycle='live-with-unpublished-changes',status_key='approved',title='Unpublished private guidance',owner_member_id='reader' WHERE id='discovery-a'");
  const projectedCard=await request('/pages/discovery-a/link-card','reader');expect(projectedCard.status).toBe(200);expect(projectedCard.data.title).toBe('Discovery launch guide');expect(projectedCard.data.trust.owner.id).toBe('owner');
  expect((await request('/pages/discovery-a/link-card?revision=discovery-unpublished','reader')).status).toBe(404);
  const projectedQuery=await request('/pages/discovery-b/query','reader',{label:'launch',status:'review'});expect(projectedQuery.status,JSON.stringify(projectedQuery.data)).toBe(200);expect(projectedQuery.data.items.map((x:any)=>x.id)).toEqual(['discovery-a']);
  expect((await find('title:Discovery label:launch','reader')).data.items.map((x:any)=>x.id)).toEqual(['discovery-a']);
+ const publishedAppearance=(await find('title:Discovery label:launch','reader')).data.items[0];
+ expect(publishedAppearance).toMatchObject({icon:'📚',cover:{kind:'gallery',id:'ocean'},coverFileId:null});
+ expect((await find('title:Unpublished','owner')).data.items[0]).toMatchObject({icon:'✦',cover:{kind:'link',url:'https://appearance.invalid/private.png'},coverFileId:null});
+ expect(JSON.stringify(publishedAppearance)).not.toContain('private.png');
  // Equally relevant pages have distinct bodies, so ranking and badges are independent of grouping.
  for(const [id,body]of [['trust-verified','Trustneedle polished documented procedure accepted'],['trust-lapsed','Trustneedle superseded incident historical timeline'],['trust-unverified','Trustneedle tentative research proposal exploration']])await page(id,body!,{title:id,status:'review'});
  for(const id of ['trust-verified','trust-lapsed','trust-unverified']) {

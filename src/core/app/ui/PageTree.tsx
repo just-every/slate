@@ -2,7 +2,7 @@ import {compareTreePages} from './treePosition';
 import type {TreeDestination} from './TreeMoveDialog';
 const TreeMoveDialog=lazy(()=>import('./TreeMoveDialog').then(module=>({default:module.TreeMoveDialog})));
 import {ScheduledPublication} from './ScheduledPublication';
-import {StoredIcon} from "../../features/pages/ui/workspace/PageAppearance";
+import {StoredIcon, StoredCover, type PageAppearanceView} from "../../features/pages/ui/workspace/PageAppearance";
 import {useResource} from "../../client/useResource";
 import {mutate, operationKey, errorMessage} from "../../client/transport";
 import {useCreatePage} from "./useCreatePage";
@@ -10,7 +10,7 @@ import {DEFAULT_PAGE_TITLE} from "./pageDestination";
 import { lazy, Suspense, useState } from "react";
 import { ArrowUpDown, ChevronRight, Database, FileText, Plus } from "lucide-react";
 import type { PageRef } from "../../shared/api/content";
-export type TreePage = PageRef & {
+export type TreePage = PageRef & PageAppearanceView & {
   databaseId?: string;
   parentPageId?: string | null;
   treePosition?: string|null;
@@ -106,6 +106,7 @@ function TreeItem({
           {page.icon ? <StoredIcon icon={page.icon}/> : page.databaseId ? <Database aria-hidden="true" /> : <FileText aria-hidden="true" />}
           <span>{page.title || "Untitled"}<ScheduledPublication page={page}/></span>
         </a>
+        {page.cover || page.coverFileId ? <span className="tree-cover"><StoredCover key={JSON.stringify([page.cover, page.coverFileId])} cover={page.cover} coverFileId={page.coverFileId} compact /></span> : null}
         <button className="iconbutton tree-action" aria-label={`Move ${page.title} in tree`} data-tooltip="Move page" data-tooltip-align="end" disabled={!canMove} onClick={()=>setMove({page})}><ArrowUpDown aria-hidden="true"/></button>
         <button className="iconbutton tree-action" aria-label={`Create child of ${page.title}`} data-tooltip="Add child" data-tooltip-align="end" disabled={!canMove} aria-busy={creation.pending||undefined} onClick={event=>{event.stopPropagation();void creation.create(async()=>({containerId:page.containerId,parentPageId:page.id,title:DEFAULT_PAGE_TITLE}));}}><Plus aria-hidden="true"/></button>
       </div>

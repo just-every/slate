@@ -748,9 +748,10 @@
         "SEARCH-002",
         "SEARCH-003",
         "SEARCH-004",
-        "SEARCH-005"
+        "SEARCH-005",
+        "PAGE-006"
       ],
-      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify."
+      "reason": "Public HTTP search journey independently matches retained page titles and bodies, scalar record fields, container names and descriptions, retained comment spans, template descriptions and snapshot bodies. One unfiltered mixed-kind corpus checks exact relevance, date and ID order, totals, facets and complete cursor traversal while native late creation and authority revocation change the live corpus. Existing member and guest authority, private drafts, personal spaces, committed changes, import completion, erasure and refused replay remain asserted. The existing responsive search callers also render all five kinds from native mutations. The separate committed capacity journey records complete HTTP first-page latency over canonical content at the declared seed capacity; its exact candidate receipt is outside push Verify. PAGE-006 supporting projection regression reads the published icon and cover for a view-only member and the changed working appearance for the editor, without leaking the private descriptor. Complete native appearance acceptance is pageAppearanceJourney in the existing browser registrations; no additional registration."
     },
     {
       "file": "tests/e2e/search/fts-upgrade.test.ts",

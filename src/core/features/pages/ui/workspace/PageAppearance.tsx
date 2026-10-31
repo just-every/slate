@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Image } from "lucide-react";
 import type { DocumentView } from "../../../../client/content";
 
 export type PageCover = { kind: "gallery"; id: string } | { kind: "link"; url: string };
@@ -12,10 +13,12 @@ export const galleries: Record<string, string> = {
   slate: "linear-gradient(120deg,#bbc3cb,#4e5967)",
 };
 
+export const suppliedIcons = ["◆", "✦", "✓", "⚑", "⌘"];
+
 export function StoredIcon({ icon }: { icon: unknown }) {
   if (typeof icon !== "string" || !icon) return null;
   return icon.startsWith("file:") ? (
-    <img className="stored-page-icon" src={`/api/media/${encodeURIComponent(icon.slice(5))}?display=inline`} alt="Page icon" />
+    <img className="stored-page-icon" src={`/api/media/${encodeURIComponent(icon.slice(5))}?display=icon`} alt="Page icon" aria-hidden="true" />
   ) : (
     <span className="stored-page-icon" aria-hidden="true">
       {icon}
@@ -23,24 +26,32 @@ export function StoredIcon({ icon }: { icon: unknown }) {
   );
 }
 
-/** The page's cover and icon as they sit above the title. They are changed from the page's More menu. */
+export interface PageAppearanceView {
+  icon?: string | null;
+  cover?: PageCover | null;
+  coverFileId?: string | null;
+}
+
+/** Remote loading is consent for this exact URL, including after replacement. */
+export function StoredCover({ cover, coverFileId, compact = false }: PageAppearanceView & { compact?: boolean }) {
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const className = compact ? "page-cover-thumbnail" : "page-cover-image";
+  if (coverFileId) return <img className={className} src={`/api/media/${encodeURIComponent(coverFileId)}?display=cover`} alt="Page cover" />;
+  if (cover?.kind === "gallery") return <div className={className} role="img" aria-label={`${cover.id} gallery cover`} style={{ background: galleries[cover.id] }} />;
+  if (cover?.kind !== "link") return null;
+  if (loadedUrl === cover.url) return <img className={className} src={cover.url} alt="Linked page cover" referrerPolicy="no-referrer" />;
+  const label = `Load cover from ${new URL(cover.url).hostname}`;
+  return <button className={compact ? "page-cover-load" : undefined} aria-label={label} data-tooltip={compact ? "Load linked cover" : undefined} onClick={() => setLoadedUrl(cover.url)}>
+    {compact ? <Image aria-hidden="true" /> : label}
+  </button>;
+}
+
+/** The page's cover and icon as they sit above the title. */
 export function PageAppearance({ document }: { document: DocumentView }) {
-  const props = document.properties as (NonNullable<DocumentView["properties"]> & { cover?: PageCover | null }) | undefined;
-  const [remote, setRemote] = useState(false);
-  const cover = props?.cover;
+  const props = document.properties as PageAppearanceView | undefined;
   return (
     <div className="page-appearance">
-      {props?.coverFileId ? (
-        <img className="page-cover-image" src={`/api/media/${encodeURIComponent(props.coverFileId)}?display=inline`} alt="Page cover" />
-      ) : cover?.kind === "gallery" ? (
-        <div className="page-cover-image" role="img" aria-label={`${cover.id} gallery cover`} style={{ background: galleries[cover.id] }} />
-      ) : cover?.kind === "link" ? (
-        remote ? (
-          <img className="page-cover-image" src={cover.url} alt="Linked page cover" />
-        ) : (
-          <button onClick={() => setRemote(true)}>Load cover from {new URL(cover.url).hostname}</button>
-        )
-      ) : null}
+      <StoredCover key={props?.cover?.kind === "link" ? props.cover.url : props?.coverFileId ?? props?.cover?.id ?? "none"} {...props} />
       <StoredIcon icon={props?.icon} />
     </div>
   );

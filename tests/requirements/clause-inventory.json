@@ -296,8 +296,13 @@
       "id": "PAGE-006",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for PAGE-006 — Icon and cover. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "The Workers registry retains supporting scope for current-reader appearance projections. Complete native control, stored media, replacement, removal and rendered-surface acceptance is recorded in CONTRACT.md through pageAppearanceJourney in the existing Verify browser callers.",
+      "supportingTests": [
+        {
+          "file": "tests/e2e/search/fts-permissions.test.ts",
+          "testName": "Indexed search uses current native authority for literal matches, totals, facets and cursors"
+        }
+      ]
     },
     {
       "id": "PAGE-007",

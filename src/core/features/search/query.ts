@@ -59,6 +59,7 @@ export async function searchQuery(ctx: FeatureContext, subject: MemberSubject, i
  OR t.page_id IS NULL AND t.variant='working' AND (t.kind='template' AND t.container_id IS NULL AND NOT guest OR live_container IS NOT NULL AND (owned OR visibility<>'personal' AND COALESCE(container_level,0)>0)))
  ), projections AS (
  SELECT v.*,
+ CASE WHEN ${published} THEN r.properties_json ELSE w.properties_json END AS appearance_json,
  CASE WHEN ${published} THEN json_extract(r.properties_json,'$.ownerMemberId') ELSE v.owner_member_id END AS owner_id,
  CASE WHEN ${published} THEN json_extract(r.properties_json,'$.labels') ELSE (SELECT json_group_array(label) FROM page_labels WHERE page_id=v.page_id) END AS labels_json,
  CASE WHEN ${published} THEN json_extract(r.properties_json,'$.statusKey') WHEN v.page_id IS NOT NULL THEN v.page_status ELSE v.status END AS projected_status,
@@ -66,6 +67,7 @@ export async function searchQuery(ctx: FeatureContext, subject: MemberSubject, i
  CASE WHEN ${published} AND v.kind<>'comment-thread' THEN r.created_at ELSE v.updated_at END AS selected_updated_at,
  CASE WHEN ${published} THEN r.created_at ELSE v.page_updated END AS trust_updated_at
  FROM variants v LEFT JOIN page_revisions r ON r.id=v.published_revision_id AND r.page_id=v.page_id AND r.deleted_at IS NULL
+ LEFT JOIN page_revisions w ON w.id=v.working_revision_id AND w.page_id=v.page_id AND w.deleted_at IS NULL
  WHERE NOT ${published} OR r.id IS NOT NULL
  ), enriched AS (
  SELECT v.*,
@@ -75,6 +77,7 @@ export async function searchQuery(ctx: FeatureContext, subject: MemberSubject, i
  FROM projections v
  ), visible AS MATERIALIZED (
  SELECT v.key,v.variant,v.id,v.page_id,v.kind,v.document_json,v.current_status AS status,v.container_id AS containerId,${score} AS score,v.selected_updated_at AS updatedAt,
+ json_extract(v.appearance_json,'$.icon') AS icon,json_extract(v.appearance_json,'$.cover') AS cover,json_extract(v.appearance_json,'$.coverFileId') AS coverFileId,
  v.trust_owner_id AS ownerId,m.display_name AS ownerName,v.trust_state AS trustState,CASE WHEN v.verified_status IS v.projected_status THEN v.verification_expiry END AS expiresAt,v.trust_updated_at AS trustUpdatedAt,
  CASE WHEN v.archived_at IS NOT NULL OR v.lifecycle='archived' OR v.trust_state='lapsed' THEN 2 WHEN v.trust_state='verified' THEN 0 ELSE 1 END AS trustRank,
  ${input.sort === 'views' ? '(SELECT COUNT(*) FROM page_views WHERE page_id=v.page_id)' : '0'} AS views

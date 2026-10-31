@@ -22,6 +22,7 @@ export async function visibleSearchRows(ctx: FeatureContext, query: Query, input
   const selected = await ctx.db.prepare(query.sql + ` SELECT (SELECT json_group_array(json_object(
     'key',key,'variant',variant,'id',id,'pageId',page_id,'kind',kind,'status',status,'containerId',containerId,'score',score,'updatedAt',updatedAt,
     'ownerId',ownerId,'ownerName',ownerName,'trustState',trustState,'expiresAt',expiresAt,'trustUpdatedAt',trustUpdatedAt,
+    'icon',icon,'cover',json(cover),'coverFileId',coverFileId,
     'title',json_extract(${doc},'$.title'),'revisionId',json_extract(${doc},'$.revisionId'),
     'minHash',json_extract(${doc},'$._minHash'),
     'unsketchedText',CASE WHEN kind='page' AND json_extract(${doc},'$._minHash.version') IS NULL THEN json_extract(${doc},'$.text') END

@@ -3978,9 +3978,9 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4011,7 +4011,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `PAGE-003` | Identity survives everything | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A page keeps its identifier for its lifetime."<br>No validated CI-run proof for this acceptance point: "Renaming it, editing it, moving it within or between containers, archiving, trashing, restoring, publishing and unpublishing never change it, and every link, mention, citation, content query and search result continues to resolve to it (`LINK-001`)." |
 | `PAGE-004` | Move | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A member with edit access on both places can move a page to another position, another parent, or another container, choosing the destination from a searchable picker."<br>No validated CI-run proof for this acceptance point: "Children move with it, grants are re-resolved against the new parent and the change is shown before it is applied, and comments, versions and links are unchanged." |
 | `PAGE-005` | Duplicate | published | partial | `tests/flagship/content/http.test.ts` | Missing a duplication journey that creates comments, versions, watchers, analytics, grants and publication before duplicating and reads their exclusion; the cited content flow checks some duplicate content and verification behavior only. |
-| `PAGE-006` | Icon and cover | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A page takes an icon from emoji, a supplied icon set or an upload, and a cover from a gallery, an upload or a link."<br>No validated CI-run proof for this acceptance point: "Both are removable, both render in the tree and in search results where the surface has room, and neither is required." |
+| `PAGE-006` | Icon and cover | published | done | `tests/qualification/ui-convergence/page-appearance-journey.mjs` — "pageAppearanceJourney", loaded by `tests/qualification/ui-convergence/journeys.test.mjs` — "page display settings are shared and survive export and import at 1440px" and "space tree title filtering preserves ancestors, access and expansion at 390px": native emoji, supplied symbols, uploaded icons, gallery, uploaded and linked covers; source replacement, independent removal and neither appearance after reload; canonical page, tree and search projections, selected uploaded bytes, interaction-gated links, published-reader isolation, refused edits and immediate revocation. `tests/e2e/search/fts-permissions.test.ts` — "Indexed search uses current native authority for literal matches, totals, facets and cursors" retains the published and working descriptor boundary. |  |
 | `PAGE-007` | Details | published | partial | `tests/qualification/backend/emitted.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/backend/emitted.mjs`. |
 | `PAGE-008` | Favorite | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A member can favorite a page or a container and unfavorite it."<br>No validated CI-run proof for this acceptance point: "Favorites are personal, are listed in the navigation (`NAV-003`), and are visible to no other member." |
 | `PAGE-009` | Watch | published | done | `tests/flagship/discovery/following.test.ts` — "PAGE-016 — authoring watches respect durable unwatch, personal overrides and workspace defaults" |  |
