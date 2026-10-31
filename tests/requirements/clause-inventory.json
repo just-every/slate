@@ -1631,11 +1631,15 @@
       "id": "PORT-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "The reviewed small-export route journeys prove canonical indexed IDs before Completed. All profile, runtime, generated-scale and full requirement-level evidence remains unproven in this registry.",
+      "unmetReason": "Bounded native reviewed-import indexing and pre-search completion readback cover ordinary pages and database records across multiple batches, interruption rollback, renewed dirty generations, missing projections and unchanged native inventory under resume. Complete imported-record satisfaction of SEARCH-001 through SEARCH-006 remains unproven, including ranked timing and paging, contextual and highlighted results, filters, freshness, authority and container-scoped search; IMP-001 acceptance 5 remains conditional on full PORT-004 satisfaction.",
       "supportingTests": [
         {
           "file": "tests/e2e/imports/preview-undo.test.ts",
           "testName": "reviews, applies and reverses real Notion and Confluence content without losing native edits"
+        },
+        {
+          "file": "tests/e2e/search/fts-permissions.test.ts",
+          "testName": "Indexed search uses current native authority for literal matches, totals, facets and cursors"
         }
       ]
     },
