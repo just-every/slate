@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "f7d115e15bc70e8dc035f82a5026a723ec59d689536dcd39f44555689c09377a",
+      "sha256": "bd7a5751f58e52186692b41b050fbbe953685caaf7d792c05cddc5a611cbc769",
       "executable": false
     },
     "DEMO.md": {
@@ -8356,7 +8356,7 @@
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageAppearance.tsx": {
-      "sha256": "417bfeaefa25864eebe97efdca7fd0e2ed9603c55d6560a753ea38ebd8ac1ff8",
+      "sha256": "d5d3c05a3b851e6164a05b03944c1b27fb90e568486c414872ab8b4907b10540",
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageAppearanceDialog.tsx": {
@@ -11996,7 +11996,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/page-appearance-journey.mjs": {
-      "sha256": "447fc26791c576de86cab6c56fe62fdfdb429a12ec7dad666e0ab1730293d4e5",
+      "sha256": "3768f2350c7b6de61c91fc24c407e46ae4c896b8b752f1730e18291b7c0ec36d",
       "executable": false
     },
     "tests/qualification/ui-convergence/page-details-journey.mjs": {

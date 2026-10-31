@@ -41,7 +41,7 @@ export function StoredCover({ cover, coverFileId, compact = false }: PageAppeara
   if (cover?.kind !== "link") return null;
   if (loadedUrl === cover.url) return <img className={className} src={cover.url} alt="Linked page cover" referrerPolicy="no-referrer" />;
   const label = `Load cover from ${new URL(cover.url).hostname}`;
-  return <button className={compact ? "page-cover-load" : undefined} aria-label={label} data-tooltip={compact ? "Load linked cover" : undefined} onClick={() => setLoadedUrl(cover.url)}>
+  return <button className={compact ? "page-cover-load" : undefined} aria-label={label} data-tooltip={compact ? "Load linked cover" : undefined} data-tooltip-align={compact ? "end" : undefined} onClick={() => setLoadedUrl(cover.url)}>
     {compact ? <Image aria-hidden="true" /> : label}
   </button>;
 }

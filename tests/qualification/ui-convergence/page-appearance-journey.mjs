@@ -88,7 +88,7 @@ export async function pageAppearanceJourney(state, people) {
     assert.deepEqual(current.blocks, originalBlocks, 'Appearance never changes the ordinary page body.');
     return fileId;
   }
-  async function rendered(scope, selected) {
+  async function rendered(scope, selected, compact = false) {
     const icons = scope.locator('.stored-page-icon');
     if (!selected.icon) await expect(icons).toHaveCount(0);
     else if (selected.icon.startsWith('file:')) {
@@ -112,6 +112,19 @@ export async function pageAppearanceJourney(state, people) {
       await expect(covers).toHaveCount(0);
       const load = scope.getByRole('button', { name: 'Load cover from appearance.invalid', exact: true });
       await expect(load).toBeVisible();
+      if (compact) {
+        assert.ok(await load.getAttribute('data-tooltip'), 'Compact cover controls have a descriptive tooltip.');
+        await load.focus(); await load.press('Tab'); await load.page().keyboard.press('Shift+Tab');
+        await expect(load).toBeFocused();
+        const tooltip = await load.evaluate(element => {
+          const box = element.getBoundingClientRect(), style = getComputedStyle(element, '::after');
+          const width = parseFloat(style.width) + (style.boxSizing === 'border-box' ? 0 : parseFloat(style.paddingLeft) + parseFloat(style.paddingRight));
+          const right = box.right - parseFloat(style.right);
+          return { opacity: style.opacity, left: right - width, right, viewport: innerWidth };
+        });
+        assert.equal(tooltip.opacity, '1', 'Keyboard focus shows the tooltip immediately.');
+        assert.ok(tooltip.left >= 0 && tooltip.right <= tooltip.viewport, 'The entire cover tooltip remains inside the viewport.');
+      }
       const before = remoteRequests.length;
       const firstLoad = !remoteRequests.some(request => request.url === selected.cover.url);
       await load.click();
@@ -140,7 +153,7 @@ export async function pageAppearanceJourney(state, people) {
     await openNavigation(view);
     const row = view.locator('.tree-row').filter({ has: view.locator(`a[href="/app/pages/${pageId}"]`) }).first();
     await expect(row).toBeVisible();
-    await rendered(row, selected);
+    await rendered(row, selected, true);
     if (capture) await accessible(view, `page appearance tree ${person.name}`);
     const search = await ok(person.context, origin, 'GET', '/api/search?q=Appearance%20atlas&kind=page');
     assert.equal(search.total, 1); assert.equal(search.items[0].id, pageId);
@@ -148,7 +161,7 @@ export async function pageAppearanceJourney(state, people) {
     await view.goto(`${origin}/app/search?q=Appearance%20atlas&kind=page`, { waitUntil: 'networkidle' });
     const result = view.locator('.search-results > li').filter({ has: view.getByRole('heading', { name: 'Appearance atlas', exact: true }) });
     await expect(result).toBeVisible();
-    await rendered(result, selected);
+    await rendered(result, selected, true);
     if (capture) await accessible(view, `page appearance search ${person.name}`);
     for (const [id, disposition] of [[selected.icon?.startsWith('file:') ? selected.icon.slice(5) : null, 'icon'], [selected.coverFileId, 'cover']]) {
       if (!id) continue;
