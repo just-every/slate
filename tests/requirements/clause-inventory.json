@@ -1055,11 +1055,15 @@
       "id": "DB-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of DB-004 — Layouts. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This Workers inventory does not certify browser acceptance. Native HTTP proves required-field refusal, explicit field creation, six retained layouts and unchanged records under configuration and refused mutations. The existing spreadsheet database browser registration loads layoutCreationJourney from ./tests/qualification/ui-convergence/layout-creation-journey.mjs for native creation, cancellation, selected saved fields, populated layouts and reload read-back; existing touchDatabaseJourney retains all six-layout record edits. CONTRACT.md carries the acceptance judgment and exact candidate Verify and guarded landing remain required.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/structured.test.ts",
           "testName": "structured records, computation, readers, templates, automation, policies and views retain durable semantics"
+        },
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
         }
       ]
     },

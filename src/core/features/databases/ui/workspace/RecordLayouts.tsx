@@ -25,7 +25,7 @@ export function RecordLayouts({
   onGroupMove,
   onHideEmpty,
   onCalculation,
-  onCreateRequiredField,
+  onConfigureRequiredField,
 }: {
   view: ViewDto;
   canEditStructure: boolean;
@@ -35,7 +35,7 @@ export function RecordLayouts({
   props: RecordViewProps;
   onGroupMove: (recordId: string, value: unknown) => void;
   onHideEmpty: (hide: boolean) => void;
-  onCreateRequiredField:(kind:"select"|"date")=>void;
+  onConfigureRequiredField:()=>void;
   onCalculation: (fieldId: string, kind: CalculationKind) => void;
 }) {
   const [month, setMonth] = useState(() => new Date());
@@ -47,7 +47,7 @@ export function RecordLayouts({
     const grouped = query.groups.find((group) => group.field === fieldId);
     if (!grouped)
       return (
-        <section><p>Choose a grouping field in View settings to arrange this board.</p>{canEditStructure?<button onClick={()=>onCreateRequiredField("select")}>Create a grouping field</button>:null}</section>
+        <section><p>Choose a grouping field in View settings to arrange this board.</p>{canEditStructure?<button onClick={onConfigureRequiredField}>Choose or create a grouping field</button>:null}</section>
       );
     return (
       <BoardView
@@ -91,7 +91,7 @@ export function RecordLayouts({
     const field = rawFields.find((field) => field.id === fieldId);
     if (!field)
       return (
-        <section><p>Choose a date field in View settings to place records in time.</p>{canEditStructure?<button onClick={()=>onCreateRequiredField("date")}>Create a date field</button>:null}</section>
+        <section><p>Choose a date field in View settings to place records in time.</p>{canEditStructure?<button onClick={onConfigureRequiredField}>Choose or create a date field</button>:null}</section>
       );
     const dates = rawRecords.flatMap((record) => {
       const value = record.values[fieldId];

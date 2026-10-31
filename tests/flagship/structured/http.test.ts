@@ -111,6 +111,92 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
       }
     ).database.id,
   ).toBe(body.value.id);
+
+  // Layout recovery still relies on server-side field, authority and lock checks.
+  const base = `/api/databases/${body.value.id}`;
+  const call = async (method: string, path: string, actor = cookie, input?: unknown) => {
+    const response = await SELF.fetch("http://localhost" + path, {
+      method, headers: {cookie: actor, origin: "http://localhost", "content-type": "application/json"},
+      ...(input ? {body: JSON.stringify(input)} : {}),
+    });
+    return {status: response.status, body: await response.json() as any};
+  };
+  const structure = async () => (await call("GET", base)).body;
+  const blank = await structure();
+  const makeView = (layout: string) => ({
+    id: `layout-${layout}`, name: layout, layout, filters: [], sorts: [], groups: [],
+    calculations: {}, display: {}, position: 0,
+  });
+  for (const layout of ["board", "calendar", "timeline"]) {
+    const refused = await call("POST", base + "/views", cookie, {
+      operationKey: `case:missing-${layout}`, expectedRevisionId: blank.database.revision_id, view: makeView(layout),
+    });
+    expect(refused.status).toBe(400);
+    expect(refused.body.code).toBe("FIELD_REQUIRED");
+    expect(await structure()).toEqual(blank);
+  }
+  const fields = [
+    {id: "stage", name: "Stage", type: "select", config: {options: ["Open", "Done"]}, position: 0},
+    {id: "due", name: "Due date", type: "date", config: {}, position: 1},
+  ];
+  for (const field of fields) {
+    const current = await structure();
+    const saved = await call("POST", base + "/fields", cookie, {
+      operationKey: `case:create-${field.id}`, expectedRevisionId: current.database.revision_id, field,
+    });
+    expect(saved.status).toBeLessThan(300);
+  }
+  const record = (await call("POST", base + "/records", cookie, {
+    operationKey: "case:layout-record", title: "Response planning", values: {stage: "Open", due: "2026-03-15"},
+  })).body.value;
+  const recordBefore = (await call("GET", base + "/records/" + record.pageId)).body;
+  for (const [position, layout] of ["table", "board", "list", "gallery", "calendar", "timeline"].entries()) {
+    const current = await structure();
+    const view = {...makeView(layout), position,
+      groups: layout === "board" ? [{field: "stage", hideEmpty: false}] : [],
+      display: ["calendar", "timeline"].includes(layout) ? {dateField: "due"} : {},
+    };
+    const saved = await call("POST", base + "/views", cookie, {
+      operationKey: `case:valid-${layout}`, expectedRevisionId: current.database.revision_id, view,
+    });
+    expect(saved.status).toBeLessThan(300);
+    const query = (await call("GET", base + "/views/" + view.id)).body;
+    expect(query.view.layout).toBe(layout);
+    expect(query.view.groups).toEqual(view.groups);
+    expect(query.view.display).toEqual(view.display);
+    expect(query.records.map((item: {pageId: string}) => item.pageId)).toEqual([record.pageId]);
+    expect(query.records[0].values).toEqual({stage: "Open", due: "2026-03-15"});
+  }
+  expect((await call("GET", base + "/records/" + record.pageId)).body).toEqual(recordBefore);
+  await seedContainerGrant(containerId, {principalKind: "member", principalId: reader.actor.id, level: "view"});
+  const viewer = await sessionFor(reader.actor.id);
+  const beforeDenied = await structure();
+  for (const [suffix, input] of [
+    ["/fields", {field: {...fields[0], name: "Denied rename"}}],
+    ["/views", {view: {...makeView("list"), name: "Denied rename"}}],
+  ] as const) {
+    const denied = await call("POST", base + suffix, viewer, {
+      operationKey: `case:denied-${suffix.slice(1)}`, expectedRevisionId: beforeDenied.database.revision_id, ...input,
+    });
+    expect(denied.status).toBe(404);
+    expect(await structure()).toEqual(beforeDenied);
+  }
+  expect((await call("POST", base + "/lock", cookie, {
+    operationKey: "case:layout-lock", expectedRevisionId: beforeDenied.database.revision_id, locked: true,
+  })).status).toBeLessThan(300);
+  const locked = await structure();
+  for (const [suffix, input] of [
+    ["/fields", {field: {...fields[1], name: "Locked rename"}}],
+    ["/views", {view: {...makeView("list"), name: "Locked rename"}}],
+  ] as const) {
+    const refused = await call("POST", base + suffix, cookie, {
+      operationKey: `case:locked-${suffix.slice(1)}`, expectedRevisionId: locked.database.revision_id, ...input,
+    });
+    expect(refused.status).toBe(409);
+    expect(refused.body.code).toBe("STRUCTURE_LOCKED");
+    expect(await structure()).toEqual(locked);
+  }
+  expect((await call("GET", base + "/records/" + record.pageId)).body).toEqual(recordBefore);
 });
 
 test("database file references list only attachments the reader could open", async () => {

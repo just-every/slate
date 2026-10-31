@@ -53,6 +53,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
   const query = useResource<QueryDto>(
     view ? `/api/databases/${id}/views/${view.id}` : null,
   );
+  const [viewDraft, setViewDraft] = useState<ViewDto>();
   const [fieldEdit, setFieldEdit] = useState<FieldDto>();
   const [fieldRemove, setFieldRemove] = useState<FieldDto>();
   const [mode, setMode] = useState<DatabaseMode>("records");
@@ -88,6 +89,15 @@ export function DatabaseWorkspace({ id }: { id: string }) {
       view: input,
     });
     setActive(next.id);
+    await reload();
+  }
+  async function saveField(field: FieldDto) {
+    const { evaluationState: _evaluationState, readOnly: _readOnly, ...input } = field;
+    await mutate(`/api/databases/${id}/fields`, {
+      operationKey: operationKey(),
+      expectedRevisionId: resource.data!.database.revision_id,
+      field: input,
+    });
     await reload();
   }
   async function saveValue(record: RecordDto, field: FieldDto, value: unknown) {
@@ -155,8 +165,8 @@ export function DatabaseWorkspace({ id }: { id: string }) {
                   <ViewMenu
                     hasView={!!view}
                     locked={locked}
-                    onSettings={() => setDialog("view")}
-                    onAdd={() => void saveView(newView(resource.data!.views.length)).catch(setError)}
+                    onSettings={() => { setViewDraft(undefined); setDialog("view"); }}
+                    onAdd={() => { setViewDraft(newView(resource.data!.views.length)); setDialog("view"); }}
                     onDuplicate={() => view && void saveView({ ...view, id: crypto.randomUUID(), name: `${view.name} copy`, position: resource.data!.views.length, revisionId: "" }).catch(setError)}
                     onDelete={() => setDialog("delete-view")}
                   />
@@ -214,7 +224,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
                   <RecordLayouts
                     canEditStructure={canEdit && !resource.data.database.structure_locked_at}
                     view={view}
-                    onCreateRequiredField={type=>setFieldEdit({id:crypto.randomUUID(),name:type==='date'?'Date':'Group',type,config:{},position:fields.length})}
+                    onConfigureRequiredField={() => { setViewDraft(undefined); setDialog("view"); }}
                     query={query.data}
                     rawFields={fields}
                     rawRecords={records}
@@ -283,19 +293,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
               setFieldEdit(undefined);
             } : undefined}
             onClose={() => setFieldEdit(undefined)}
-            onSave={async (field) => {
-              const {
-                evaluationState: _evaluationState,
-                readOnly: _readOnly,
-                ...input
-              } = field;
-              await mutate(`/api/databases/${id}/fields`, {
-                operationKey: operationKey(),
-                expectedRevisionId: resource.data!.database.revision_id,
-                field: input,
-              });
-              await reload();
-            }}
+            onSave={saveField}
           />
         ) : null}
         {fieldRemove ? (
@@ -310,12 +308,14 @@ export function DatabaseWorkspace({ id }: { id: string }) {
             await reload();
           }} />
         ) : null}
-        {dialog === "view" && view ? (
+        {dialog === "view" && (viewDraft ?? view) ? (
           <ViewDialog
-            view={view}
+            key={(viewDraft ?? view)!.id}
+            view={(viewDraft ?? view)!}
             fields={fields}
+            onSaveField={saveField}
             onSave={saveView}
-            onClose={() => setDialog(null)}
+            onClose={() => { setViewDraft(undefined); setDialog(null); }}
           />
         ) : null}
         {dialog==='delete-view'&&view?<ActionDialog title="Delete this saved view?" action="Delete view" onClose={()=>setDialog(null)} onSubmit={async()=>{const {revisionId:_revisionId,...input}=view;await mutate(`/api/databases/${id}/views`,{operationKey:operationKey(),expectedRevisionId:resource.data!.database.revision_id,view:input,delete:true});setActive(undefined);if(!await resource.reload())throw new Error('The view was deleted. Reload the database to see its remaining views.');}}><p>Delete “{view.name}”. Its records and other saved views remain available.</p></ActionDialog>:null}

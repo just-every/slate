@@ -14,6 +14,7 @@ import {columnsJourney} from './columns-journey.mjs';
 import {beginTouchJourney} from './touch-journey.mjs';
 import {touchCommentJourney,touchPublishShareJourney} from './touch-page.mjs';
 import {touchDatabaseJourney} from './touch-database.mjs';
+import {layoutCreationJourney} from './layout-creation-journey.mjs';
 import { samlJourney } from './saml-journey.mjs';
 import { folderJourney } from './folder-journey.mjs';
 import {tablesJourney} from './tables-journey.mjs';
@@ -136,7 +137,7 @@ for (const width of [1440]) {
       // Its assertions and member authority remain unchanged.
       const touch=await beginTouchJourney(state,width,{writePage:false});
       try {
-        await step('remove a field with impact confirmation and export current view CSV; touch member edits all six layouts and uses charts, templates and automations', async () => {await databaseJourney(state);await touchDatabaseJourney(touch,touch.containerId);await touchDatabaseToolsJourney(state,touch);});
+        await step('remove a field with impact confirmation and export current view CSV; touch member edits all six layouts and uses charts, templates and automations', async () => {await databaseJourney(state);await layoutCreationJourney(state,(await state.api('/api/containers')).items.find(item=>item.name==='Handbook').id);await touchDatabaseJourney(touch,touch.containerId);await touchDatabaseToolsJourney(state,touch);});
       } finally {await touch.close();}
     }, {}, {scheduled:true});
   });

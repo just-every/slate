@@ -1,28 +1,48 @@
 import { FilterBuilder, type FilterValue } from "./FilterBuilder";
 import { useState } from "react";
+import { FieldDialog } from "./FieldDialog";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import type { ViewDto, FieldDto } from "../../../../client/records";
 export function ViewDialog({
   view,
   fields,
   onSave,
+  onSaveField,
   onClose,
 }: {
   view: ViewDto;
   fields: FieldDto[];
   onSave: (view: ViewDto) => Promise<void>;
+  onSaveField: (field: FieldDto) => Promise<void>;
   onClose: () => void;
 }) {
   const [layout, setLayout] = useState(view.layout);
   const [filters, setFilters] = useState(view.filters as FilterValue[]);
+  const [groupField, setGroupField] = useState(view.groups[0]?.field ?? "");
+  const [dateField, setDateField] = useState(String(view.display.dateField ?? ""));
+  const [creatingField, setCreatingField] = useState<FieldDto>();
+  const groupFields = fields.filter(field =>
+    ["select", "status", "person", "checkbox", "date"].includes(field.type));
+  const dateFields = fields.filter(field => field.type === "date");
+  const needsDate = layout === "calendar" || layout === "timeline";
+  const missingGroup = layout === "board" && !groupFields.some(field => field.id === groupField);
+  const missingDate = needsDate && !dateFields.some(field => field.id === dateField);
+  function createField(type: "select" | "date") {
+    setCreatingField({
+      id: crypto.randomUUID(), name: type === "date" ? "Date" : "Group",
+      type, config: {}, position: fields.length,
+    });
+  }
   return (
+    <>
     <ActionDialog
       title="View settings"
       action="Save view"
+      submitDisabled={missingGroup || missingDate || !!creatingField}
       onClose={onClose}
       onSubmit={async (form) => {
         const sort = String(form.get("sortField") ?? "");
-        const group = String(form.get("groupField") ?? "");
+        const group = groupField;
         await onSave({
           ...view,
           name: String(form.get("name")),
@@ -41,7 +61,7 @@ export function ViewDialog({
             : [],
           display: {
             ...view.display,
-            dateField: String(form.get("dateField") ?? ""),
+            dateField: needsDate ? dateField : view.display.dateField ?? "",
             visibleFieldIds: form.getAll("visible").map(String),
           },
         });
@@ -64,40 +84,44 @@ export function ViewDialog({
           )}
         </select>
       </label>
-      {["calendar", "timeline"].includes(layout) ? (
+      {needsDate ? (
+        <>
         <label>
           Date field
           <select
             name="dateField"
             required
-            defaultValue={String(view.display.dateField ?? "")}
+            value={dateField}
+            onChange={event => setDateField(event.target.value)}
           >
             <option value="">Choose date field</option>
-            {fields
-              .filter((field) => field.type === "date")
-              .map((field) => (
+            {dateFields.map((field) => (
                 <option key={field.id} value={field.id}>
                   {field.name}
                 </option>
               ))}
           </select>
         </label>
+        {missingDate ? <p>Choose or create a date field before saving this layout.</p> : null}
+        <button type="button" className="tool" onClick={() => createField("date")}>Create a date field</button>
+        </>
       ) : null}
       <label>
         Group by
-        <select name="groupField" defaultValue={view.groups[0]?.field ?? ""}>
+        <select name="groupField" required={layout === "board"} value={groupField}
+          onChange={event => setGroupField(event.target.value)}>
           <option value="">No grouping</option>
-          {fields
-            .filter(
-              (field) => !["file", "formula", "rollup"].includes(field.type),
-            )
-            .map((field) => (
+          {groupFields.map((field) => (
               <option key={field.id} value={field.id}>
                 {field.name}
               </option>
             ))}
         </select>
       </label>
+      {layout === "board" ? <>
+        {missingGroup ? <p>Choose or create a grouping field before saving this board.</p> : null}
+        <button type="button" className="tool" onClick={() => createField("select")}>Create a grouping field</button>
+      </> : null}
       <label>
         <input
           type="checkbox"
@@ -147,5 +171,17 @@ export function ViewDialog({
         ))}
       </fieldset>
     </ActionDialog>
+    {creatingField ? <FieldDialog
+      field={creatingField}
+      fields={fields}
+      allowedTypes={[creatingField.type]}
+      onClose={() => setCreatingField(undefined)}
+      onSave={async field => {
+        await onSaveField(field);
+        if (creatingField.type === "date") setDateField(field.id);
+        else setGroupField(field.id);
+      }}
+    /> : null}
+    </>
   );
 }

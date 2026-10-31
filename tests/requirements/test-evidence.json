@@ -312,9 +312,10 @@
       "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input",
       "kind": "supporting-regression",
       "clauses": [
-        "BASE-ACCESS-002"
+        "BASE-ACCESS-002",
+        "DB-004"
       ],
-      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance."
+      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. DB-004 native HTTP exercises missing grouping and date field refusal without a saved view, explicit field creation, all six layouts over identical records, and unchanged structure and records after view-only or locked mutations are refused."
     },
     {
       "file": "tests/flagship/structured/template-permissions.test.ts",

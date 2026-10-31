@@ -31,8 +31,10 @@ export function FieldDialog({
   onSave,
   onRemove,
   onClose,
+  allowedTypes,
 }: {
   field: FieldDto;
+  allowedTypes?: string[];
   fields: FieldDto[];
   onSave: (field: FieldDto) => Promise<void>;
   onRemove?: () => void;
@@ -91,7 +93,7 @@ export function FieldDialog({
       <label>
         Type
         <select aria-label="Type" value={type} onChange={(e) => setType(e.target.value)}>
-          {types.map(([value, label]) => (
+          {types.filter(([value]) => !allowedTypes || allowedTypes.includes(value)).map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
