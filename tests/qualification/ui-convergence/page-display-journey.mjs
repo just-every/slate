@@ -4,7 +4,7 @@ import { unzipSync } from 'fflate';
 import { expect } from '@playwright/test';
 import { closeDetails } from './browser-support.mjs';
 import { accessible } from './browser-evidence.mjs';
-import { grant, ok } from './two-people-support.mjs';
+import { editable, grant, ok } from './two-people-support.mjs';
 
 export async function pageDisplayJourney(state, people) {
   const { page, context, origin, api } = state;
@@ -17,7 +17,6 @@ export async function pageDisplayJourney(state, people) {
   ].map((block, index) => ({ ...block, id: randomUUID(), treePosition: String(index) }));
   const { value: { pageId } } = await ok(context, origin, 'POST', '/api/pages', { operationKey: randomUUID(), containerId: space.id, title: 'Customer incident response', blocks });
   await grant(context, origin, pageId, 'browser-reader', 'view');
-  const original = await api(`/api/pages/${pageId}`);
   const shot = (view, label) => view.screenshot({ path: `.artifacts/ui-convergence/page-display-${width}-${label}.png`, fullPage: false });
   async function checkDisplay(view, display) {
     const document = view.locator('.main.page-document');
@@ -42,8 +41,40 @@ export async function pageDisplayJourney(state, people) {
     await page.getByRole('combobox', { name: /^Typeface/ }).selectOption(display.typeface);
     await page.getByLabel('Small text', { exact: true }).setChecked(display.smallText);
     await page.getByLabel('Full width', { exact: true }).setChecked(display.fullWidth);
+    // Keep the panel and its pending choices open while this tab commits text.
+    // The next display write must follow our receipt without requiring a reload.
+    if (display.typeface !== 'default') {
+      const bodyEdit = display.typeface === 'mono';
+      const path = `/api/pages/${pageId}${bodyEdit ? `/blocks/${blocks[2].id}` : ''}`;
+      const [saved] = await Promise.all([
+        page.waitForResponse(response => response.request().method() === 'PATCH' && new URL(response.url()).pathname === path),
+        (async () => {
+          if (bodyEdit) {
+            // Keyboard focus can reach the body behind the phone's side panel.
+            await editable(page, blocks[2].id).focus();
+            await page.keyboard.press('ControlOrMeta+End');
+            await page.keyboard.type(' Confirmed by the incident lead.');
+          } else {
+            await page.getByRole('textbox', { name: 'Page title', exact: true }).fill('Customer incident response — reviewed');
+            await page.getByRole('combobox', { name: /^Typeface/ }).focus();
+          }
+        })(),
+      ]);
+      assert.equal(saved.status(), 200, 'Our text save succeeds while Display settings stays open.');
+      await expect(page.locator('.editor-save-status')).toHaveText('Saved');
+      await expect(page.getByRole('region', { name: 'Display settings', exact: true })).toBeVisible();
+      await expect(page.getByRole('combobox', { name: /^Typeface/ })).toHaveValue(display.typeface);
+    }
+    const beforeDisplay = await api(`/api/pages/${pageId}`);
+    if (display.typeface === 'serif') assert.equal(beforeDisplay.page.title, 'Customer incident response — reviewed');
+    if (display.typeface === 'mono') assert.match(JSON.stringify(beforeDisplay.blocks[2].content), /Confirmed by the incident lead\./);
+    const savedDisplay = page.waitForResponse(response => response.request().method() === 'PATCH' && new URL(response.url()).pathname === `/api/pages/${pageId}`);
     await page.getByRole('button', { name: 'Save display settings', exact: true }).click();
+    assert.equal((await savedDisplay).status(), 200, 'Display settings follows our own text save without a conflict or reload.');
     await expect(page.getByRole('status').filter({ hasText: 'Display settings saved.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload saved page', exact: true })).toHaveCount(0);
+    const persisted = await api(`/api/pages/${pageId}`);
+    for (const [key, value] of Object.entries(display)) assert.equal(persisted.properties[key], value, `Stored ${key} matches the pending display choice.`);
     await accessible(page, 'page display settings');
     await shot(page, `${display.typeface}-settings`);
     await closeDetails(page);
@@ -54,7 +85,7 @@ export async function pageDisplayJourney(state, people) {
     assert.deepEqual(await checkDisplay(people.bob.page, display), ownerStyle, 'The reader uses the same stored display as the editor.');
     await shot(people.bob.page, `${display.typeface}-reader`);
     const current = await api(`/api/pages/${pageId}`);
-    assert.deepEqual(current.blocks, original.blocks, 'Display changes preserve stored body content.');
+    assert.deepEqual(current.blocks, beforeDisplay.blocks, 'Display changes preserve stored body content, including our own edit.');
     if (display.typeface !== 'serif') continue;
     // Open the product's actual exported HTML, including its own offline styles.
     const response = await context.request.post(`${origin}/api/exports/readable`, { headers: { origin }, data: { scope: 'page', id: pageId, format: 'html' } });

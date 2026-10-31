@@ -48,10 +48,14 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
   const revisionRef = useRef(revision);
   // A read dispatched before a committed mutation may still be in transport.
   // Retire it before publishing the receipt's newer compare-and-swap revision.
-  function updateRevision(value: string) {
+  function updateRevision(value: string, previousRevisionId?: string) {
     invalidateRead();
     revisionRef.current = value;
     setRevision(value);
+    if (previousRevisionId)
+      window.dispatchEvent(new CustomEvent("slate:page-text-saved", {
+        detail: { pageId: document.page.id, previousRevisionId, revisionId: value },
+      }));
   }
   const [workingRevisionId, setWorkingRevisionId] = useState(document.workingRevisionId);
   const [firstBlockDirty,setFirstBlockDirty]=useState(false);
@@ -151,7 +155,7 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
       if (receipt.value.previousRevisionId === synced.current)
         synced.current = receipt.value.revisionId;
       if (alive.current) {
-        updateRevision(receipt.value.revisionId);
+        updateRevision(receipt.value.revisionId, receipt.value.previousRevisionId);
         setWorkingRevisionId(receipt.value.revisionId);
       }
       const latest = current.current.find((block) => block.id === id);

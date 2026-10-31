@@ -1,4 +1,4 @@
-.slate-app .navigation-create > button { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; }
+.slate-app .navigation-create > button { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: 100%; padding: 0 calc(var(--row-inset) - 1px); }
 .slate-app .navigation-create svg { width: 18px; height: 18px; }
 .slate-app .create-menu { display: grid; gap: 4px; padding: 6px; margin-top: 8px; border: 1px solid var(--slate-line); border-radius: 8px; background: var(--slate-surface); box-shadow: var(--slate-shadow-popover); }
 .slate-app .create-menu > button, .slate-app .create-menu > a { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; text-align: left; border-radius: 4px; }

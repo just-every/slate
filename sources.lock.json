@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "7308d5b8a4c45e451461a38f8b283775764fec65ab86d5dea9dccd4899fffd32",
+      "sha256": "e6010d9b46db926aa3d81e4e7406e8b20f83ccee9c163feb112390678150e3c9",
       "executable": false
     },
     "DEMO.md": {
@@ -5376,7 +5376,7 @@
       "executable": false
     },
     "src/core/app/styles/navigation.css": {
-      "sha256": "50d3ade70ae21398af21a7a9fcc6c85bcb5f66cc250d82bc21556bd48602d492",
+      "sha256": "6edeb3b89064760b8ba9e61e1f19236485da256d1b6bad985a4d878dc9ce93c5",
       "executable": false
     },
     "src/core/app/styles/page.css": {
@@ -5600,11 +5600,11 @@
       "executable": false
     },
     "src/core/client/usePageEditor.ts": {
-      "sha256": "f78d1eded419bca27dfb2a8154177d3d726ede1f3a566984cbf276990c217ec8",
+      "sha256": "e5df55b3be39f639ae7b5ef551eded2c2a12c3467f15ece033888c10befb510b",
       "executable": false
     },
     "src/core/client/usePagePropertySave.ts": {
-      "sha256": "c4dff813a1b51e25225af52f5cd8dff04028aa525ceca98bdb97588dbc2b1f4e",
+      "sha256": "d2a575863387bee81b34ab8bcc83f61dec59cc1062f75d771f1e8f65fb131fd6",
       "executable": false
     },
     "src/core/client/useRecordReferences.ts": {
@@ -8380,7 +8380,7 @@
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageDisplay.tsx": {
-      "sha256": "3b55b92dff5b37305881966bea35db487a022cf383557a45e88050c9e40adde2",
+      "sha256": "f51f135bc2a5aad0cef71e1b2e70a30cdc71c58acc42fe0948788fdd1ba286c2",
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageEditorBody.tsx": {
@@ -8432,7 +8432,7 @@
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageWorkspace.tsx": {
-      "sha256": "0e5f8c52482f15c0471f52068a84e970c153d8f636ac535b0a195ba6f3cf5177",
+      "sha256": "018c260616d446f6a11025a52b849272513c04785adaba5980651c0434f05ddf",
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PublicationReviewPanel.tsx": {
@@ -12008,7 +12008,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/page-display-journey.mjs": {
-      "sha256": "dcf32bad53ead7ab01cd9b1d721b7ee67f0107d7075ea7da99f620bcc3249efe",
+      "sha256": "5e9274cbe15cd57ebf142f1127751627afd327877a2382001128143b8deb9df1",
       "executable": false
     },
     "tests/qualification/ui-convergence/page-lock-journey.mjs": {

@@ -9,7 +9,7 @@ export function PageDisplay({ document, revision, reload }: { document: Document
   const [error, setError] = useState<unknown>();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const properties = usePagePropertySave(document.page.id, revision);
+  const properties = usePagePropertySave(document.page.id, revision, true);
   if (!document.permissions.canEdit) return <section><h2>Display settings</h2><p>You can read this page. Editing options require edit access.</p></section>;
   return (
     <section>
