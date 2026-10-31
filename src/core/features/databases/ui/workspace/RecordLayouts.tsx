@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReferenceLabel } from "../../../../client/useRecordReferences";
 import { displayDate } from "../../../../app/ui/displayDate";
 import { recordDate, recordDateTime } from "../../../../client/recordDates";
 import { TableView } from "../views/TableView";
@@ -26,6 +27,7 @@ export function RecordLayouts({
   onHideEmpty,
   onCalculation,
   onCreateRequiredField,
+  references,
 }: {
   view: ViewDto;
   canEditStructure: boolean;
@@ -33,7 +35,8 @@ export function RecordLayouts({
   rawFields: FieldDto[];
   rawRecords: RecordDto[];
   props: RecordViewProps;
-  onGroupMove: (recordId: string, value: unknown) => void;
+  onGroupMove: (recordId: string, value: unknown, sourceValue: unknown) => void;
+  references: Map<string, ReferenceLabel>;
   onHideEmpty: (hide: boolean) => void;
   onCreateRequiredField:(kind:"select"|"date")=>void;
   onCalculation: (fieldId: string, kind: CalculationKind) => void;
@@ -54,6 +57,7 @@ export function RecordLayouts({
         groups={grouped.groups.map((group, index) => ({
           id: String(index),
           label: group.value == null ? "No value"
+            : groupField?.type === "person" ? references.get(String(group.value))?.label ?? "Unavailable person"
             : groupField?.type === "date" ? recordDate(String(group.value))
             : groupField && ["created-at", "updated-at"].includes(groupField.type)
               ? displayDate(String(group.value), true) : String(group.value),
@@ -79,8 +83,8 @@ export function RecordLayouts({
         onHideEmptyGroupsChange={onHideEmpty}
         onOpenRecord={props.onOpenRecord}
         onOpenLink={props.onOpenLink}
-        onMoveRecord={(id, index) =>
-          onGroupMove(id, grouped.groups[Number(index)].value)
+        onMoveRecord={(id, index, sourceIndex) =>
+          onGroupMove(id, grouped.groups[Number(index)].value, grouped.groups[Number(sourceIndex)].value)
         }
         onNewRecordInGroup={() => props.onNewRecord()}
       />

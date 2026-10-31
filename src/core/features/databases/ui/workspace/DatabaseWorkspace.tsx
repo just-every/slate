@@ -218,6 +218,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
                     query={query.data}
                     rawFields={fields}
                     rawRecords={records}
+                    references={references}
                     props={{
                       fields: shown.map(fieldView),
                       records: records.map((record) =>
@@ -240,15 +241,26 @@ export function DatabaseWorkspace({ id }: { id: string }) {
                         window.location.assign(`/app/pages/${link}`),
                       onNewRecord: () => setDialog("new"),
                     }}
-                    onGroupMove={(recordId, value) => {
+                    onGroupMove={(recordId, value, sourceValue) => {
                       const record = records.find(
                           (item) => item.pageId === recordId,
                         ),
                         field = fields.find(
                           (item) => item.id === view.groups[0]?.field,
                         );
-                      if (record && field)
-                        void saveValue(record, field, value).catch(setError);
+                      if (record && field) {
+                        // A person move replaces only the assignment in the source
+                        // column. Moving to No value explicitly clears all people.
+                        const next = field.type === "person"
+                          ? value == null ? [] : [...new Set([
+                            ...(Array.isArray(record.values[field.id])
+                              ? (record.values[field.id] as string[]).filter(person => person !== sourceValue)
+                              : []),
+                            String(value),
+                          ])]
+                          : value;
+                        void saveValue(record, field, next).catch(setError);
+                      }
                     }}
                     onHideEmpty={(hide) =>
                       void saveView({

@@ -1,3 +1,4 @@
+import { groupingHttpJourney } from "./grouping-http";
 import { env } from "cloudflare:test";
 import { beforeEach, test, expect } from "vitest";
 import { resetDeployment } from "../../e2e/setup/reset-deployment";
@@ -111,6 +112,8 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
       }
     ).database.id,
   ).toBe(body.value.id);
+  await seedContainerGrant(containerId, { principalKind: "member", principalId: reader.actor.id, level: "view" });
+  await groupingHttpJourney(body.value, cookie, await sessionFor(reader.actor.id), ctx.actor.id, reader.actor.id);
 });
 
 test("database file references list only attachments the reader could open", async () => {

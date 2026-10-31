@@ -89,7 +89,7 @@ export function ViewDialog({
           <option value="">No grouping</option>
           {fields
             .filter(
-              (field) => !["file", "formula", "rollup"].includes(field.type),
+              (field) => ["select", "status", "person", "checkbox", "date"].includes(field.type),
             )
             .map((field) => (
               <option key={field.id} value={field.id}>

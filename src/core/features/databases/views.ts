@@ -288,12 +288,13 @@ export async function queryView(
     const buckets = new Map<string, typeof records>();
     for (const r of records) {
       const value = r.values[g.field] ?? null;
-      for (const key of Array.isArray(value) ? value : [value]) {
+      for (const key of Array.isArray(value) && value.length ? value : [Array.isArray(value) ? null : value]) {
         const k = JSON.stringify(key);
         buckets.set(k, [...(buckets.get(k) ?? []), r]);
       }
     }
     if (!g.hideEmpty) {
+      if (!buckets.has("null")) buckets.set("null", []);
       const f = fs.find((f) => f.id === g.field);
       for (const key of (f?.config.options as unknown[]) ??
         (f?.type === "checkbox" ? [true, false] : [])) {

@@ -37,7 +37,7 @@ export function BoardView({
   hideEmptyGroups: boolean;
   onHideEmptyGroupsChange: (next: boolean) => void;
   onOpenRecord: (recordId: string) => void;
-  onMoveRecord: (recordId: string, groupId: string) => void;
+  onMoveRecord: (recordId: string, groupId: string, sourceGroupId: string) => void;
   onOpenLink: (linkId: string) => void;
   onNewRecordInGroup: (groupId: string) => void;
   className?: string;
@@ -82,7 +82,7 @@ export function BoardView({
                             .map((target) => ({ id: target.id, label: target.label }))
                         : []
                     }
-                    onMove={(groupId) => onMoveRecord(record.id, groupId)}
+                    onMove={(groupId) => onMoveRecord(record.id, groupId, group.id)}
                     onOpen={() => onOpenRecord(record.id)}
                     onOpenLink={onOpenLink}
                     record={record}

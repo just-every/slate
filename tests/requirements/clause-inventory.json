@@ -1074,8 +1074,13 @@
       "id": "DB-006",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for DB-006 — Group. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "Native HTTP and the existing databaseGroupingJourney browser helper cover typed saved grouping, exact authorized membership and counts, move controls, retained values, empty groups and viewer refusals. Guarded landing and independent release acceptance remain separate.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
+        }
+      ]
     },
     {
       "id": "DB-007",

@@ -1,9 +1,11 @@
+import { databaseGroupingJourney } from './database-grouping-journey.mjs';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
 
 /** Identity comes from the shared harness; all database setup and assertions use real public routes. */
-export async function databaseJourney({ page, origin, context, api }) {
+export async function databaseJourney(state) {
+  const { page, origin, context, api } = state;
   async function mutate(route, data, method = 'POST') {
     const response = await context.request.fetch(origin + route, {
       method, data: { operationKey: randomUUID(), ...data },
@@ -82,4 +84,5 @@ export async function databaseJourney({ page, origin, context, api }) {
   const csv = Buffer.concat(chunks).toString('utf8');
   assert.equal(csv, '"Name","Notes"\r\n"Selected, ""quoted"" record","Fresh, ""quoted""\nsecond line"\r\n');
   assert.equal((await api(base + '/records/' + record.pageId)).values[keep.id], note);
+  await databaseGroupingJourney(state);
 }
