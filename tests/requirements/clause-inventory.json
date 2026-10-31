@@ -1508,7 +1508,7 @@
       "id": "IMP-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Native HTTP supporting journeys prove preparation cancellation and late transactional document rollback, including retained originals, unchanged native state and retry. IMP-001 remains partial: complete acceptance 1–5, interrupted reviewed-space checkpoint proof in acceptance 7, and requirement-wide idempotency, exact-original retention and complete creation and loss accounting remain unproven.",
+      "unmetReason": "Native HTTP supporting journeys prove preparation cancellation before and after plan sealing and late transactional document rollback, including retained originals, unchanged native state and retry. IMP-001 remains partial: complete acceptance 1–5, interrupted reviewed-space checkpoint proof in acceptance 7, and requirement-wide idempotency, exact-original retention and complete creation and loss accounting remain unproven.",
       "supportingTests": [
         {
           "file": "tests/flagship/federation/federation.test.ts",
