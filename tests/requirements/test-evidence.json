@@ -777,7 +777,7 @@
         "WORK-010",
         "WORK-015"
       ],
-      "reason": "A D1 store at the published v0.1.0 schema with owner, member, scoped guest, group and live sessions upgrades through 0018-0023; the access table holds through HTTP. Earlier GET links retire; Base email proofs preview inert and confirm once by same-origin POST; the pinned incumbent provider with a real RS256 signature binds the verified mailbox's member and never moves a binding; ownership change needs a step-up proof from the asking session and ends the changed member's fenced sessions. Live provider acceptance and full product acceptance are separate."
+      "reason": "Native prior-schema upgrade preserves members, groups, guests and current authority. WORK-015 extends that same loaded journey through actual invitation issue and acceptance, signed RS256 OIDC admission, refusal of an uninvited verified identity with unchanged native identity state, discovery and token outages, wrong signatures, independent email confirmation and a new-address invitation without restoring removed sessions or private grants. Existing SAML acceptance is retained. The emitted Worker sign-in journey separately renders provider failure and confirms email fallback. R-12 real tenant receipts remain field proof; ADMIN-001 and ADMIN-002 retain their own protocol duties."
     },
     {
       "file": "tests/e2e/imports/preview-undo.test.ts",

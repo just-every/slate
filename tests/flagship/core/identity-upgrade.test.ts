@@ -33,6 +33,7 @@ function http(fixture: Fixture) {
       expect(link.origin + link.pathname).toBe(origin + '/auth/confirm');
       return link.searchParams.get('token')!;
     },
+    latestInvitation: (email: string) => mail.latestLink(email),
   };
 }
 const cookieOf = (response: Response) => response.headers.getSetCookie().find(value => value.startsWith('slate_session='))!.split(';')[0]!;
@@ -114,7 +115,122 @@ test('published v0.1.0 members, groups, guests and live sessions keep identity, 
   expect((await web.get('/api/session', memberFresh)).status).toBe(401);
   expect(await (await web.get('/api/session', cookies.member)).json()).toMatchObject({ member: { id: member.memberId, role: 'owner' } });
   expect(await (await web.get('/api/session', cookies.owner)).json()).toMatchObject({ member: { id: owner.memberId } });
+  await invitedProviderJourney(fixture, web);
 });
+
+/** WORK-015: native invitation and session doors, with only provider and mail transport substituted. */
+async function invitedProviderJourney(fixture: Fixture, web: ReturnType<typeof http>) {
+  const { db, api, origin, bindings, cookies } = fixture;
+  const oldEmail = ['synthetic-slate-703', 'example.test'].join('@');
+  const newEmail = ['synthetic-slate-704', 'example.test'].join('@');
+  const unknownEmail = ['synthetic-slate-705', 'example.test'].join('@');
+  const rows = async (table: string) => (await db.prepare(`SELECT * FROM ${table} ORDER BY id`).all()).results;
+  const snapshot = async () => ({ members: await rows('members'), sessions: await rows('sessions'), bindings: (await db.prepare('SELECT * FROM member_identity_bindings ORDER BY issuer,subject').all()).results });
+  const invite = async (email: string) => {
+    const response = await web.send('POST', '/api/invitations', { operationKey: crypto.randomUUID(), email, kind: 'member' }, cookies.owner);
+    expect(response.status, await response.clone().text()).toBe(200);
+    const link = web.latestInvitation(email);
+    expect(link.origin + link.pathname).toBe(origin + '/api/auth/invitation/accept');
+    return link.searchParams.get('token')!;
+  };
+  const accept = (token: string) => api.request(origin + '/api/auth/invitation/accept', { method: 'POST', headers: { host: web.host, origin, 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token }) }, bindings);
+  const session = async (cookie: string) => {
+    const response = await web.get('/api/session', cookie);
+    expect(response.status).toBe(200);
+    return (await response.json<{ member: { id: string; email: string; role: string } }>()).member;
+  };
+  const token = await invite(oldEmail), beforeAcceptance = await snapshot();
+  const preview = await web.get('/api/auth/invitation/accept?token=' + token);
+  expect(preview.status).toBe(200); expect(preview.headers.get('set-cookie')).toBeNull();
+  expect(await snapshot()).toEqual(beforeAcceptance);
+  const accepted = await accept(token);
+  expect(accepted.status).toBe(303);
+  const oldCookie = cookieOf(accepted), oldMember = await session(oldCookie);
+  expect(oldMember).toMatchObject({ email: oldEmail, role: 'member' });
+  expect(await db.prepare('SELECT accepted_by_member_id FROM invitations WHERE email=?').bind(oldEmail).first()).toEqual({ accepted_by_member_id: oldMember.id });
+
+  const provider = await providerEdge(fixture, 'synthetic-slate-' + crypto.randomUUID());
+  try {
+    const flow = await provider.signIn({ subject: 'synthetic-slate-706', email: oldEmail });
+    const signedIn = await flow.complete();
+    expect(signedIn.status).toBe(303);
+    const providerCookie = cookieOf(signedIn);
+    expect(await session(providerCookie)).toEqual(oldMember);
+    expect(await db.prepare('SELECT member_id FROM member_identity_bindings WHERE subject=?').bind('synthetic-slate-706').first()).toEqual({ member_id: oldMember.id });
+
+    // A verified mailbox alone confers no admission and creates no native identity state.
+    const beforeUnknown = await snapshot();
+    const unknown = await (await provider.signIn({ subject: 'synthetic-slate-707', email: unknownEmail })).complete();
+    expect(unknown.status).toBe(403);
+    expect(unknown.headers.getSetCookie().some(value => value.startsWith('slate_session='))).toBe(false);
+    expect(await snapshot()).toEqual(beforeUnknown);
+
+    // Give the old identity a real private grant, then revoke it before the owner invites a new address.
+    const page = await db.prepare("SELECT id FROM pages WHERE title='Owner page'").first<{ id: string }>();
+    const grant = await web.send('POST', '/api/sharing', { operationKey: crypto.randomUUID(), targetKind: 'page', targetId: page!.id, principalKind: 'member', principalId: oldMember.id, level: 'view' }, cookies.owner);
+    expect(grant.status, await grant.clone().text()).toBe(200);
+    expect((await web.get('/api/pages/' + page!.id, oldCookie)).status).toBe(200);
+    const removal = { operationKey: crypto.randomUUID(), memberId: oldMember.id };
+    expect((await web.send('POST', '/api/members/remove', removal, cookies.owner)).status).toBe(200);
+    for (const cookie of [oldCookie, providerCookie]) expect((await web.get('/api/session', cookie)).status).toBe(401);
+    const retiredSessions = (await db.prepare('SELECT * FROM sessions WHERE member_id=? ORDER BY id').bind(oldMember.id).all()).results;
+    const retiredGrants = (await db.prepare('SELECT * FROM page_grants WHERE principal_id=? ORDER BY id').bind(oldMember.id).all()).results;
+    expect(retiredSessions.length).toBeGreaterThan(0); expect(retiredSessions.every(row => row.revoked_at !== null)).toBe(true);
+    expect(retiredGrants).toHaveLength(1); expect(retiredGrants[0]!.revoked_at).not.toBeNull();
+
+    const replacementToken = await invite(newEmail), replacement = await accept(replacementToken);
+    expect(replacement.status).toBe(303);
+    const replacementCookie = cookieOf(replacement), replacementMember = await session(replacementCookie);
+    expect(replacementMember).toMatchObject({ email: newEmail, role: 'member' });
+    expect(replacementMember.id).not.toBe(oldMember.id);
+    expect((await web.get('/api/pages/' + page!.id, replacementCookie)).status).toBe(404);
+    expect(await db.prepare('SELECT status,email FROM members WHERE id=?').bind(oldMember.id).first()).toEqual({ status: 'removed', email: oldEmail });
+    expect((await db.prepare('SELECT * FROM sessions WHERE member_id=? ORDER BY id').bind(oldMember.id).all()).results).toEqual(retiredSessions);
+    expect((await db.prepare('SELECT * FROM page_grants WHERE principal_id=? ORDER BY id').bind(oldMember.id).all()).results).toEqual(retiredGrants);
+    const beforeReplay = await snapshot();
+    for (const used of [token, replacementToken]) {
+      const replay = await accept(used);
+      expect(replay.status).toBe(400); expect(replay.headers.get('set-cookie')).toBeNull();
+    }
+    expect((await web.send('POST', '/api/members/remove', removal, cookies.owner)).status).toBe(200);
+    for (const email of [oldEmail, newEmail]) {
+      const rebound = await (await provider.signIn({ subject: 'synthetic-slate-706', email })).complete();
+      expect(rebound.status).toBe(403);
+      expect(rebound.headers.getSetCookie().some(value => value.startsWith('slate_session='))).toBe(false);
+    }
+    expect(await snapshot()).toEqual(beforeReplay);
+
+    // Discovery, token transport and a cryptographically wrong signature each fail closed.
+    // Keeping the edge broken during email confirmation proves the independent mailbox door.
+    for (const failure of ['discovery', 'token', 'signature'] as const) {
+      provider.fail(null);
+      const pending = failure === 'discovery' ? null : await provider.signIn({ subject: 'synthetic-slate-708', email: newEmail });
+      provider.fail(failure);
+      const beforeFailure = await snapshot();
+      const failed = pending ? await pending.complete(true) : await api.request(origin + '/auth/oidc/identity/start', { method: 'POST', headers: { host: web.host, origin, accept: 'text/html', 'content-type': 'application/x-www-form-urlencoded' }, body: '' }, bindings);
+      expect(failed.status).toBe(303);
+      const destination = new URL(failed.headers.get('location')!, origin);
+      expect(destination.pathname).toBe('/signin');
+      expect(destination.searchParams.get('provider')).toBe('identity');
+      expect(destination.searchParams.get('notice')).toBe(failure === 'signature' ? 'oidc_invalid_response' : 'oidc_provider_unavailable');
+      expect(failed.headers.getSetCookie().some(value => value.startsWith('slate_session='))).toBe(false);
+      expect(await snapshot()).toEqual(beforeFailure);
+      expect((await web.send('POST', '/api/auth/magic', { email: newEmail })).status).toBe(200);
+      const emailSession = await web.confirm(await web.latestLink(newEmail));
+      expect(emailSession.status).toBe(303);
+      expect(await session(cookieOf(emailSession))).toEqual(replacementMember);
+      expect((await web.get('/api/session', providerCookie)).status).toBe(401);
+    }
+    provider.fail(null);
+    bindings.SSO_ENABLED = 'false';
+    const capabilities = await web.get('/api/auth/capabilities');
+    expect(await capabilities.json()).toMatchObject({ mailDelivery: true, identityProvider: false, identityProviders: [] });
+    expect((await web.send('POST', '/api/auth/magic', { email: newEmail })).status).toBe(200);
+    const withoutProvider = await web.confirm(await web.latestLink(newEmail));
+    expect(withoutProvider.status).toBe(303); expect(await session(cookieOf(withoutProvider))).toEqual(replacementMember);
+    for (const cookie of [oldCookie, providerCookie]) expect((await web.get('/api/session', cookie)).status).toBe(401);
+  } finally { bindings.SSO_ENABLED = 'true'; provider.restore(); }
+}
 
 
 contract('ADMIN-001', 'signed SP and IdP SAML, DNS-gated invited or allow-listed JIT, enforced member SSO and one owner mailbox escape', async () => {

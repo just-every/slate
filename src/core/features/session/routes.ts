@@ -22,7 +22,7 @@ import { completeNativeLocalSetup, LOCAL_SETUP_PATH } from "./local-setup";
 import { OWNER_SIGNIN_PATH, previewOwnerSignIn } from "./preview-owner-signin";
 
 const retiredLink = (config: RuntimeConfig, method: string) => confirmationResponse({ branding: slateBranding(config), preview: null, token: "", method });
-import { BASE_AUTH_PATHS } from './paths';
+import { BASE_AUTH_PATHS, PROVIDER_START, PROVIDER_CALLBACK } from './paths';
 export { BASE_AUTH_PATHS, SESSION_AUTH_PATHS } from './paths';
 const invitationToken = z.string().min(20).max(512);
 const requestDigest = (secret: string, email: string, key: string) => sessionDigest(secret, `mail-request:${email.toLowerCase()}:${key}`);
@@ -78,6 +78,16 @@ export function createSessionRoutes() {
       const response = await handle(c.req.raw);
       // With SSO off no provider owns the callback, and Base answers null for it.
       if (!response) return c.json(error("NOT_FOUND", "Not found."), 404);
+      // Base owns verification; Slate identifies the failed provider on its own sign-in page.
+      if ((c.req.path === PROVIDER_START || c.req.path === PROVIDER_CALLBACK) && response.status === 303) {
+        const destination = new URL(response.headers.get('location') ?? '/', c.req.url);
+        if (destination.origin === new URL(c.req.url).origin && destination.pathname === '/signin' && destination.searchParams.get('notice')?.startsWith('oidc_')) {
+          destination.searchParams.set('provider', 'identity');
+          const headers = new Headers(response.headers);
+          headers.set('location', destination.pathname + destination.search);
+          return new Response(response.body, { status: response.status, headers });
+        }
+      }
       // A used, expired or foreign link submitted from the confirmation page gets the same page, not JSON.
       if (c.req.path === "/auth/confirm" && c.req.method === "POST" && response.status === 400) return retiredLink(c.get("runtimeConfig"), "POST");
       return response;

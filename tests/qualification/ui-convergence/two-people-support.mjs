@@ -202,7 +202,7 @@ export async function savedAfterCommit(page, blockId, edit, { whileSaving } = {}
     assert.ok(saved && saved.at >= receiptAt, 'Saved follows the real committed receipt, never preceding it.');
     const savedAfterCommitMs = saved.at - commitAt;
     assert.ok(savedAfterCommitMs >= 0 && savedAfterCommitMs <= 2000, `Saved appears within two seconds of the native commit: ${savedAfterCommitMs} ms.`);
-    const measurement = { pageId, blockId, blockRevisionId: body.value.blockRevisionId, revisionId: body.value.revisionId, receipt, activity, savingShownMs: saving.at, savedAfterCommitMs };
+    const measurement = { pageId, blockId, expectedRevisionId: submitted.expectedRevisionId, blockRevisionId: body.value.blockRevisionId, revisionId: body.value.revisionId, receipt, activity, savingShownMs: saving.at, savedAfterCommitMs };
     const evidence = path.join(root, '.artifacts/ui-convergence/saves');
     await mkdir(evidence, { recursive: true });
     await writeFile(path.join(evidence, `${receipt.operationKey}.json`), JSON.stringify({ ...measurement, dispatchedAt, receiptAt, seen }, null, 2));

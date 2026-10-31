@@ -243,7 +243,7 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE
 2. SAML single sign-on and SCIM provisioning are `ADMIN-001` and `ADMIN-002`.
 3. Configured OIDC provider signs in an invited member only; a failing provider leaves magic-link sign-in working and says which is unavailable.
 
-**Evidence.** `tests/qualification/core/identity.mjs`
+**Evidence.** `tests/qualification/core/identity.mjs` Supporting candidate regressions: `tests/flagship/core/identity-upgrade.test.ts` — native invited OIDC, refused identities without writes, provider outages, mailbox replacement and email fallback; `tests/e2e/provider-fallback-flow.mjs` — emitted provider failure and email recovery.
 **Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/identity.mjs`.
 
 ### Editing and saving

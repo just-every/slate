@@ -158,7 +158,7 @@
       "id": "WORK-015",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of WORK-015 — Identity provider. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This legacy inventory classifies supporting Workers tests only; CONTRACT.md owns clause status. The loaded native journey covers invited OIDC admission, unknown verified identity refusal with no identity writes, discovery and token outages, invalid signatures, email fallback and a replacement mailbox with no restored sessions or grants. The existing emitted Worker registration supplies the browser sign-in proof. SAML and SCIM remain ADMIN-001 and ADMIN-002 duties; R-12 real tenant receipts remain field proof.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/identity-upgrade.test.ts",

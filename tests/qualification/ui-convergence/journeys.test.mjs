@@ -94,7 +94,6 @@ for (const width of [390, 1440]) {
         await state.runScheduled();
         await chatJourney(state, width);
         if (width === 390) {
-          await withSecondPerson(state, width, people => step('SAVE-003 — native stale property and structure choices remain recoverable', () => revisionConflictsJourney(state, people)));
           await templateCaptureJourney(state);
           await withSecondPerson(state, width, people => step('DB-015 — template handover and revoked-saver pause on a phone', () => recordTemplatesJourney(state, people)));
           // One phone smoke visits the main screens; functional journeys use desktop
@@ -121,6 +120,7 @@ for (const width of [390]) {
   test(`space tree title filtering preserves ancestors, access and expansion at ${width}px`, { timeout: 420000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
+      await withSecondPerson(state, width, people => step('SAVE-003 — native stale property and structure choices remain recoverable', () => revisionConflictsJourney(state, people)));
       await treeFilterJourney(state);
       await state.switchIdentity('owner');
       await settingsJourney(state,width);

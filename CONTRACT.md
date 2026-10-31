@@ -3974,13 +3974,13 @@ Contributed tree node kinds beyond pages, databases, cards and posts, and cross-
 
 ## Status
 
-Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
+Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. SAVE-003 native conflict proof was reviewed from source commit `54dd17ef7a0051314a6bf1502fe3d1a831cae22f` (31 October 2026); the final merged candidate is named by the branch receipt.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -3999,10 +3999,10 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `WORK-012` | Theme | published | partial | `tests/qualification/core/identity.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/identity.mjs`. |
 | `WORK-013` | First run | published | partial | `tests/qualification/backend/emitted.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/backend/emitted.mjs`. |
 | `WORK-014` | Shortcut reference | published | partial | `tests/qualification/core/shell.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/shell.mjs`. |
-| `WORK-015` | Identity provider | published | partial | `tests/qualification/core/identity.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/identity.mjs`. |
+| `WORK-015` | Identity provider | published | partial | `tests/qualification/core/identity.mjs` Supporting candidate regressions: `tests/flagship/core/identity-upgrade.test.ts` — native invited OIDC, refused identities without writes, provider outages, mailbox replacement and email fallback; `tests/e2e/provider-fallback-flow.mjs` — emitted provider failure and email recovery. | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/identity.mjs`. |
 | `SAVE-001` | Durable save state | published | partial | `tests/qualification/interface/routed.browser.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/routed.browser.mjs`. |
 | `SAVE-002` | Failed writes | published | done | `tests/qualification/ui-convergence/failed-save-journey.mjs` — "failedSaveJourney" |  |
-| `SAVE-003` | Revision conflicts | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every edit is submitted with the revision it began from: the block's revision for a body edit, the page's for a title, property, structure or order change."<br>No validated CI-run proof for this acceptance point: "An edit against a superseded revision is rejected with 409, keeps the local draft, and offers compare, reload, or explicit overwrite."<br>No validated CI-run proof for this acceptance point: "Slate never resolves a conflict by last write wins." |
+| `SAVE-003` | Revision conflicts | published | done | `tests/qualification/ui-convergence/journeys.test.mjs` — "two people edit at once, lose access mid-edit and restore history at 1440px": concurrentEditingJourney in `tests/qualification/ui-convergence/two-people-editing.mjs` proves starting block and title revisions, 409, retained text, Compare, Reload and explicit Overwrite; revisionConflictsJourney in `tests/qualification/ui-convergence/revision-conflicts-journey.mjs` proves starting page revisions for properties, status, structure and order, retained choices, unchanged canonical content and activity on refusal, and both writers’ exact retained snapshots after explicit resolution. Its phone proof is loaded by "space tree title filtering preserves ancestors, access and expansion at 390px". `tests/e2e/saving/failed-writes.test.ts` — "SAVE-002 — refused title and block writes preserve committed data and a corrected retry commits once" proves native two-member stale refusals with unchanged content, history and activity and durable explicit resolution. | |
 | `SAVE-004` | Network loss | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "While the server is unreachable the editor shows Offline and keeps the unsent draft in browser storage as recovery only."<br>No validated CI-run proof for this acceptance point: "A recovered draft is labeled unsaved and never appears in the tree, in lists, in search, or in export as workspace data." |
 | `SAVE-005` | Operation keys | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every mutation accepts an operation key."<br>No validated CI-run proof for this acceptance point: "Repeating a key with the same body within 24 hours returns the first response and creates no second record, notification, AI run, publish, import, or activity entry; repeating it with a different body is rejected with 409." |
 | `SAVE-006` | Concurrent editing and optional co-editing | published | partial | `tests/qualification/ui-convergence/two-people-editing.mjs` | live co-editing only under the flagship opt-in; see COLLAB-001 |

@@ -19,7 +19,7 @@ export async function managedFirstOpen(origin, token, email = 'owner@example.tes
   assert.equal(replay.status, 409, 'The claim cannot replace an existing workspace');
   const shots = process.env.SLATE_OWNER_SHOTS;
   if (shots) await mkdir(shots, { recursive: true });
-  const browser = await chromium.launch({ headless: true, args: ['--use-mock-keychain', '--password-store=basic'] });
+  const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}), args: ['--no-sandbox', '--use-mock-keychain', '--password-store=basic'] });
   try {
     for (const width of [1440, 390]) {
       const context = await browser.newContext({ viewport: { width, height: width === 1440 ? 1000 : 844 } });

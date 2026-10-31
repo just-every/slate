@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { writeFile } from 'node:fs/promises';
 import { expect } from '@playwright/test';
 import { accessible } from './browser-evidence.mjs';
 import { openPageAction } from './browser-support.mjs';
@@ -192,5 +193,8 @@ export async function revisionConflictsJourney(state, people) {
       record(`${kind}Conflict`, { refused: 409, fromRevision: submitted.expectedRevisionId, firstWriter: competing.value.revisionId, resolved: result.value.revisionId });
     }
     record('nativeConflictMutations', mutations);
+    await writeFile(`.artifacts/ui-convergence/revision-conflicts-${alice.page.viewportSize().width}.json`, JSON.stringify({
+      pageId, width: alice.page.viewportSize().width, mutations, outcomes: people.timings,
+    }, null, 2));
   } finally { alice.page.off('response', received); }
 }
