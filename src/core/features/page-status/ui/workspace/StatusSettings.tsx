@@ -5,10 +5,14 @@ import { useWorkspace } from "../../../../app/ui/WorkspaceContext";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import { RequestState } from "../../../../app/ui/RequestState";
 import type { StatusEntry } from "./PageStatusPanel";
+import type { TreePage } from "../../../../app/ui/PageTree";
+import { ContainerBulk } from "../../../containers/ui/workspace/ContainerBulk";
 export function StatusSettings() {
   const { member } = useWorkspace();
   const resource = useResource<{ items: StatusEntry[] }>("/api/status");
   const [editing, setEditing] = useState<StatusEntry | "new" | null>(null);
+  const [bulkStatus, setBulkStatus] = useState<StatusEntry | null>(null);
+  const pages = useResource<{ items: (TreePage & { statusKey: string | null })[] }>(bulkStatus ? "/api/pages" : null);
   const key = useRef("");
   const start = (value: StatusEntry | "new") => {
     key.current = operationKey();
@@ -38,12 +42,25 @@ export function StatusSettings() {
                   : ""}
               </div>
               {member.role === "owner" ? (
-                <button onClick={() => start(item)}>Edit</button>
+                <div className="action-row">
+                  <button onClick={() => start(item)}>Edit</button>
+                  {item.retiredAt ? <button className="secondary-button" onClick={() => setBulkStatus(item)}>Change assigned pages</button> : null}
+                </div>
               ) : null}
             </li>
           ))}
         </ul>
       </RequestState>
+      {bulkStatus ? (
+        <section aria-label={`Pages carrying ${bulkStatus.label}`}>
+          <h3>Change pages carrying {bulkStatus.label}</h3>
+          <p>Retirement keeps the status on existing pages. Select pages to change it explicitly.</p>
+          <RequestState loading={pages.loading} error={pages.error} retry={pages.reload}>
+            {pages.data ? <ContainerBulk key={bulkStatus.key} statusOnly pages={pages.data.items.filter(page => page.statusKey === bulkStatus.key)} onSaved={pages.reload} /> : null}
+          </RequestState>
+          <button className="secondary-button" onClick={() => setBulkStatus(null)}>Close bulk change</button>
+        </section>
+      ) : null}
       {editing ? (
         <ActionDialog
           title={editing === "new" ? "Add status" : "Edit status"}
@@ -58,7 +75,8 @@ export function StatusSettings() {
               requiresVerification: data.get("verification") === "on",
               retire: data.get("retire") === "on",
             });
-            resource.reload();
+            await resource.reload();
+            if (bulkStatus) await pages.reload();
           }}
         >
           <label>

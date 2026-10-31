@@ -1,3 +1,4 @@
+import {statusVocabularyJourney} from './status-vocabulary-journey.mjs';
 import assert from 'node:assert/strict';
 import {themeJourney} from './theme-journey.mjs';
 import {activityContextJourney} from './activity-context-journey.mjs';
@@ -91,6 +92,7 @@ export async function settingsJourney(state, width) {
   await expect(page.locator('.spaces-workspace').getByRole('heading', { name: 'Spaces', exact: true })).toBeVisible();
   await expect(page.locator('body')).not.toContainText(/\bContainers?\b/);
   await accessible(page, 'space settings');
+  await statusVocabularyJourney(state,width);
   await guestConsoleJourney(state);
   await themeJourney(state, width);
   if(width===1440)await activityContextJourney(state);

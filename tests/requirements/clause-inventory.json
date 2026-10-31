@@ -786,8 +786,13 @@
       "id": "STAT-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for STAT-001 — The status vocabulary. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "Native vocabulary and retirement support is statusVocabularyCase; responsive acceptance is statusVocabularyJourney through the existing settings callers. Exact candidate Verify and guarded landing receipts are required before the clause is counted.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/content/http.test.ts",
+          "testName": "content durable HTTP publication, human verification and media enforce current reader authority"
+        }
+      ]
     },
     {
       "id": "STAT-002",

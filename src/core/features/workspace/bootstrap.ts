@@ -30,7 +30,7 @@ export async function completeFirstRun(ctx:FeatureContext,input:{operationKey:st
       mutationGuard(ctx.db,'SELECT first_run_completed_at IS NULL FROM workspaces WHERE id=?',[ctx.actor.workspaceId]),
       mutationGuard(ctx.db,'SELECT NOT EXISTS (SELECT 1 FROM containers WHERE workspace_id=?) AND NOT EXISTS (SELECT 1 FROM pages WHERE workspace_id=?)',[ctx.actor.workspaceId,ctx.actor.workspaceId]),
       ctx.db.prepare('UPDATE workspaces SET name=?,updated_at=?,revision_id=?,first_run_completed_at=? WHERE id=?').bind(input.workspaceName,ctx.now,revisionId,ctx.now,ctx.actor.workspaceId),
-      ...nameStatements,...initial.statements,
+      ...defaultStatusStatements(ctx.db,ctx.actor.workspaceId,ctx.now),...nameStatements,...initial.statements,
     ]};
   }});
 }

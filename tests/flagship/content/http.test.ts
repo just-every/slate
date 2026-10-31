@@ -1,3 +1,4 @@
+import {statusVocabularyCase} from './status-vocabulary.case';
 import { lifecycleJourney } from './lifecycle';
 import {runFoldCases} from '../fold-cases';
 import {runContentCases,fixture as repairFixture,page as repairPage,paragraph as repairParagraph} from './journeys';
@@ -149,6 +150,7 @@ it("publication, human verification and media enforce current reader authority",
  ]);
 }},
 {name:"content durable HTTP exact human opens gate verification and stale or forged attestations are refused",before:resetDeployment,run:async()=>{
+ await statusVocabularyCase();await resetDeployment();
  await runContentCases([
 {name:"content durable HTTP comments retain revisions; exact human opens gate verification; revocation blocks replay",run:async()=>{const f=await fixture();const c=await f.request('POST','/api/pages',{operationKey:createUlid(),containerId:f.containerId,title:'Review'});const id=c.data.value.pageId;const comment=await f.request('POST',`/api/comments/page/${id}`,{operationKey:createUlid(),body:[{text:'Discuss'}]});expect(comment.status,JSON.stringify(comment.data)).toBe(200);const status=await f.request('POST','/api/status',{operationKey:createUlid(),key:'verified',label:'Verified',color:'#00aa00',requiresVerification:true});expect(status.status).toBe(200);const input={operationKey:createUlid(),expectedRevisionId:c.data.value.revisionId,statusKey:'verified',attestRevisionId:c.data.value.revisionId};expect((await f.request('POST',`/api/status/page/${id}`,input)).status).toBe(409);expect((await f.request('POST',`/api/pages/${id}/open`,{operationKey:createUlid(),revisionId:(await f.request('GET',`/api/pages/${id}`)).data.workingRevisionId})).status).toBe(200);expect((await f.request('POST',`/api/status/page/${id}`,input)).status).toBe(200);await env.DB.prepare('DELETE FROM container_grants WHERE container_id=? AND principal_kind=\'workspace\'').bind(f.containerId).run();expect((await f.request('GET',`/api/pages/${id}`,undefined,f.b)).status).toBe(404);}},
 {name:"creation rejects verified status and exact opens reject the stale delivered revision",run:async(fixture=repairFixture,page=repairPage,paragraph=repairParagraph)=>{
