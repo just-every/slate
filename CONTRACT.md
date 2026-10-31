@@ -3974,13 +3974,13 @@ Contributed tree node kinds beyond pages, databases, cards and posts, and cross-
 
 ## Status
 
-Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
+Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. IMP-002 native persisted-outcome source and journeys were checked at commit `8d4b321d0cd8532ddc9415e4fe8dd8a1a6357143` (31 October 2026); the exact candidate and landing receipts remain the branch Verify and guarded lander.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4142,7 +4142,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `TMPL-006` | Where a template lives | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. Supporting regression: `tests/qualification/ui-convergence/template-scope-journey.mjs` — "templateScopeJourney", invoked by the existing "TMPL-007 starter templates are found by category; touch spaces, templates, archive and workspace settings work at 1440px" journey in `tests/qualification/ui-convergence/journeys.test.mjs`; populated workspace and two readable containers prove exact local-first lists after reload, and one Move collection submission each way retains identifier and snapshot and reconciles all three collections. Main's partial judgment is retained; this supporting proof does not promote acceptance. | No validated CI-run proof for this acceptance point: "A template belongs to the workspace or to one container."<br>No validated CI-run proof for this acceptance point: "A container's templates are offered first inside that container and are not offered elsewhere, and moving a template between the two is one action." |
 | `IMP-001` | Import jobs | published | partial | `tests/e2e/imports/preview-undo.test.ts` | Missing a public preparation-cancellation and failed-document rollback journey; the cited reviewed-space journey covers preview, Apply, bounded resume and atomic tree visibility. |
 | `IMP-015` | Import original, Undo and erasure custody | published | partial | `tests/e2e/imports/preview-undo.test.ts` | Missing a public page-erasure journey retiring the exact retained original and all retry/resume/Undo custody; the cited flow demonstrates Undo conflicts and member erasure but not erasure of any one imported source. |
-| `IMP-002` | Notion import | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public import journey that opens the resulting Notion tree, database records, media and loss report; the cited incumbent-export test calls the import parser directly. |
+| `IMP-002` | Notion import | published | done | `tests/e2e/imports/preview-undo.test.ts` — "reviews, applies and reverses real Notion and Confluence content without losing native edits" proves acceptance 1 and 3 through native upload, Preview, Apply, resume and complete persisted reads; `tests/e2e/imports/real-exports.test.ts` — "incumbent-produced archives preserve pages, relationships, media and explicit losses" and `tests/e2e/imports/fixtures/real/PROVENANCE.md` retain acceptance 2. | |
 | `IMP-003` | Confluence import | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public Confluence, Word and Google Docs import journey that opens the resulting tree, versions, links and loss report; the cited incumbent-export test calls parsers directly. |
 | `IMP-016` | Imported Confluence principal and restriction mapping | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public reviewed-mapping journey that applies active and unresolved restrictions and tries unsafe principal mapping without widening; the cited incumbent-export test reads parsed source restrictions only. |
 | `IMP-004` | Import safety | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public import journey that records network requests for an archive with missing and hostile media and reads the retained links and losses; the cited parser checks do not go through the import door. |
