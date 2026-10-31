@@ -119,7 +119,7 @@ export async function indexingJourney(){
     AND EXISTS(SELECT 1 FROM search_text s JOIN pages p ON p.id=s.page_id
      WHERE s.key IN (SELECT key FROM _slate_index_fault) AND json_extract(s.document_json,'$.revisionId')=p.revision_id)
    BEGIN UPDATE search_text SET document_json=json_set(document_json,'$.revisionId','synthetic-slate-final-fence-1')
-    WHERE key IN (SELECT key FROM _slate_index_fault); END`);
+    WHERE key IN (SELECT key FROM _slate_index_fault); END`.replaceAll('\n',' '));
   job=await call(`/${id}/resume`,{});expect(job.state).toBe('indexing');
   expect(await dirty()).toEqual([]);
   expect(JSON.parse((await projections()).find(row=>row.id===stale.id)!.document_json).revisionId).toBe('synthetic-slate-final-fence-1');

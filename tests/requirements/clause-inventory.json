@@ -1631,7 +1631,7 @@
       "id": "PORT-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Bounded native reviewed-import indexing and pre-search completion readback cover ordinary pages and database records across multiple batches, interruption rollback, renewed dirty generations, missing projections and unchanged native inventory under resume. Complete imported-record satisfaction of SEARCH-001 through SEARCH-006 remains unproven, including ranked timing and paging, contextual and highlighted results, filters, freshness, authority and container-scoped search; IMP-001 acceptance 5 remains conditional on full PORT-004 satisfaction.",
+      "unmetReason": "Bounded native reviewed-import indexing and pre-search completion readback cover ordinary pages and database records across multiple batches, interruption rollback, renewed dirty generations, missing projections, stale record revisions, invalidation between readiness readback and completion, and unchanged native inventory under resume. The retained text-import journey also refuses a stale canonical revision until repair. Complete imported-record satisfaction of SEARCH-001 through SEARCH-006 remains unproven, including ranked timing and paging, contextual and highlighted results, filters, freshness, authority and container-scoped search; IMP-001 acceptance 5 remains conditional on full PORT-004 satisfaction.",
       "supportingTests": [
         {
           "file": "tests/e2e/imports/preview-undo.test.ts",

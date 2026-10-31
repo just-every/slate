@@ -72,10 +72,9 @@ export async function freshnessJourney(f:Awaited<ReturnType<typeof searchFixture
  await f.db.exec(`CREATE TRIGGER _slate_text_index_stale AFTER INSERT ON search_text
   WHEN NEW.kind='page' AND NEW.text LIKE '%Freshness imported body%'
   BEGIN UPDATE search_text SET document_json=json_set(document_json,'$.revisionId','synthetic-slate-stale-2')
-   WHERE key=NEW.key AND variant=NEW.variant; END`);
- let indexed;
+   WHERE key=NEW.key AND variant=NEW.variant; END`.replaceAll('\n',' '));
  try{
-  indexed=await request('POST','/imports/'+imported.id+'/run',{});expect(indexed.state).toBe('indexing');
+  const indexed=await request('POST','/imports/'+imported.id+'/run',{});expect(indexed.state).toBe('indexing');
   expect((await request('GET','/imports/'+imported.id)).state).toBe('indexing');
  }finally{await f.db.exec('DROP TRIGGER IF EXISTS _slate_text_index_stale');}
  const published=(await f.db.prepare('SELECT * FROM pages WHERE id IN (SELECT target_id FROM federation_import_mappings WHERE import_job_id=?) ORDER BY id').bind(imported.id).all()).results;

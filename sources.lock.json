@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "4ab87fc2f536c3a321601620c3eae4b1bbb58c6decce141add663a6f8f84b0f0",
+      "sha256": "2d0734dccf8dc73ce3b8d317299d787c4cf7eacfa5d5c30a774b2397cbbabb23",
       "executable": false
     },
     "DEMO.md": {
@@ -10440,7 +10440,7 @@
       "executable": false
     },
     "tests/e2e/imports/indexing-journey.ts": {
-      "sha256": "4bd5e9b363f988fdd09bba07d237d6745d4df88fe676ed194810461a7cd6141c",
+      "sha256": "c3a02f97e4cbc2e23c96554721040ec61a245499df20e1c0b4dc2fcb27c447b0",
       "executable": false
     },
     "tests/e2e/imports/inflate-bounds.test.ts": {
@@ -10672,7 +10672,7 @@
       "executable": false
     },
     "tests/e2e/search/freshness-journey.ts": {
-      "sha256": "b0d94cac563c4d75d4d993c09dd456e297d511b3978565fa30f937d0cf9f12ed",
+      "sha256": "64fa3c95e29d77e3c8cc2a861525e1f618ab3986844c100ab3705a084153702b",
       "executable": false
     },
     "tests/e2e/search/fts-permissions.test.ts": {
@@ -12208,7 +12208,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "bfe8858faacc94fb73c5cb6fd904d3be2ddc1b616e59823041b0392bb1d9d39d",
+      "sha256": "29bcb2759e31d1409c7e73924112fc3920e5bcdb6e8db32d77502221f39afb98",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12224,7 +12224,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "1cc4d4929e8e0ca8bed7c34e2822ee3d72af9fe003f8fda504e8d200aa607e9e",
+      "sha256": "29ec5a1d2517ae4131408290d0d4da4a7a555ea57248af32c62de8e4bcb3506b",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {
