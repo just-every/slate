@@ -11180,7 +11180,7 @@
       "executable": false
     },
     "tests/flagship/structured/http.test.ts": {
-      "sha256": "b51c5f6979d5b2d1383810b1d78b662a29e21f9ba34faa36d4937fc7e1ea448b",
+      "sha256": "022c948a3285c8043af2bfd1978aee0fb4e26b446b79c50b6c43401683f5feac",
       "executable": false
     },
     "tests/flagship/structured/migration.py": {
@@ -11796,7 +11796,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/database-journey.mjs": {
-      "sha256": "9c50af03238fa2f996c425a546c5815c2faf43c7b5cda1aa45dc8ab780692c7f",
+      "sha256": "956ad2efd9ec978fc9508f15b5d3c106f7b6649ea5c0aa4ccb0de47d547f2a5c",
       "executable": false
     },
     "tests/qualification/ui-convergence/developer-access-journey.mjs": {
@@ -11968,7 +11968,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "f475c43cef72944f2232b958f4b177f8c33dbf84072eccaf9f17b84300980e5b",
+      "sha256": "a06e1f32a13e64c7378923d113e285c26b304ea35cbbd0765b5373c27e1278c8",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {
@@ -12033,6 +12033,10 @@
     },
     "tests/qualification/ui-convergence/reading-journeys.mjs": {
       "sha256": "fe0bf9d7b967315123d873f6fa35aa58e78dbb21b9edc83a22105ec9b85f1cb9",
+      "executable": false
+    },
+    "tests/qualification/ui-convergence/record-detail-journey.mjs": {
+      "sha256": "83bbd05121fa3cbb18046d2e630cfa86966dadda0912f6b4121b535de7689e69",
       "executable": false
     },
     "tests/qualification/ui-convergence/record-templates-journey.mjs": {
@@ -12204,7 +12208,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "6ee77c8d5e441215e98bb1b16cbf6d1a190edffbe5d1b3f37c9066894a62659e",
+      "sha256": "c0ee429c94b06a36883d791d5a2ccd232834f60cf05c347efcf1cbe4322cc413",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12220,7 +12224,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "b2962458e67e0e43dd341e71fedf28752ff41931c8c55f1b41e57ac21f96adb5",
+      "sha256": "6e3897dc16673d781e3ea9160ee79cfe851b38fa17686ae7cde58f26160f97c5",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

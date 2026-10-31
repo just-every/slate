@@ -111,6 +111,83 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
       }
     ).database.id,
   ).toBe(body.value.id);
+
+  // Follow the same native session into a populated record, including the
+  // allowed edit, computed-field refusal and subsequent viewer downgrade.
+  const call = async (method: string, path: string, actor = cookie, data?: unknown) => {
+    const response = await SELF.fetch(`http://localhost/api${path}`, {
+      method, headers: {cookie: actor, origin: "http://localhost", "content-type": "application/json"},
+      ...(data ? {body: JSON.stringify(data)} : {}),
+    });
+    return {status: response.status, body: await response.json() as any};
+  };
+  let operation = 0;
+  const mutate = async (method: string, path: string, data: object, actor = cookie) => {
+    const result = await call(method, path, actor, {operationKey: `case:record-detail-${++operation}`, ...data});
+    expect(result.status, JSON.stringify(result.body)).toBeLessThan(300);
+    return result.body.value;
+  };
+  const base = `/databases/${body.value.id}`;
+  const definitions = [
+    {id: "notes", name: "Notes", type: "text", config: {}, position: 2},
+    {id: "quantity", name: "Quantity", type: "number", config: {}, position: 0},
+    {id: "double", name: "Double quantity", type: "formula", config: {expression: {op: "multiply", args: [{field: "quantity"}, {literal: 2}]}}, position: 1},
+    {id: "created", name: "Created", type: "created-at", config: {}, position: 3},
+    {id: "updated", name: "Updated", type: "updated-at", config: {}, position: 4},
+    {id: "identifier", name: "Record identifier", type: "identifier", config: {}, position: 5},
+  ];
+  let structure = (await call("GET", base)).body.database.revision_id;
+  for (const field of definitions) structure = (await mutate("POST", base + "/fields", {expectedRevisionId: structure, field})).revisionId;
+  const record = await mutate("POST", base + "/records", {title: "Populated record", values: {notes: "Retained notes", quantity: 7}});
+  const recordPath = base + "/records/" + record.pageId;
+  await mutate("PUT", `/pages/${record.pageId}/blocks`, {expectedRevisionId: record.revisionId,
+    blocks: [{id: "record-body", blockType: "paragraph", treePosition: "a", content: {text: [{text: "Original retained record body"}]}}]});
+  const earlier = (await call("GET", recordPath)).body;
+  await mutate("POST", `/comments/page/${record.pageId}`, {body: [{text: "Retained record discussion"}]});
+  await mutate("POST", "/sharing", {targetKind: "page", targetId: (await call("GET", base)).body.database.page_id, principalKind: "member", principalId: reader.actor.id, level: "edit"});
+  const memberCookie = await sessionFor(reader.actor.id);
+  const opened = (await call("GET", recordPath, memberCookie)).body;
+  expect(opened.fields.map((field: any) => field.id)).toEqual(["quantity", "double", "notes", "created", "updated", "identifier"]);
+  expect(opened.fields.filter((field: any) => field.editable).map((field: any) => field.id)).toEqual(["quantity", "notes"]);
+  expect(opened.values).toMatchObject({quantity: 7, double: 14, notes: "Retained notes", identifier: record.pageId});
+  const edit = {operationKey: "case:record-inline-edit", expectedRevisionId: opened.revisionId, values: {quantity: 11}};
+  expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(200);
+  const edited = (await call("GET", recordPath, memberCookie)).body;
+  expect(edited.values).toMatchObject({quantity: 11, double: 22, notes: "Retained notes"});
+  for (const values of [{double: 99}, {created: "2026-01-01"}, {updated: "2026-01-01"}, {identifier: "other-record"}]) {
+    const denied = await call("PATCH", recordPath, memberCookie, {operationKey: `case:readonly-${++operation}`, expectedRevisionId: edited.revisionId, values});
+    expect(denied.status).toBe(400);
+    expect(denied.body.code).toBe("double" in values ? "COMPUTED_FIELD" : "READ_ONLY_FIELD");
+    expect((await call("GET", recordPath, memberCookie)).body).toEqual(edited);
+  }
+  const dbPage = (await call("GET", base)).body.database.page_id;
+  const memberGrant = (await call("GET", `/sharing/pages/${dbPage}`)).body.items.find((item: any) => item.principalId === reader.actor.id);
+  await mutate("POST", "/sharing", {id: memberGrant.id, targetKind: "page", targetId: dbPage, principalKind: "member", principalId: reader.actor.id, level: "view"});
+  const viewer = (await call("GET", recordPath, memberCookie)).body;
+  expect(viewer.fields.every((field: any) => !field.editable)).toBe(true);
+  expect(viewer.values).toEqual(edited.values);
+  const history = (await call("GET", `/revisions/${record.pageId}`, memberCookie)).body;
+  expect(history.items.some((item: any) => item.id === earlier.revisionId)).toBe(true);
+  const exact = (await call("GET", `/revisions/${record.pageId}/${earlier.revisionId}`, memberCookie)).body;
+  expect(exact.properties.databaseFields.quantity).toBe(7);
+  expect(exact.blocks[0].content.text[0].text).toBe("Original retained record body");
+  expect((await call("GET", `/comments/page/${record.pageId}`, memberCookie)).body.comments[0].body[0].text).toBe("Retained record discussion");
+  expect((await call("PATCH", recordPath, memberCookie, {...edit, operationKey: "case:viewer-record-write", expectedRevisionId: viewer.revisionId, values: {quantity: 99}})).status).toBe(404);
+  expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(404);
+  expect((await call("GET", recordPath, memberCookie)).body).toEqual(viewer);
+  expect((await call("GET", `/revisions/${record.pageId}`)).body).toEqual(history);
+  const workspace = (await call("GET", "/workspace")).body;
+  for (const parity of ["record-is-row", "record-is-page"]) {
+    const current = (await call("GET", "/workspace")).body;
+    const {name, mark, description, guestAccess, publicLinkAccess, anonymousAccess} = current;
+    await mutate("PUT", "/workspace", {expectedRevisionId: current.revisionId, name, mark, description, guestAccess, publicLinkAccess, anonymousAccess,
+      policies: {...workspace.policies, "record.page-parity.v1": parity}});
+    const retained = (await call("GET", recordPath, memberCookie)).body;
+    expect(retained.parity).toBe(parity);
+    expect(retained.presentation.body).toBe(parity === "record-is-page");
+    expect(retained.page.blocks).toEqual(edited.page.blocks);
+    expect(retained.values).toEqual(edited.values);
+  }
 });
 
 test("database file references list only attachments the reader could open", async () => {
