@@ -69,7 +69,11 @@ export async function persistedOutcomes(door:Door,job:any,format:ImportFormat,na
    const expected=flatten(source);expect(blocks).toHaveLength(expected.length);
    for(const [index,block] of expected.entries()){
     const actual=blocks[index]!;
+    if(block.kind!=='link')expect(actual.blockType).toBe(block.canonicalBlock?.blockType??(['bulleted-list','numbered-list','toggle'].includes(block.kind)?'list':block.kind));
     if(['paragraph','heading','quote','callout','task'].includes(block.kind))expect(spans(actual.content.text)).toBe(block.text??'');
+    if(['bulleted-list','numbered-list','toggle'].includes(block.kind))expect(spans(actual.content.items[0].text)).toBe(block.text??'');
+    if(block.kind==='task')expect(actual.content.done).toBe(!!block.checked);
+    if(block.kind==='expandable')expect(actual.content.summary).toBe(block.text??'');
     if(block.kind==='heading')expect(actual.content.level).toBe(Math.min(3,block.level??1));
     if(block.kind==='code')expect(actual.content.code).toBe(block.text??'');
     if(block.kind==='table'){
@@ -105,6 +109,11 @@ export async function persistedOutcomes(door:Door,job:any,format:ImportFormat,na
    const published=page.revisions.findLast(revision=>revision.origin==='publish')!;
    expect(document.publishedRevisionId).toBe(target('version',published.sourceId));
   }
+ }
+ for(const media of parsed.media){
+  const response=await door.request(`/media/${target('file',media.sourceId)}`);
+  expect(response.status).toBe(200);
+  expect(new Uint8Array(await response.arrayBuffer())).toEqual(media.bytes);
  }
  const losses=await completeReport(door,job,'unmapped');
  const warnings=await completeReport(door,job,'warnings');

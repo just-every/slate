@@ -1548,7 +1548,7 @@
       "id": "IMP-003",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of IMP-003 — Confluence import. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This legacy inventory classifies supporting registrations only; CONTRACT.md owns native clause status. The loaded reviewed-space and federation journeys now read the complete persisted Confluence tree, supplied labels and source version metadata, published and working content, resolved page and attachment targets, exact paged losses and genuine Word and Google Docs documents. Supplemental XML is explicitly identified separately from the unchanged incumbent archives and provenance. No live provider or unrelated import clause is claimed.",
       "supportingTests": [
         {
           "file": "tests/flagship/federation/federation.test.ts",

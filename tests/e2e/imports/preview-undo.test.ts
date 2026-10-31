@@ -119,7 +119,7 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  const grant=await door.json('/sharing',{operationKey:crypto.randomUUID(),targetKind:'page',targetId:overview.page.id,principalKind:'member',principalId:reader.memberId,level:'view'});
  expect((await readerDoor.json(`/pages/${overview.page.id}`)).publishedRevisionId).toBe(overview.publishedRevisionId);
  expect((await readerDoor.json(`/revisions/${overview.page.id}`)).items.map((revision:any)=>revision.id)).toContain(overview.publishedRevisionId);
- await door.json('/sharing',{operationKey:crypto.randomUUID(),targetKind:'page',targetId:draft.page.id,principalKind:'member',principalId:reader.memberId,level:'view'});
+ await door.json('/sharing',{operationKey:crypto.randomUUID(),targetKind:'container',targetId:draft.page.containerId,principalKind:'member',principalId:reader.memberId,level:'view'});
  expect((await readerDoor.request(`/pages/${draft.page.id}`)).status).toBe(404);
  await door.json('/sharing',{operationKey:crypto.randomUUID(),id:grant.value.id,targetKind:'page',targetId:overview.page.id,principalKind:'member',principalId:reader.memberId,level:'view',revoke:true});
  expect((await readerDoor.request(`/pages/${overview.page.id}`)).status).toBe(404);
