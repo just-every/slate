@@ -791,7 +791,7 @@
         "IMP-003",
         "IMP-016"
       ],
-      "reason": "Through actual Worker HTTP routes, the committed small anonymised export is previewed without target writes, explicitly applied and resumed, indexed before Completed, downloaded exactly and undone while preserving a native edit and reporting its conflict. This supports the listed flows only; it does not establish generated scale, hosted capacity, all UI states or complete product acceptance."
+      "reason": "Through actual Worker HTTP routes, the committed small anonymised exports are previewed without target writes, explicitly applied and resumed, indexed before Completed, downloaded exactly and undone while preserving a native edit and reporting its conflict. The same registration cancels a genuine Notion Preparing job after real media staging and sealing private Kit preparation: owner and other-member native reads expose no tree, media is reclaimed, resume replay cannot publish and exact originals remain downloadable. Native document append and child-page imports fail at a real SQLite trigger after content and file writes; destination reads, canonical rows, revisions, R2 objects, receipts and activity remain unchanged, the failed job and exact original remain available, and retry completes. This proves acceptance 6 and the failed-document portion of acceptance 7 only; complete acceptance 1–5, interrupted reviewed-space checkpoint proof and requirement-wide idempotency, original retention and creation and loss accounting remain unproven."
     },
     {
       "file": "tests/e2e/imports/undo-cross-references.test.ts",
