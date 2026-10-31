@@ -7108,7 +7108,7 @@
       "executable": false
     },
     "src/core/features/imports/apply-review.ts": {
-      "sha256": "d949b2398f4194a0f114c4f36a4fbf96465e3f503d885ac82d62031aab4aac1d",
+      "sha256": "0608f890e698709be80e115364d364a6c0770377332960d57fbeee31295bae5d",
       "executable": false
     },
     "src/core/features/imports/archive-r2.ts": {
@@ -7284,7 +7284,7 @@
       "executable": false
     },
     "src/core/features/imports/legacy-index.ts": {
-      "sha256": "712f6411e406e6edb908b86cd70a7740b728c86de759d6a1cb55da127ad6f3bb",
+      "sha256": "d742bbabeffd7685fd49c2444ff7e881236a4f831a8d5ac708f54d608422b2ce",
       "executable": false
     },
     "src/core/features/imports/legacy-run.ts": {
@@ -8880,7 +8880,7 @@
       "executable": false
     },
     "src/core/features/search/service.ts": {
-      "sha256": "c093efbec5bb9b4cc0c1bdcb2f7dce4d0a0e1862bdcc6682088f812e088d916c",
+      "sha256": "de850a460503e4816bef94043ffce638bdd510e120d1af6bd02d575076700f52",
       "executable": false
     },
     "src/core/features/search/shared-records.ts": {
@@ -10440,7 +10440,7 @@
       "executable": false
     },
     "tests/e2e/imports/indexing-journey.ts": {
-      "sha256": "a791e89a159cbc682e0e74115a0eb86799e91cd7b94d4b8746dd1afb3dad75d3",
+      "sha256": "4bd5e9b363f988fdd09bba07d237d6745d4df88fe676ed194810461a7cd6141c",
       "executable": false
     },
     "tests/e2e/imports/inflate-bounds.test.ts": {
@@ -10672,7 +10672,7 @@
       "executable": false
     },
     "tests/e2e/search/freshness-journey.ts": {
-      "sha256": "f23656d57ebfc323a9c94b60323680ad4c96ddaa991db9a1c411356f510d1340",
+      "sha256": "b0d94cac563c4d75d4d993c09dd456e297d511b3978565fa30f937d0cf9f12ed",
       "executable": false
     },
     "tests/e2e/search/fts-permissions.test.ts": {

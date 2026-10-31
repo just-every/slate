@@ -108,6 +108,25 @@ export async function indexingJourney(){
  expect(JSON.parse((await projections()).find(row=>row.id===stale.id)!.document_json).revisionId).toBe('synthetic-slate-stale-1');
  expect(await inventory()).toEqual(published);
  await env.DB.prepare('UPDATE pages SET title=title WHERE id=?').bind(stale.id).run();
+ // Invalidate after the readiness read, inside the completion transaction's
+ // first authority guard. The final UPDATE must independently reject it.
+ await env.DB.exec('DELETE FROM _slate_index_fault');
+ await env.DB.prepare('INSERT INTO _slate_index_fault VALUES(?)').bind(`record:${stale.id}`).run();
+ try{
+  await env.DB.exec(`CREATE TRIGGER _slate_index_completion AFTER INSERT ON core_write_guards
+   WHEN NEW.accepted=1 AND NOT EXISTS(SELECT 1 FROM search_dirty)
+    AND EXISTS(SELECT 1 FROM federation_imports WHERE state='indexing')
+    AND EXISTS(SELECT 1 FROM search_text s JOIN pages p ON p.id=s.page_id
+     WHERE s.key IN (SELECT key FROM _slate_index_fault) AND json_extract(s.document_json,'$.revisionId')=p.revision_id)
+   BEGIN UPDATE search_text SET document_json=json_set(document_json,'$.revisionId','synthetic-slate-final-fence-1')
+    WHERE key IN (SELECT key FROM _slate_index_fault); END`);
+  job=await call(`/${id}/resume`,{});expect(job.state).toBe('indexing');
+  expect(await dirty()).toEqual([]);
+  expect(JSON.parse((await projections()).find(row=>row.id===stale.id)!.document_json).revisionId).toBe('synthetic-slate-final-fence-1');
+  expect((await call(`/${id}`)).state).toBe('indexing');
+  expect(await inventory()).toEqual(published);
+ }finally{await env.DB.exec('DROP TRIGGER IF EXISTS _slate_index_completion');}
+ await env.DB.prepare('UPDATE pages SET title=title WHERE id=?').bind(stale.id).run();
  job=await call(`/${id}/resume`,{});expect(job.state).toBe('completed');
  expect(job.progress).toEqual({phase:'indexing',checkpoint:expected.length,total:expected.length});
  expect(await dirty()).toEqual([]);
@@ -125,5 +144,7 @@ export async function indexingJourney(){
  expect((await call(`/${id}/resume`,{})).state).toBe('completed');
  expect(await inventory()).toEqual(published);expect(await projections()).toEqual(complete);expect(await dirty()).toEqual([]);
  await env.DB.exec('DROP TABLE _slate_index_fault');
- console.info(`PROBE PORT-004 bounded indexing: native import HTTP -> ${expected.length} canonical projections, ${records.length} records; durable Indexing, interruption rollback, renewed generation and missing projection fenced; resume retained native inventory; no search request`);
+ console.info(`PROBE PORT-004 1: native reviewed import HTTP with ${expected.length} page and record IDs -> bounded durable Indexing, interrupted batch rolled back, fresh requests resumed without republishing`);
+ console.info('PROBE PORT-004 2: native resume with renewed generation, missing page and stale record projections -> Indexing until repair; invalidation after readback refused by completion write before any search');
+ console.info(`PROBE PORT-004 3: completed job readback -> ${expected.length} exact canonical projections, no imported dirty generations, unchanged native inventories and idempotent completed resume before any search`);
 }

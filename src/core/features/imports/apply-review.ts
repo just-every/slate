@@ -8,7 +8,7 @@ import {PlanTooLargeError,PLAN_BYTES_LIMIT,prepareD1ImportStream,publishD1Import
 import {ApiProblem} from '../../app/problems';
 import {mutationGuard} from '../../app/operations';
 import {createUlid} from '../../shared/ulid';
-import {verifySearchable} from '../search/service';
+import {incompleteImportSearchSql,verifySearchable} from '../search/service';
 import {kitContext} from './kit-context';
 import {type StoredReview,type PreviewJob} from './preview';
 import type {ImportRequestContext} from './request-context';
@@ -80,7 +80,7 @@ export async function applyReviewedImport(ctx:ImportRequestContext,job:ReviewedJ
   report.created=report.wouldCreate;delete report.wouldCreate;
   if(report.sections?.wouldCreate){report.sections.created=report.sections.wouldCreate;delete report.sections.wouldCreate;}
   report.indexedPages=review.pageIds.length;
-  await ctx.db.batch([authorized(),ctx.db.prepare("UPDATE federation_imports SET state='completed',report_json=?,counts_json=?,progress_json=?,revision_id=?,updated_at=? WHERE id=? AND state='indexing' AND native_published=1 AND NOT EXISTS(SELECT 1 FROM json_each(?) p WHERE NOT EXISTS(SELECT 1 FROM search_text s WHERE s.page_id=p.value AND s.workspace_id=?) OR EXISTS(SELECT 1 FROM search_dirty d WHERE d.workspace_id=? AND d.key IN ('page:'||p.value,'record:'||p.value)))").bind(JSON.stringify(report),JSON.stringify(counts),JSON.stringify({phase:'indexing',checkpoint:review.pageIds.length,total:review.pageIds.length}),createUlid(),ctx.now,job.id,JSON.stringify(review.pageIds),ctx.actor.workspaceId,ctx.actor.workspaceId),authorized()]);
+  await ctx.db.batch([authorized(),ctx.db.prepare(`UPDATE federation_imports SET state='completed',report_json=?,counts_json=?,progress_json=?,revision_id=?,updated_at=? WHERE id=? AND state='indexing' AND native_published=1 AND NOT EXISTS(${incompleteImportSearchSql})`).bind(JSON.stringify(report),JSON.stringify(counts),JSON.stringify({phase:'indexing',checkpoint:review.pageIds.length,total:review.pageIds.length}),createUlid(),ctx.now,job.id,JSON.stringify(review.pageIds),ctx.actor.workspaceId),authorized()]);
 }
 
 export async function undoReviewedImport(ctx:ImportRequestContext,job:ReviewedJob) {

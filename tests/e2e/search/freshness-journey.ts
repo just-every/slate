@@ -67,7 +67,23 @@ export async function freshnessJourney(f:Awaited<ReturnType<typeof searchFixture
  // Replay of a completed import may never bring its erased source back.
  const form=new FormData();form.set('file',new File(['Freshness imported body'], 'Freshness import.txt',{type:'text/plain'}));form.set('format','text');form.set('operationKey',crypto.randomUUID());
  const imported=await request('POST','/imports',form);
- const complete=await request('POST','/imports/'+imported.id+'/run',{});expect(complete.state).toBe('completed');
+ // A stale projection written during the text import's native rebuild must
+ // keep this separate publication door Indexing, even with no dirty key left.
+ await f.db.exec(`CREATE TRIGGER _slate_text_index_stale AFTER INSERT ON search_text
+  WHEN NEW.kind='page' AND NEW.text LIKE '%Freshness imported body%'
+  BEGIN UPDATE search_text SET document_json=json_set(document_json,'$.revisionId','synthetic-slate-stale-2')
+   WHERE key=NEW.key AND variant=NEW.variant; END`);
+ let indexed;
+ try{
+  indexed=await request('POST','/imports/'+imported.id+'/run',{});expect(indexed.state).toBe('indexing');
+  expect((await request('GET','/imports/'+imported.id)).state).toBe('indexing');
+ }finally{await f.db.exec('DROP TRIGGER IF EXISTS _slate_text_index_stale');}
+ const published=(await f.db.prepare('SELECT * FROM pages WHERE id IN (SELECT target_id FROM federation_import_mappings WHERE import_job_id=?) ORDER BY id').bind(imported.id).all()).results;
+ expect(published.length).toBeGreaterThan(0);
+ expect((await request('POST','/imports/'+imported.id+'/resume',{})).state).toBe('indexing');
+ expect((await f.db.prepare('SELECT * FROM pages WHERE id IN (SELECT target_id FROM federation_import_mappings WHERE import_job_id=?) ORDER BY id').bind(imported.id).all()).results).toEqual(published);
+ await f.db.prepare('UPDATE pages SET title=title WHERE id IN (SELECT target_id FROM federation_import_mappings WHERE import_job_id=?)').bind(imported.id).run();
+ const complete=await request('POST','/imports/'+imported.id+'/resume',{});expect(complete.state).toBe('completed');
  const mapped=(await f.db.prepare("SELECT target_id FROM federation_import_mappings WHERE import_job_id=? AND target_kind='page'").bind(imported.id).all<{target_id:string}>()).results;
  expect(mapped.length).toBeGreaterThan(0);
  for(const row of mapped){

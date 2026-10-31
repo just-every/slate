@@ -50,8 +50,19 @@ export async function search(ctx: FeatureContext, raw: SearchInput) {
   return { items, total: groups.length, facets: searchFacets(groups), filters,
     nextCursor: remaining.length > selected.length ? encodeCursor({ snapshot: snapshotId, offset: selected.at(-1)!.position + 1 }) : undefined };
 }
+/** Retained IDs and workspace are the two bindings. Reuse this predicate in
+ * the completion write so a stale or unrelated projection cannot admit it. */
+export const incompleteImportSearchSql = `SELECT 1 FROM json_each(?) i
+  LEFT JOIN pages p ON p.id=i.value AND p.workspace_id=? AND p.deleted_at IS NULL
+  WHERE p.id IS NULL OR NOT EXISTS(
+    SELECT 1 FROM search_text s WHERE s.workspace_id=p.workspace_id AND s.page_id=p.id
+      AND s.key=(CASE WHEN p.page_kind='record' THEN 'record:' ELSE 'page:' END)||p.id
+      AND s.kind=CASE WHEN p.page_kind='record' THEN 'record' ELSE 'page' END
+      AND s.id=p.id AND s.variant='working'
+      AND json_extract(s.document_json,'$.revisionId')=p.revision_id
+  ) OR EXISTS(SELECT 1 FROM search_dirty d WHERE d.workspace_id=p.workspace_id AND d.key IN ('page:'||p.id,'record:'||p.id))`;
 /** Import completion proves every requested canonical ID has a clean indexed generation. */
 export async function verifySearchable(ctx: FeatureContext, pageIds: string[], bounds?: import('./index').SearchRefreshBounds) {
   await refreshSearchIndex(ctx, bounds);
-  return !!await ctx.db.prepare("SELECT NOT EXISTS(SELECT 1 FROM json_each(?) i WHERE NOT EXISTS(SELECT 1 FROM search_text s WHERE s.workspace_id=? AND s.page_id=i.value) OR EXISTS(SELECT 1 FROM search_dirty d WHERE d.workspace_id=? AND d.key IN ('page:'||i.value,'record:'||i.value))) AS ready").bind(JSON.stringify(pageIds), ctx.actor.workspaceId, ctx.actor.workspaceId).first<number>('ready');
+  return !!await ctx.db.prepare(`SELECT NOT EXISTS(${incompleteImportSearchSql}) AS ready`).bind(JSON.stringify(pageIds), ctx.actor.workspaceId).first<number>('ready');
 }
