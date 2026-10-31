@@ -87,7 +87,8 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  expect((await app.request(`https://slate.example/api/pages/${independent!.id}`,{headers:{Cookie:cookie}},env)).status).toBe(404);
  expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM pages WHERE workspace_id=?').bind(workspaceId).first<number>('n')).toBeLessThan(pages.length);
  }
- for(const stage of ['media','sealed'] as const)await cancelsReviewedPreparation(stage);
+ for(const format of ['notion-workspace','confluence-space'] as const)
+  for(const stage of ['media','sealed'] as const)await cancelsReviewedPreparation(format,stage);
  for(const mode of ['append','children'] as const)await rollsBackDocumentImport(mode);
 },120_000);
 
