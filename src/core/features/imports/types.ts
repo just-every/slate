@@ -129,6 +129,9 @@ export interface ImportedPage extends SourceIdentity {
   restricted?: boolean;
   grants: ImportedGrant[];
   revisions: ImportedRevision[];
+  /** Explicit source pointers distinguish a working draft from published content. */
+  workingRevisionSourceId?: string;
+  publishedRevisionSourceId?: string;
   publicExposure?: ImportedPublicExposure;
   /** CONT-010: a source blog post keeps its original date and author. */
   post?: { postedAt: string; authorSourceId?: string };

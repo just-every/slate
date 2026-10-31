@@ -7168,7 +7168,7 @@
       "executable": false
     },
     "src/core/features/imports/confluence/space.ts": {
-      "sha256": "14e18cc1d1f2b90877a1c7c9aa02efd68e94b4bd0a474e8fc0140ecd2fcc7807",
+      "sha256": "109e7287db65ca512c2cb36d7d839c37b65ac5183425cc4927e00d640aa22322",
       "executable": false
     },
     "src/core/features/imports/confluence/storage.ts": {
@@ -7204,7 +7204,7 @@
       "executable": false
     },
     "src/core/features/imports/confluence/xml-space.ts": {
-      "sha256": "7f914a0cb919f9670398b037a924907ed3eb6d132203215f89c0c39420880074",
+      "sha256": "febd6630ec5a92ac683c8f58734004f8fbc54ed3af058e193bb2451cea635029",
       "executable": false
     },
     "src/core/features/imports/confluence/xml-storage.ts": {
@@ -7384,7 +7384,7 @@
       "executable": false
     },
     "src/core/features/imports/persist.ts": {
-      "sha256": "edbe24a42751ec9d673687aa89dd60ab81e68c8a6f42f333d1b5281003d25595",
+      "sha256": "2970eadd094c71a97b66d47adf86ecc85e37fb9ceae8c25a1f7f744a93ed1d99",
       "executable": false
     },
     "src/core/features/imports/portable-blocks.ts": {
@@ -7520,7 +7520,7 @@
       "executable": false
     },
     "src/core/features/imports/types.ts": {
-      "sha256": "e91e44d8b24fd20665a0fc8b59083e2bea3de0784ab72d0d05cbe2f12f787fbe",
+      "sha256": "87dd0686ebb8f8c6b1882aff7ac78992d229c2757b12df5cb7c1ee1d388681d1",
       "executable": false
     },
     "src/core/features/imports/upload-stream.ts": {
@@ -10455,8 +10455,12 @@
       "sha256": "dfeaeb267a3c512d913e766d2e552c6545f3ca23881ccb06fdbb232217d8cd0e",
       "executable": false
     },
+    "tests/e2e/imports/persisted-outcomes.ts": {
+      "sha256": "8616aaa1f83ea632d05307953cedb711a5bde751526985f9c941f3bbe0b82676",
+      "executable": false
+    },
     "tests/e2e/imports/preview-undo.test.ts": {
-      "sha256": "6a9c3d94a7fd892c2224d08bf9bf3fd1bdb5b10bfbda9109036ce5f570ca47d5",
+      "sha256": "dd8b28c25e692fdb47b8e340f93bef913184d13039306e5eec897be80c7089f2",
       "executable": false
     },
     "tests/e2e/imports/provider-folder-journey.ts": {
@@ -10892,7 +10896,7 @@
       "executable": false
     },
     "tests/flagship/federation/federation.test.ts": {
-      "sha256": "7d395d971893ac5e8b51dad251c5a8ab763aa2c34700f0c640435f42147df450",
+      "sha256": "200ec2dd1a83d6ffe31800308f00bd04071af9ab79b5877cf61b2fc7f2786278",
       "executable": false
     },
     "tests/flagship/federation/fixtures/PROVENANCE.md": {

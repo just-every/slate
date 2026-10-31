@@ -4,6 +4,7 @@ import {createApi} from '../../../src/core/app/hono';
 import {parseImport,type ImportFormat} from '../../../src/core/features/imports';
 import {seedWorkspace,seedMember,sessionFor} from '../setup/fixtures';
 import {resetDatabase} from '../setup/reset-database';
+import {completeReport,importDoor,persistedOutcomes,supplementalConfluenceArchive} from './persisted-outcomes';
 
 const resetCase=async()=>{vi.restoreAllMocks();await resetDatabase(env.DB);await env.DB.exec('DROP TABLE IF EXISTS _rer_deploy_migrations');};
 beforeEach(resetCase);
@@ -35,6 +36,10 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  if(job.report.principals.length){job=await call(`/${job.id}/preview`,{mappings:job.report.principals.filter((p:any)=>p.kind==='member').map((p:any)=>({sourceId:p.sourceId,kind:'member',targetId:mapped.memberId}))});}
  const expectedPages=job.report.counts.pages;
  const assertPublishedCount=async()=>{const n=await env.DB.prepare('SELECT COUNT(*) AS n FROM pages WHERE deleted_at IS NULL').first<number>('n');expect([0,expectedPages]).toContain(n);};
+ const door=importDoor(app,cookie);
+ const previewLosses=await completeReport(door,job,'unmapped');
+ const previewWarnings=await completeReport(door,job,'warnings');
+ const previewCreations=await completeReport(door,job,'wouldCreate');
  const id=job.id;job=await call(`/${id}/apply`,{fingerprint:job.report.fingerprint});
  let hiddenChecked=false, atomicPublication=false;
  for(let n=0;job.state!=='completed'&&n<100;n++){
@@ -55,6 +60,12 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  expect(hiddenChecked||atomicPublication).toBe(true);
  if(format==='notion-workspace')expect(hiddenChecked).toBe(true);
  expect(job.state).toBe('completed');
+ expect(await completeReport(door,job,'unmapped')).toEqual(previewLosses);
+ expect(await completeReport(door,job,'warnings')).toEqual(previewWarnings);
+ expect(await completeReport(door,job,'created')).toEqual(previewCreations);
+ if(format==='confluence-space')await persistedOutcomes(door,job,format,name,new Uint8Array(bytes));
+ expect(await env.DB.prepare("SELECT count(*) n FROM members WHERE status='active'").first('n')).toBe(4);
+ expect(await env.DB.prepare('SELECT count(*) n FROM public_exposures').first('n')).toBe(0);
  const pages=(await env.DB.prepare('SELECT id,title,revision_id,parent_page_id FROM pages WHERE workspace_id=? ORDER BY id').bind(workspaceId).all<{id:string;title:string;revision_id:string;parent_page_id:string|null}>()).results;
  expect(pages.length).toBeGreaterThan(1);expect(job.counts.pages).toBe(pages.length);
  expect(await env.DB.prepare('SELECT COUNT(DISTINCT page_id) AS n FROM search_text WHERE workspace_id=?').bind(workspaceId).first('n')).toBe(pages.length);
@@ -85,6 +96,36 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  expect((await app.request(`https://slate.example/api/pages/${independent!.id}`,{headers:{Cookie:cookie}},env)).status).toBe(404);
  expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM pages WHERE workspace_id=?').bind(workspaceId).first<number>('n')).toBeLessThan(pages.length);
  }
+ // This is supplemental XML, never an incumbent-produced space export.
+ await resetCase();
+ const {workspaceId}=await seedWorkspace();
+ const owner=await seedMember(workspaceId,{email:['synthetic-slate-1','example.test'].join('@'),displayName:'Supplemental importer',role:'owner',isSetupOwner:true});
+ const door=importDoor(createApi(),await sessionFor(owner.memberId)),bytes=supplementalConfluenceArchive(),name='synthetic-slate-1.zip';
+ await door.json('/status',{operationKey:crypto.randomUUID(),key:'current',label:'Source current',color:'#4488cc',requiresVerification:false});
+ const form=new FormData();form.set('file',new File([bytes],name));form.set('format','confluence-space');form.set('operationKey',crypto.randomUUID());
+ const upload=await door.json('/imports',form);let job=await door.json(`/imports/${upload.id}/preview`,{});
+ const losses=await completeReport(door,job,'unmapped'),warnings=await completeReport(door,job,'warnings'),creations=await completeReport(door,job,'wouldCreate');
+ expect((await door.json('/pages')).items).toEqual([]);
+ job=await door.json(`/imports/${job.id}/apply`,{fingerprint:job.report.fingerprint});
+ for(let attempt=0;job.state!=='completed'&&attempt<100;attempt++)job=await door.json(`/imports/${job.id}/resume`,{});
+ expect(job.state).toBe('completed');
+ expect(await completeReport(door,job,'unmapped')).toEqual(losses);
+ expect(await completeReport(door,job,'warnings')).toEqual(warnings);
+ expect(await completeReport(door,job,'created')).toEqual(creations);
+ const outcomes=await persistedOutcomes(door,job,'confluence-space',name,bytes);
+ const reader=await seedMember(workspaceId,{email:['synthetic-slate-2','example.test'].join('@'),displayName:'Supplemental reader',role:'member'});
+ const readerDoor=importDoor(createApi(),await sessionFor(reader.memberId));
+ const overview=outcomes.documents.get('Overview'),draft=outcomes.documents.get('Private draft');
+ const grant=await door.json('/sharing',{operationKey:crypto.randomUUID(),targetKind:'page',targetId:overview.page.id,principalKind:'member',principalId:reader.memberId,level:'view'});
+ expect((await readerDoor.json(`/pages/${overview.page.id}`)).publishedRevisionId).toBe(overview.publishedRevisionId);
+ expect((await readerDoor.json(`/revisions/${overview.page.id}`)).items.map((revision:any)=>revision.id)).toContain(overview.publishedRevisionId);
+ await door.json('/sharing',{operationKey:crypto.randomUUID(),targetKind:'page',targetId:draft.page.id,principalKind:'member',principalId:reader.memberId,level:'view'});
+ expect((await readerDoor.request(`/pages/${draft.page.id}`)).status).toBe(404);
+ await door.json('/sharing',{operationKey:crypto.randomUUID(),id:grant.value.id,targetKind:'page',targetId:overview.page.id,principalKind:'member',principalId:reader.memberId,level:'view',revoke:true});
+ expect((await readerDoor.request(`/pages/${overview.page.id}`)).status).toBe(404);
+ const attachment=outcomes.creations.find(item=>item.kind==='file')!;
+ expect((await readerDoor.request(`/media/${attachment.targetId}`)).status).toBe(404);
+ expect(await env.DB.prepare('SELECT count(*) n FROM public_exposures').first('n')).toBe(0);
 },120_000);
 
 it('erases historical and shared imported people through confirmed native removal, atomically retires custody and keeps unrelated Undo',async()=>{

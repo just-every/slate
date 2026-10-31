@@ -1,5 +1,6 @@
 import {runFoldCases} from '../fold-cases';
 import {scheduledBackupJourney} from '../../e2e/imports/scheduled-backup-journey';
+import {documentImportJourney} from '../../e2e/imports/persisted-outcomes';
 import {contract} from '../../e2e/contract';
 import {applyReviewedSpace} from '../../e2e/imports/reviewed-space';
 import {resetDatabase} from '../../e2e/setup/reset-database';
@@ -26,6 +27,7 @@ describe('durable imports and federation',()=>{
 {name:"durable imports and federation persists a real Google Docs export, retains original, searchable canonical content, and replays without duplicate pages",before:async()=>{await reset();},run:async()=>{
 try {
 const ctx=await context();const bytes=new Uint8Array(await(await (env as typeof env & {TEST_IMPORT_FIXTURES:Fetcher}).TEST_IMPORT_FIXTURES.fetch('https://fixtures/google-docs-download.docx')).arrayBuffer());const job=await startImport(ctx,{operationKey:'real-google-docx',format:'google-docx',source:{name:'google.docx',bytes}});const complete=await runImport(ctx,job.id);expect(complete.state).toBe('completed');const pages=await ctx.db.prepare('SELECT id,title FROM pages WHERE workspace_id=?').bind(ctx.actor.workspaceId).all();expect(pages.results.length).toBeGreaterThan(0);expect(await ctx.db.prepare('SELECT count(*) AS count FROM page_blocks').first<number>('count')).toBeGreaterThan(0);await runImport(ctx,job.id);expect((await ctx.db.prepare('SELECT id FROM pages WHERE workspace_id=?').bind(ctx.actor.workspaceId).all()).results.length).toBe(pages.results.length);expect(await ctx.files.get(complete.archive_key)).not.toBeNull();await expect(startImport(ctx,{operationKey:'real-google-docx',format:'text',source:{name:'different.txt',bytes:new TextEncoder().encode('different')}})).rejects.toMatchObject({code:'OPERATION_KEY_CONFLICT'});
+await documentImportJourney(createApi(),await sessionFor(ctx.actor.id),'google-docx','google-docs-download.docx',bytes);
 } finally {{vi.unstubAllGlobals();}}
 }},
 {name:"durable imports and federation reviews genuine Notion and Confluence exports before atomic publication",before:async()=>{await reset();},run:async()=>{
@@ -51,6 +53,7 @@ for(const scenario of [async()=>{const ctx=await context();const job=await start
 {name:"durable imports and federation imports a publisher-produced Microsoft Word fixture with retained provenance",before:async()=>{await reset();},run:async()=>{
 try {
 const ctx=await context();const bytes=new Uint8Array(await(await (env as typeof env & {TEST_IMPORT_FIXTURES:Fetcher}).TEST_IMPORT_FIXTURES.fetch('https://fixtures/word-government-impact-assessment.docx')).arrayBuffer());const job=await startImport(ctx,{operationKey:'genuine-word',format:'docx',source:{name:'word-government-impact-assessment.docx',bytes}});expect((await runImport(ctx,job.id)).state).toBe('completed');expect(await ctx.db.prepare('SELECT count(*) AS count FROM page_blocks').first<number>('count')).toBeGreaterThan(10);
+await documentImportJourney(createApi(),await sessionFor(ctx.actor.id),'docx','word-government-impact-assessment.docx',bytes);
 } finally {{vi.unstubAllGlobals();}}
 }},
 {name:"durable imports and federation authorizes real Worker HTTP imports and export endpoints against current sessions",before:async()=>{await reset();},run:async()=>{

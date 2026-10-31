@@ -52,13 +52,15 @@ export function parseConfluenceXmlSpace(files: Map<string, Uint8Array>, source: 
     const ordinal = Number.isSafeInteger(number) && number > 0 ? number : undefined;
     if (!ordinal && property(entity, 'version', 'versionNumber')) reportUnmapped(report, 'Confluence revision version number is invalid', sourceId);
     reportCreated(report, 'version', `Version ${ordinal ?? entity.id}`, sourceId);
-    return {sourceId, sourceIdentityKind: 'native', ordinal, title: property(entity, 'title'), labels: content.labels(entity), label: property(entity, 'title'), status: property(entity, 'contentStatus', 'status'), comment: property(entity, 'versionComment', 'comment', 'message'), createdAt: property(entity, 'lastModificationDate', 'creationDate', 'created'), origin: 'publish', blocks: blocksFor(entity, sourceId, owner)};
+    return {sourceId, sourceIdentityKind: 'native', ordinal, title: property(entity, 'title'), labels: content.labels(entity), label: property(entity, 'title'), status: property(entity, 'contentStatus', 'status'), comment: property(entity, 'versionComment', 'comment', 'message'), createdAt: property(entity, 'lastModificationDate', 'creationDate', 'created'), origin: pageLifecycle(entity)==='draft'?'autosave':'publish', blocks: nameMatches(entity,'Folder')?[]:blocksFor(entity, sourceId, owner)};
   };
   const pages: ImportedPage[] = history.pages.map(entity => {
     const isFolder = nameMatches(entity, 'Folder');
     const sourceId = history.aliases.get(entity.id)!;
     const title = property(entity, 'title', 'name') ?? `${isFolder ? 'Folder' : 'Page'} ${entity.id}`;
     const previous = history.revisions.get(entity.id) ?? [];
+    const currentRevision = ['version','versionNumber','versionComment','comment','contentStatus','status'].some(name=>property(entity,name)!==undefined)
+      ? revisionFor(entity,sourceId) : undefined;
     const parents = propertyIds(entity, 'parentId', 'parent');
     const parent = parents.length ? history.aliases.get(parents[0]!) : undefined;
     const invalidParent = parents.length > 0 && (!parent || parents.some(id => history.aliases.get(id) !== parent));
@@ -70,7 +72,8 @@ export function parseConfluenceXmlSpace(files: Map<string, Uint8Array>, source: 
       blocks: isFolder ? [] : blocksFor(entity, sourceId, sourceId), lifecycle: pageLifecycle(entity),
       labels: content.labels(entity), properties: {}, status: property(entity, 'contentStatus', 'status'),
       ...historicalRestrictions(entity, previous, restrictions, report),
-      revisions: previous.map(revision => revisionFor(revision, sourceId)),
+      revisions: [...previous.map(revision => revisionFor(revision, sourceId)),...(currentRevision?[currentRevision]:[])],
+      ...(currentRevision?{workingRevisionSourceId:currentRevision.sourceId,...(pageLifecycle(entity)==='draft'?{}:{publishedRevisionSourceId:currentRevision.sourceId})}:{}),
     };
     if (invalidParent) { page.restricted = true; page.grants = []; }
     if (isFolder) reportUnmapped(report, 'Confluence folder imported as an empty-body page', sourceId);

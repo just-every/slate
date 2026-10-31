@@ -289,6 +289,8 @@ export function parseConfluenceCsvSpace(files: Map<string, Uint8Array>, source: 
       restricted: tableRows(tables, "content_permissions").some(permission => permission.content_id === row.contentid) || tableRows(tables, "content_perm_set").some(permission => (permission.content_id ?? permission.contentid) === row.contentid),
       grants,
       revisions,
+      workingRevisionSourceId: draft ? `confluence-version:${draft.contentid}:draft` : `confluence-version:${row.contentid}:${row.version}`,
+      publishedRevisionSourceId: neverPublished ? undefined : `confluence-version:${row.contentid}:${row.version}`,
       ...(postedAt ? { post: { postedAt, ...(row.creator ? { authorSourceId: memberSourceId(row.creator) } : {}) } } : {}),
     };
   });
