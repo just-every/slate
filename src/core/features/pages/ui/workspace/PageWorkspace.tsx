@@ -43,6 +43,16 @@ export interface PageHost {
   /** Extra items for the top bar's More menu, listed after Export page. */
   moreItems?: ReactNode;
   properties?: ReactNode;
+  /** Shown above the title (SL1: a record's way back to its list and its layout control). */
+  lead?: ReactNode;
+  topBarClassName?: string;
+  /** The page's one address, which Copy page link writes (SL1); defaults to its page address. */
+  address?: string;
+  /**
+   * SL1: a database's page at the database's address. The list follows the title outside this page, so the body shows
+   * only as the database's description: when it has content, or after More › Add description.
+   */
+  database?: boolean;
 }
 export function PageWorkspace({ pageId, host }: { pageId: string; host?: PageHost }) {
   const {member, workspace}=useWorkspace();
@@ -71,7 +81,7 @@ function PageBoundary({pageId,host}:{pageId:string;host?:PageHost}) {
   </>;
 }
 /** LINK-004: the page's existence is acknowledged with no title, snippet or author. */
-function PageAccessNeeded({pageId,changed,keys}:{pageId:string;changed:boolean;keys:ReturnType<typeof draftKeys>}) {
+export function PageAccessNeeded({pageId,changed,keys}:{pageId:string;changed:boolean;keys:ReturnType<typeof draftKeys>}) {
   return <div className="content-frame"><article className="main page-document">
     <div className="request-notice" role="alert">
       <h2>Access needed</h2>
@@ -110,6 +120,12 @@ function LoadedPage({
   const [selection,setSelection] = useState<PageSelection>();
   const [present, setPresent] = useState(false);
   const [reactionsOpen,setReactionsOpen]=useState(false);
+  // A database's description shows once its body has content, or once More › Add description asks for it, and then stays.
+  const [describing,setDescribing]=useState(false);
+  const description=!host?.database||describing||editor.blocks.some(block=>block.type!=="paragraph"||richTextToPlain(block.text).trim()!=="");
+  useEffect(()=>{if(host?.database&&description&&!describing)setDescribing(true);},[description]);
+  const addDescription=useRef(false);
+  useEffect(()=>{if(describing&&addDescription.current){addDescription.current=false;window.document.querySelector<HTMLElement>('.database-head [data-page-editor] [data-slate-editable]')?.focus();}},[describing]);
   const [detail, setDetailState] = useState<string | null>(() => typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("detail") ?? (new URLSearchParams(window.location.search).has("thread")||new URLSearchParams(window.location.search).has("comment")?"comments":null)) : null);
   function setDetail(value: string | null) {
     setDetailState(value);
@@ -282,6 +298,7 @@ function LoadedPage({
     <>
       <PageTopBar
         trail={[...trail, { label: document.page.title || "Untitled", suffix: document.policyProfile["page.status.v1"] === "verification-only" ? <PageStatusBadge document={document}/> : null }]}
+        className={host?.topBarClassName}
         flagship={flagship}
         detail={detail}
         onToggle={value => {setSelection(undefined);setDetail(detail === value ? null : value);}}
@@ -294,6 +311,7 @@ function LoadedPage({
           reload={reload}
           onPresent={() => {setPresent(true);setDetail(null);}}
           onOpenPanel={(kind, returnTo) => {setSelection(undefined);requestedReturn.current=returnTo;setDetail(kind);}}
+          onAddDescription={host?.database && document.permissions.canEdit && !description ? () => {addDescription.current=true;setDescribing(true);} : undefined}
         />}
       />
       {present ? (
@@ -305,9 +323,11 @@ function LoadedPage({
       ) : null}
       <div className="content-frame">
         <article
-          className={`main page-document ${document.properties?.smallText ? "page-small-text" : ""} ${document.properties?.fullWidth ? "page-full-width" : ""}`}
+          className={`main page-document ${document.properties?.smallText ? "page-small-text" : ""} ${document.properties?.fullWidth ? "page-full-width" : ""}${host?.database ? " database-head" : ""}`}
           data-typeface={document.properties?.typeface ?? "default"}
+          data-layout={host?.database ? "wide" : undefined}
         >
+          {host?.lead}
           {document.page.lifecycle === "draft" ? <p className="draft-label">Private draft</p> : null}
           <h1 className="sr-only">{title || "Untitled page"}</h1>
           {document.lock ? <p role="status" className="request-notice" data-page-lock>Locked by {document.lock.lockedByDisplayName}. This page is read-only; comments stay open.</p> : null}
@@ -334,7 +354,7 @@ function LoadedPage({
             }}
           />
           {newPage && document.permissions.canEdit ? <script dangerouslySetInnerHTML={{__html:newPageArrivalScript}}/> : null}
-          <PageReadMetadata document={document} />
+          {host?.database ? null : <PageReadMetadata document={document} />}
           {recovered.current && title!==savedTitle ? <SaveStatus state="unsaved" recoveredDraft onRetry={()=>void saveTitle()}/> : null}
           {titleFailure ? <SaveStatus state="failed" failureMessage={titleFailure} onRetry={() => void saveTitle()} /> : null}
           {host?.properties}
@@ -375,14 +395,14 @@ function LoadedPage({
             />
           </details> : null}
           {!document.permissions.canEdit?<>{!document.lock ? <p role="status">This page is read-only with your current access.</p> : null}<UnsavedDraft keys={keys} reason={document.lock ? "This page was locked before this text was saved." : "Your access to this page changed to view only before this text was saved."}/></>:null}
-          <PageEditorBody
+          {description ? <PageEditorBody
             editor={editor}
             titleState={titleFailure || titleConflict || recovered.current ? "failed" : titleSaving || title!==savedTitle ? "saving" : undefined}
             document={document}
             onAsk={selection=>{if(flagship){setSelection(selection);setDetail("ask");}}}
             onComment={selection=>{setSelection(selection);setDetail("comments");if(selection)reload();}}
-            footer={<details className="page-reactions" onToggle={event=>setReactionsOpen(event.currentTarget.open)}><summary>👍 Reactions</summary>{reactionsOpen?<PageReactions pageId={document.page.id}/>:null}</details>}
-          />
+            footer={host?.database ? undefined : <details className="page-reactions" onToggle={event=>setReactionsOpen(event.currentTarget.open)}><summary>👍 Reactions</summary>{reactionsOpen?<PageReactions pageId={document.page.id}/>:null}</details>}
+          /> : null}
         </article>
         {detail && Object.hasOwn(panelTitles, detail) && (flagship || detail !== "ask") ? (
           <aside className="right" ref={detailPanel} role="region" aria-label={panelTitles[detail]}>
@@ -394,6 +414,7 @@ function LoadedPage({
               onClose={() => setDetail(null)}
               onCommentSent={() => setSelection(undefined)}
               reload={reload}
+              address={host?.address}
             />
           </aside>
         ) : null}

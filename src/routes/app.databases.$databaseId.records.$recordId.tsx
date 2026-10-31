@@ -1,10 +1,3 @@
-import {editorLeaf} from "../editor-leaf";
 import { createFileRoute } from "@tanstack/react-router";
-import { RecordWorkspace } from "../core/features/databases/ui/workspace/RecordWorkspace";
-export const Route = createFileRoute(
-  "/app/databases/$databaseId/records/$recordId",
-)({ component: editorLeaf(Page) });
-function Page() {
-  const { databaseId, recordId } = Route.useParams();
-  return <RecordWorkspace databaseId={databaseId} id={recordId} />;
-}
+/** A record at its one address; its database's layout route draws it with the list kept mounted. */
+export const Route = createFileRoute("/app/databases/$databaseId/records/$recordId")({});

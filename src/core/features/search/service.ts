@@ -11,6 +11,7 @@ import { nameSnippetMembers } from './snippets';
 import { validateSearch, type SearchInput } from './input';
 import { parseAdvancedSearch, searchHighlights } from './language';
 import { searchResult } from './results';
+import { pageAddresses } from '../databases/addresses';
 import { createSearchSnapshot, saveSearchSnapshot, searchFacets, selectedSearchDocuments, snapshotGroups, visibleSearchRows, type SearchSnapshot } from './snapshots';
 export { validateSearch } from './input';
 export type { SearchInput } from './input';
@@ -43,9 +44,10 @@ export async function search(ctx: FeatureContext, raw: SearchInput) {
   // The last live ACL query covers every disclosed similar-page member, not
   // merely the representative whose snippet is displayed.
   const documents = await selectedSearchDocuments(ctx, query, selected.flatMap(group => group.rows));
+  const addresses = await pageAddresses(ctx, selected.flatMap(group => [documents.get(group.rows[0]!.key)!.pageId, ...group.rows.slice(1).map(row => row.id)].flatMap(id => id ? [id] : [])));
   const items = await nameSnippetMembers(ctx, selected.map(group => {
     const row = group.rows[0]!;
-    return searchResult(documents.get(row.key)!, row, terms, group.rows.slice(1));
+    return searchResult(documents.get(row.key)!, row, terms, group.rows.slice(1), addresses);
   }));
   return { items, total: groups.length, facets: searchFacets(groups), filters,
     nextCursor: remaining.length > selected.length ? encodeCursor({ snapshot: snapshotId, offset: selected.at(-1)!.position + 1 }) : undefined };

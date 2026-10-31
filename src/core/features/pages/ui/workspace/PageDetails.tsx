@@ -32,6 +32,7 @@ export function PageDetails({
   onClose,
   reload,
   onCommentSent,
+  address,
 }: {
   kind: string;
   selection?: PageSelection;
@@ -40,6 +41,8 @@ export function PageDetails({
   onClose: () => void;
   reload: () => void;
   onCommentSent: () => void;
+  /** The page's one address, for Copy page link. */
+  address?: string;
 }) {
   return (
     <>
@@ -51,7 +54,7 @@ export function PageDetails({
       ) : kind === "history" ? (
         <PageHistory document={document} revision={revision} reload={reload} />
       ) : kind === "share" ? (
-        <PageSharing document={document} />
+        <PageSharing document={document} address={address} />
       ) : kind === "ask" ? (
         <PageAsk document={document} selection={selection} />
       ) : kind === "status" ? (

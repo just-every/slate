@@ -4,6 +4,7 @@ import { knowledgeNoun } from "../../../../shared/knowledge/vocabulary";
 import type { DatabaseField, RecordGroup } from "../types";
 import { recordColourDotClass } from "../types";
 import { RecordCard } from "./RecordCard";
+import type { RecordAnchor } from "./shared";
 
 /**
  * `DB-006` board layout: one column per group of the grouping field, the count in
@@ -20,7 +21,7 @@ export function BoardView({
   canMoveBetweenGroups,
   hideEmptyGroups,
   onHideEmptyGroupsChange,
-  onOpenRecord,
+  recordLink,
   onMoveRecord,
   onOpenLink,
   onNewRecordInGroup,
@@ -36,7 +37,7 @@ export function BoardView({
   canMoveBetweenGroups: boolean;
   hideEmptyGroups: boolean;
   onHideEmptyGroupsChange: (next: boolean) => void;
-  onOpenRecord: (recordId: string) => void;
+  recordLink: RecordAnchor;
   onMoveRecord: (recordId: string, groupId: string) => void;
   onOpenLink: (linkId: string) => void;
   onNewRecordInGroup: (groupId: string) => void;
@@ -83,7 +84,7 @@ export function BoardView({
                         : []
                     }
                     onMove={(groupId) => onMoveRecord(record.id, groupId)}
-                    onOpen={() => onOpenRecord(record.id)}
+                    link={recordLink(record.id)}
                     onOpenLink={onOpenLink}
                     record={record}
                     showRecordIcon={showRecordIcon}

@@ -20,7 +20,7 @@ import { Hono } from 'hono';
 import type { AppEnvironment } from '../../app/types';
 import { featureContext } from '../../app/feature-context';
 import { createPage, readPage, updatePage } from './service';
-import { listPages, previewMove, movePage, duplicatePage } from './tree';
+import { listTreePages, previewMove, movePage, duplicatePage } from './tree';
 import { updateBlock, replaceBlocks } from '../editor/service';
 import { previewPublication } from '../lifecycle/publication-preview';
 import { publishPage, cancelSchedule, discardChanges } from '../lifecycle/service';
@@ -36,7 +36,7 @@ export function createPagesRoutes() {
         const b = await c.req.json();
         return c.json(await previewLink(b.url, publicPreviewTransport));
     });
-    r.get('/', async (c) => c.json(await listPages(featureContext(c), c.req.query('containerId'),c.req.query('label'))));
+    r.get('/', async (c) => c.json(await listTreePages(featureContext(c), c.req.query('containerId'),c.req.query('label'))));
     r.post('/', async (c) => c.json(await createPage(featureContext(c), await validatedJson(c, createPageSchema))));
     r.post('/:id/query', async (c) => c.json(await contentQuery(featureContext(c), c.req.param('id'), await c.req.json())));
     r.post('/:id/task-report', async (c) => c.json(await taskReport(featureContext(c), c.req.param('id'), await c.req.json())));

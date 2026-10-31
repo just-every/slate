@@ -9,6 +9,7 @@ import {
   Copy,
   Ellipsis,
   FileDown,
+  FileText,
   FolderInput,
   Globe,
   History,
@@ -51,6 +52,7 @@ export function PageMoreMenu({
   reload,
   onPresent,
   onOpenPanel,
+  onAddDescription,
 }: {
   document: DocumentView;
   unsaved: boolean;
@@ -62,6 +64,8 @@ export function PageMoreMenu({
   onPresent: () => void;
   /** Opens a side panel; `returnTo` is where focus goes when it closes. */
   onOpenPanel: (kind: string, returnTo: HTMLElement | null) => void;
+  /** A database's page with an empty body: shows its description and puts the caret in it (SL1, Q4). */
+  onAddDescription?: () => void;
 }) {
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const [reminder,setReminder]=useState(false);
@@ -153,6 +157,7 @@ export function PageMoreMenu({
           {item(<FileDown aria-hidden="true" />, "Export page", dialogItem("export"))}
           {item(<Bell aria-hidden="true" />, "Remind me", open(()=>setReminder(true)))}
           {extraItems}
+          {onAddDescription ? item(<FileText aria-hidden="true" />, "Add description", open(onAddDescription), false) : null}
           <DropdownMenuItem disabled={following.disabled} onSelect={stayOpen(() => void following.toggleFavourite())}>
             <Star aria-hidden="true" fill={following.favourite ? "currentColor" : "none"} />
             {following.favourite ? "Remove from favourites" : "Add to favourites"}

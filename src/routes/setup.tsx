@@ -7,7 +7,7 @@ export const Route = createFileRoute("/setup")({
   validateSearch: z.object({ step: z.coerce.number().int().min(1).max(3).optional().catch(undefined) }),
   beforeLoad: async () => {
     const workspace = await loadWorkspace();
-    if (!workspace.setup.required || !workspace.setup.canComplete) throw redirect({ to: "/app" });
+    if ("canonical" in workspace || !workspace.setup.required || !workspace.setup.canComplete) throw redirect({ to: "/app" });
     return { workspace };
   },
   head: () => ({ meta: [{ title: "Set up your workspace — Slate" }], links: [{ rel: "stylesheet", href: "/rer-theme.css" }] }),

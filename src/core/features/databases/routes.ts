@@ -27,9 +27,10 @@ import {
   saveField,
   createRecord,
 } from "./service";
-import { saveView, listViews, queryView, chart } from "./views";
-import { openRecord, updateRecord } from "./records";
-import { database, fields, requireRecordDatabase } from "./repository";
+import { saveView, queryView, chart } from "./views";
+import { updateRecord } from "./records";
+import { requireRecordDatabase } from "./repository";
+import { readDatabase, readRecord } from "./reads";
 export function createDatabasesRoutes() {
   const r = new Hono<AppEnvironment>();
   r.post('/from-table',async c=>c.json(await convertTable(featureContext(c),parseInput(z.object({operationKey:z.string().min(8),pageId:z.string(),blockId:z.string(),expectedRevisionId:z.string()}).strict(),await c.req.json()))));
@@ -59,15 +60,7 @@ export function createDatabasesRoutes() {
       201,
     ),
   );
-  r.get("/:id", async (c) => {
-    const ctx = featureContext(c),
-      id = c.req.param("id");
-    return c.json({
-      database: await database(ctx, id),
-      fields: await fields(ctx, id),
-      views: await listViews(ctx, id),
-    });
-  });
+  r.get("/:id", async (c) => c.json(await readDatabase(featureContext(c), c.req.param("id"))));
   r.post("/:id/lock", async (c) =>
     c.json(
       await setStructureLock(
@@ -146,11 +139,9 @@ export function createDatabasesRoutes() {
   r.post("/:id/templates/:templateId/records", async (c) =>
     c.json(await createFromTemplate(featureContext(c), c.req.param("id"), c.req.param("templateId"), parseInput(templateUseInput, await c.req.json())), 201),
   );
-  r.get("/:id/records/:pageId", async (c) => {
-    const ctx = featureContext(c);
-    await requireRecordDatabase(ctx, c.req.param("id"), c.req.param("pageId"));
-    return c.json(await openRecord(ctx, c.req.param("pageId")));
-  });
+  r.get("/:id/records/:pageId", async (c) =>
+    c.json(await readRecord(featureContext(c), c.req.param("id"), c.req.param("pageId"))),
+  );
   r.patch("/:id/records/:pageId", async (c) => {
     await requireRecordDatabase(
       featureContext(c),

@@ -25,6 +25,7 @@ import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as AppContainersIndexRouteImport } from './routes/app.containers.index'
 import { Route as AppContainersContainerIdRouteImport } from './routes/app.containers.$containerId'
 import { Route as AppDatabasesIndexRouteImport } from './routes/app.databases.index'
+import { Route as AppDatabasesDatabaseIdRouteImport } from './routes/app.databases.$databaseId'
 import { Route as AppDecisionsIndexRouteImport } from './routes/app.decisions.index'
 import { Route as AppDecisionsDecisionIdRouteImport } from './routes/app.decisions.$decisionId'
 import { Route as AppInquiriesInquiryIdRouteImport } from './routes/app.inquiries.$inquiryId'
@@ -122,6 +123,11 @@ const AppDatabasesIndexRoute = AppDatabasesIndexRouteImport.update({
   path: '/databases/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDatabasesDatabaseIdRoute = AppDatabasesDatabaseIdRouteImport.update({
+  id: '/databases/$databaseId',
+  path: '/databases/$databaseId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDecisionsIndexRoute = AppDecisionsIndexRouteImport.update({
   id: '/decisions/',
   path: '/decisions/',
@@ -189,15 +195,15 @@ const AppTemplatesTemplateIdRoute = AppTemplatesTemplateIdRouteImport.update({
 } as any)
 const AppDatabasesDatabaseIdIndexRoute =
   AppDatabasesDatabaseIdIndexRouteImport.update({
-    id: '/databases/$databaseId/',
-    path: '/databases/$databaseId/',
-    getParentRoute: () => AppRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppDatabasesDatabaseIdRoute,
   } as any)
 const AppDatabasesDatabaseIdRecordsRecordIdRoute =
   AppDatabasesDatabaseIdRecordsRecordIdRouteImport.update({
-    id: '/databases/$databaseId/records/$recordId',
-    path: '/databases/$databaseId/records/$recordId',
-    getParentRoute: () => AppRoute,
+    id: '/records/$recordId',
+    path: '/records/$recordId',
+    getParentRoute: () => AppDatabasesDatabaseIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/app/containers/$containerId': typeof AppContainersContainerIdRoute
+  '/app/databases/$databaseId': typeof AppDatabasesDatabaseIdRouteWithChildren
   '/app/decisions/$decisionId': typeof AppDecisionsDecisionIdRoute
   '/app/inquiries/$inquiryId': typeof AppInquiriesInquiryIdRoute
   '/app/pages/$pageId': typeof AppPagesPageIdRoute
@@ -280,6 +287,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/app/containers/$containerId': typeof AppContainersContainerIdRoute
+  '/app/databases/$databaseId': typeof AppDatabasesDatabaseIdRouteWithChildren
   '/app/decisions/$decisionId': typeof AppDecisionsDecisionIdRoute
   '/app/inquiries/$inquiryId': typeof AppInquiriesInquiryIdRoute
   '/app/pages/$pageId': typeof AppPagesPageIdRoute
@@ -315,6 +323,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/docs/'
     | '/app/containers/$containerId'
+    | '/app/databases/$databaseId'
     | '/app/decisions/$decisionId'
     | '/app/inquiries/$inquiryId'
     | '/app/pages/$pageId'
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/docs/'
     | '/app/containers/$containerId'
+    | '/app/databases/$databaseId'
     | '/app/decisions/$decisionId'
     | '/app/inquiries/$inquiryId'
     | '/app/pages/$pageId'
@@ -520,6 +530,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDatabasesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/databases/$databaseId': {
+      id: '/app/databases/$databaseId'
+      path: '/databases/$databaseId'
+      fullPath: '/app/databases/$databaseId'
+      preLoaderRoute: typeof AppDatabasesDatabaseIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/decisions/': {
       id: '/app/decisions/'
       path: '/decisions'
@@ -613,17 +630,17 @@ declare module '@tanstack/react-router' {
     }
     '/app/databases/$databaseId/': {
       id: '/app/databases/$databaseId/'
-      path: '/databases/$databaseId'
+      path: '/'
       fullPath: '/app/databases/$databaseId/'
       preLoaderRoute: typeof AppDatabasesDatabaseIdIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppDatabasesDatabaseIdRoute
     }
     '/app/databases/$databaseId/records/$recordId': {
       id: '/app/databases/$databaseId/records/$recordId'
-      path: '/databases/$databaseId/records/$recordId'
+      path: '/records/$recordId'
       fullPath: '/app/databases/$databaseId/records/$recordId'
       preLoaderRoute: typeof AppDatabasesDatabaseIdRecordsRecordIdRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppDatabasesDatabaseIdRoute
     }
   }
 }
@@ -642,6 +659,23 @@ const AppContainersRouteWithChildren = AppContainersRoute._addFileChildren(
   AppContainersRouteChildren,
 )
 
+interface AppDatabasesDatabaseIdRouteChildren {
+  AppDatabasesDatabaseIdIndexRoute: typeof AppDatabasesDatabaseIdIndexRoute
+  AppDatabasesDatabaseIdRecordsRecordIdRoute: typeof AppDatabasesDatabaseIdRecordsRecordIdRoute
+}
+
+const AppDatabasesDatabaseIdRouteChildren: AppDatabasesDatabaseIdRouteChildren =
+  {
+    AppDatabasesDatabaseIdIndexRoute: AppDatabasesDatabaseIdIndexRoute,
+    AppDatabasesDatabaseIdRecordsRecordIdRoute:
+      AppDatabasesDatabaseIdRecordsRecordIdRoute,
+  }
+
+const AppDatabasesDatabaseIdRouteWithChildren =
+  AppDatabasesDatabaseIdRoute._addFileChildren(
+    AppDatabasesDatabaseIdRouteChildren,
+  )
+
 interface AppRouteChildren {
   AppArchiveRoute: typeof AppArchiveRoute
   AppContainersRoute: typeof AppContainersRouteWithChildren
@@ -651,6 +685,7 @@ interface AppRouteChildren {
   AppSearchRoute: typeof AppSearchRoute
   AppTasksRoute: typeof AppTasksRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDatabasesDatabaseIdRoute: typeof AppDatabasesDatabaseIdRouteWithChildren
   AppDecisionsDecisionIdRoute: typeof AppDecisionsDecisionIdRoute
   AppInquiriesInquiryIdRoute: typeof AppInquiriesInquiryIdRoute
   AppPagesPageIdRoute: typeof AppPagesPageIdRoute
@@ -665,8 +700,6 @@ interface AppRouteChildren {
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppSpacesIndexRoute: typeof AppSpacesIndexRoute
   AppTemplatesIndexRoute: typeof AppTemplatesIndexRoute
-  AppDatabasesDatabaseIdIndexRoute: typeof AppDatabasesDatabaseIdIndexRoute
-  AppDatabasesDatabaseIdRecordsRecordIdRoute: typeof AppDatabasesDatabaseIdRecordsRecordIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -678,6 +711,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSearchRoute: AppSearchRoute,
   AppTasksRoute: AppTasksRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDatabasesDatabaseIdRoute: AppDatabasesDatabaseIdRouteWithChildren,
   AppDecisionsDecisionIdRoute: AppDecisionsDecisionIdRoute,
   AppInquiriesInquiryIdRoute: AppInquiriesInquiryIdRoute,
   AppPagesPageIdRoute: AppPagesPageIdRoute,
@@ -692,9 +726,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppSpacesIndexRoute: AppSpacesIndexRoute,
   AppTemplatesIndexRoute: AppTemplatesIndexRoute,
-  AppDatabasesDatabaseIdIndexRoute: AppDatabasesDatabaseIdIndexRoute,
-  AppDatabasesDatabaseIdRecordsRecordIdRoute:
-    AppDatabasesDatabaseIdRecordsRecordIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

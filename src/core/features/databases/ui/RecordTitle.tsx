@@ -1,6 +1,7 @@
 import { FileText } from "lucide-react";
 import { cn } from "../../../ui";
 import type { RecordIcon } from "./types";
+import type { RecordAnchor } from "./views/shared";
 
 /**
  * `DB-010` — the per-record icon, shown under `record-is-page` and hidden under
@@ -24,26 +25,25 @@ export function RecordTitle({
   title,
   icon,
   showIcon,
-  onOpen,
+  link,
   className,
 }: {
   title: string;
   icon: RecordIcon;
   showIcon: boolean;
-  onOpen: () => void;
+  link: ReturnType<RecordAnchor>;
   className?: string;
 }) {
   return (
-    <button
+    <a
       className={cn(
-        "flex min-w-0 items-center gap-1.5 rounded-control text-left text-ui text-ink transition-colors hover:text-accent",
+        "record-title flex min-w-0 items-center gap-1.5 rounded-control text-left text-ui text-ink transition-colors hover:text-accent",
         className,
       )}
-      onClick={onOpen}
-      type="button"
+      {...link}
     >
       {showIcon ? <RecordIconMark icon={icon} /> : null}
       <span className="truncate font-medium">{title}</span>
-    </button>
+    </a>
   );
 }

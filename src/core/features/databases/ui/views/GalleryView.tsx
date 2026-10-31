@@ -13,7 +13,7 @@ export function GalleryView({
   records,
   showRecordIcon,
   canEditRecords,
-  onOpenRecord,
+  recordLink,
   onOpenLink,
   onNewRecord,
   className,
@@ -26,7 +26,7 @@ export function GalleryView({
             coverClass={record.coverClass ?? null}
             fields={fields}
             key={record.id}
-            onOpen={() => onOpenRecord(record.id)}
+            link={recordLink(record.id)}
             onOpenLink={onOpenLink}
             record={record}
             showRecordIcon={showRecordIcon}

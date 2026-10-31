@@ -15,9 +15,11 @@
 .slate-app .database-workspace thead th { height: 40px; font-size: 13px; font-weight: 500; }
 .slate-app .database-workspace td { background-color: var(--slate-canvas); }
 .slate-app .database-workspace tbody tr:hover td { background-color: var(--slate-wash); }
-.slate-app .database-workspace td :is(button, [role="button"]) { min-width: 0; min-height: max(var(--slate-tap-target, 0px), 28px); border-color: transparent; background-color: inherit; }
+/* A record's title is a link to its one address (SL1); it keeps the look its button had. */
+.slate-app .database-workspace a.record-title { min-width: max(var(--slate-tap-target, 0px), 32px); min-height: max(var(--slate-tap-target, 0px), 32px); padding-inline: 8px; border: 1px solid var(--slate-line); border-radius: 6px; background-color: var(--slate-surface); color: var(--slate-ink); font: inherit; }
+.slate-app .database-workspace td :is(button, [role="button"], a.record-title) { min-width: 0; min-height: max(var(--slate-tap-target, 0px), 28px); border-color: transparent; background-color: inherit; }
 .slate-app .database-workspace td input { min-height: max(var(--slate-tap-target, 0px), 28px); border-color: transparent; background-color: inherit; }
-.slate-app .database-workspace td :is(button, [role="button"]):hover { background-color: var(--slate-sidebar-hover); }
+.slate-app .database-workspace td :is(button, [role="button"], a.record-title):hover { background-color: var(--slate-sidebar-hover); }
 .slate-app .database-workspace tfoot td { background-color: var(--slate-canvas); }
 .slate-app .database-workspace tfoot button { border-color: var(--slate-line); }
 .slate-app .database-table { width: 100%; min-width: 0; }
@@ -30,10 +32,9 @@
   .slate-app .db-find { flex: 1 1 100%; }
   .slate-app .db-find input { width: 100%; }
 }
-.slate-app .database-workspace article :is(button, [role="button"]) { min-width: 0; min-height: max(var(--slate-tap-target, 0px), 28px); border-color: transparent; background-color: var(--slate-surface); }
+.slate-app .database-workspace article :is(button, [role="button"], a.record-title) { min-width: 0; min-height: max(var(--slate-tap-target, 0px), 28px); border-color: transparent; background-color: var(--slate-surface); }
 .slate-app .database-workspace section[aria-label] > button { border-color: transparent; background-color: var(--slate-canvas); }
 .slate-app .record-field dd > button { min-height: max(var(--slate-tap-target, 0px), 28px); border-color: transparent; background-color: var(--slate-canvas); color: var(--slate-ink-muted); }
-.slate-app .record-peek .record-field dd > button { background-color: var(--slate-surface); }
 
 /* The chart panel: three labelled selects of one width on one row, wrapping together on a narrow screen. */
 .slate-app .chart-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 220px)); gap: 12px 16px; margin: 12px 0 16px; }

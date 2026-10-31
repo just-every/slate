@@ -54,7 +54,7 @@ export async function databaseJourney({ page, origin, context, api }) {
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   const cleared = page.waitForResponse(response => response.url().endsWith(`/records/${record.pageId}`)
     && response.request().method() === 'PATCH');
-  await page.getByRole('row').filter({ has: page.getByRole('button', { name: title, exact: true }) })
+  await page.getByRole('row').filter({ has: page.getByRole('link', { name: title, exact: true }) })
     .getByRole('textbox', { name: remove.name, exact: true }).fill('');
   assert.ok((await cleared).ok());
   await expect.poll(async () => (await api(base + '/records/' + record.pageId)).values[remove.id]).toBeNull();

@@ -16,19 +16,23 @@ async function databaseCheckboxBounds({ page, context, origin, api }, containerI
     revision = (await mutate(base + '/views', { expectedRevisionId: revision, view })).revisionId;
   }
   const record = await mutate(base + '/records', { title: 'Release checkbox', values: { [field.id]: false } });
-  for (const surface of ['list', 'record', 'peek', 'gallery']) {
+  for (const surface of ['list', 'record', 'beside', 'gallery']) {
     if (surface === 'record') await page.goto(`${origin}/app/databases/${database.id}/records/${record.pageId}`, { waitUntil: 'networkidle' });
     else {
       await page.goto(`${origin}/app/databases/${database.id}`, { waitUntil: 'networkidle' });
       const view = page.getByRole('button', { name: `Checks ${surface === 'gallery' ? 'gallery' : 'list'}`, exact: true });
       await view.click();
       await expect(view).toHaveAttribute('aria-pressed', 'true');
-      if (surface === 'peek') await page.getByRole('button', { name: 'Release checkbox', exact: true }).click();
+      // SL1: the title opens the record at its address, beside the list's index.
+      if (surface === 'beside') {
+        await page.getByRole('main').getByRole('link', { name: 'Release checkbox', exact: true }).click();
+        await expect(page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue('Release checkbox');
+      }
     }
-    // Changing views and opening a peek fetch their own record content. Finish
+    // Changing views and opening a record fetch their own record content. Finish
     // that render before placing the pointer on its final checkbox position.
     await page.waitForLoadState('networkidle');
-    const host = surface === 'peek' ? page.getByRole('dialog', { name: 'Record preview', exact: true }) : page;
+    const host = surface === 'beside' ? page.locator('.record-fields-list') : page;
     const checkbox = host.getByRole('checkbox', { name: field.name, exact: true });
     await expect(checkbox).toBeDisabled();
     const measure = () => checkbox.evaluate(el => {

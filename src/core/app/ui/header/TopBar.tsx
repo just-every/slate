@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
-export type Crumb = { label: string; href?: string; suffix?: ReactNode };
+/** `onClick` lets a crumb open its address in place (SL1: a record's database crumb keeps the list mounted). */
+export type Crumb = { label: string; href?: string; suffix?: ReactNode; onClick?: (event: MouseEvent<HTMLAnchorElement>) => void };
 
 /**
  * The one top bar of the signed-in app: where you are on the left, what you can do here on the right.
@@ -15,7 +16,7 @@ export function TopBar({ trail, className, children }: { trail: readonly Crumb[]
             const current = index === trail.length - 1;
             return (
               <li key={`${index}:${crumb.label}`}>
-                {crumb.href && !current ? <a href={crumb.href}>{crumb.label}</a> : <span aria-current={current ? "page" : undefined}>{crumb.label}</span>}
+                {crumb.href && !current ? <a href={crumb.href} onClick={crumb.onClick}>{crumb.label}</a> : <span aria-current={current ? "page" : undefined}>{crumb.label}</span>}
                 {crumb.suffix}
               </li>
             );

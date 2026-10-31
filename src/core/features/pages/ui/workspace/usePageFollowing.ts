@@ -7,7 +7,8 @@ export function usePageFollowing(pageId: string) {
   const {navigation:resource} = useWorkspace();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
-  const favourite = resource.data?.favourites.some((item) => item.kind === "page" && item.id === pageId) ?? false;
+  // A database's page is favourited as its database (SL1: its More menu is the database's favourite).
+  const favourite = resource.data?.favourites.some((item) => item.kind !== "container" && item.pageId === pageId) ?? false;
   const watched = resource.data?.watches.includes(pageId) ?? false;
   async function refresh() {
     setPending(true);

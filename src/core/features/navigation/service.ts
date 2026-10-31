@@ -7,6 +7,7 @@ import { containerListAccess } from '../containers/list-access';
 import { navigationPageReads } from './list-reads';
 import { personalMutation } from './mutations';
 import { preferences } from './preferences';
+import { pageAddresses } from '../databases/addresses';
 export { preferences, updatePreferences } from './preferences';
 export async function navigation(ctx:FeatureContext){const subject=await currentSubject(ctx);
  const [recent,favourites,containers,watches,containerWatches,personal,configuration]=await Promise.all([
@@ -20,8 +21,10 @@ export async function navigation(ctx:FeatureContext){const subject=await current
   authorScheduleProjections(ctx,pageIds),navigationPageReads(ctx,pageIds,subject),containerListAccess(ctx,containerIds,subject)
  ]);
  const dayFormat=new Intl.DateTimeFormat('en-CA',{timeZone:personal.value.timezone,year:'numeric',month:'2-digit',day:'2-digit'});
- const readableRecent=recent.results.filter(r=>pages.canRead(r.id)).map(r=>({...r,...schedules.get(r.id),title:pages.title(r.id),day:dayFormat.format(new Date(r.openedAt))}));
- const readableFavourites=favourites.results.filter(r=>r.kind==='container'?containerAccess.has(r.id):pages.canRead(r.pageId!)).map(r=>({...r,...(r.pageId?schedules.get(r.pageId):{}),title:r.kind==='container'?r.title:pages.title(r.pageId!),href:r.kind==='container'?`/app/containers/${r.id}`:r.kind==='database'?`/app/databases/${r.id}`:`/app/pages/${r.id}`}));
+ // SL1: a recent or favourite database or record opens its one address.
+ const addresses=await pageAddresses(ctx,[...recent.results.map(r=>r.id),...favourites.results.flatMap(r=>r.kind==='page'?[r.id]:[])].filter(pages.canRead));
+ const readableRecent=recent.results.filter(r=>pages.canRead(r.id)).map(r=>({...r,...schedules.get(r.id),title:pages.title(r.id),href:addresses.get(r.id)!,day:dayFormat.format(new Date(r.openedAt))}));
+ const readableFavourites=favourites.results.filter(r=>r.kind==='container'?containerAccess.has(r.id):pages.canRead(r.pageId!)).map(r=>({...r,...(r.pageId?schedules.get(r.pageId):{}),title:r.kind==='container'?r.title:pages.title(r.pageId!),href:r.kind==='container'?`/app/containers/${r.id}`:r.kind==='database'?`/app/databases/${r.id}`:addresses.get(r.id)!}));
  const readableContainers=containers.results.filter(r=>containerAccess.has(r.id));
  const readableWatches=watches.results.filter(r=>pages.canRead(r.id)).map(r=>r.id);
  return {isGuest:subject.isGuest,recents:readableRecent,favourites:readableFavourites,containers:readableContainers,watches:readableWatches,containerWatches:containerWatches.results.filter(r=>containerAccess.has(r.id)).map(r=>r.id),preferences:personal,configuration};

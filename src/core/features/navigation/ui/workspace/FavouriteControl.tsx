@@ -1,11 +1,10 @@
 import { Star } from "lucide-react";
 import { useState } from "react";
-import { IconAction } from "../../../../app/ui/header/IconAction";
 import { useWorkspace } from "../../../../app/ui/WorkspaceContext";
 import { mutate, operationKey, errorMessage } from "../../../../client/transport";
 
-/** A favourite toggle; `iconOnly` shows the star alone, named and with a tooltip like the other top-bar icons. */
-export function FavouriteControl({ kind, id, className, iconOnly }: { kind: "page" | "container" | "database"; id: string; className?: string; iconOnly?: boolean }) {
+/** A favourite toggle for a space. */
+export function FavouriteControl({ kind, id, className }: { kind: "page" | "container"; id: string; className?: string }) {
   const { navigation:resource } = useWorkspace();
   const [error, setError] = useState<unknown>();
   const enabled = resource.data?.favourites.some((item) => item.kind === kind && item.id === id) ?? false;
@@ -16,19 +15,12 @@ export function FavouriteControl({ kind, id, className, iconOnly }: { kind: "pag
         window.dispatchEvent(new Event("slate:navigation-changed"));
       })
       .catch(setError);
-  const star = <Star aria-hidden="true" fill={enabled ? "currentColor" : "none"} />;
   return (
     <>
-      {iconOnly ? (
-        <IconAction className={className} label={label} aria-pressed={enabled} disabled={!resource.data} onClick={toggle}>
-          {star}
-        </IconAction>
-      ) : (
-        <button className={className} aria-pressed={enabled} disabled={!resource.data} onClick={toggle}>
-          {star}
-          {label}
-        </button>
-      )}
+      <button className={className} aria-pressed={enabled} disabled={!resource.data} onClick={toggle}>
+        <Star aria-hidden="true" fill={enabled ? "currentColor" : "none"} />
+        {label}
+      </button>
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
     </>
   );

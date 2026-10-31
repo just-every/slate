@@ -9,12 +9,15 @@ export function RecordFields({
   references,
   canEdit,
   onEdit,
+  onOpenLink,
 }: {
   fields: FieldDto[];
   values: Record<string, unknown>;
   references: ReturnType<typeof useRecordReferences>;
   canEdit: boolean;
   onEdit: (field: FieldDto) => void;
+  /** Opens a relation chip's record. */
+  onOpenLink: (pageId: string) => void;
 }) {
   return (
     <dl className="record-fields-list">
@@ -22,7 +25,7 @@ export function RecordFields({
         <div key={field.id} className="record-field">
           <dt>{field.name}</dt>
           <dd>
-            <FieldDisplay density="detail" field={fieldView(field)} value={fieldValue(field, values[field.id], references)} />
+            <FieldDisplay density="detail" field={fieldView(field)} value={fieldValue(field, values[field.id], references)} onOpenLink={onOpenLink} />
             {canEdit && !field.readOnly ? <button onClick={() => onEdit(field)}>Edit</button> : null}
           </dd>
         </div>

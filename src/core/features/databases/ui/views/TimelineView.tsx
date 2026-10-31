@@ -1,6 +1,7 @@
 import { cn } from "../../../../ui";
 import { RecordIconMark } from "../RecordTitle";
 import type { TimelineBar } from "../types";
+import type { RecordAnchor } from "./shared";
 
 /**
  * `DB-004` timeline layout. Each bar's position and width arrive as percentages
@@ -11,7 +12,7 @@ export function TimelineView({
   columnLabels,
   dateFieldName,
   showRecordIcon,
-  onOpenRecord,
+  recordLink,
   className,
 }: {
   bars: readonly TimelineBar[];
@@ -19,7 +20,7 @@ export function TimelineView({
   columnLabels: readonly string[];
   dateFieldName: string;
   showRecordIcon: boolean;
-  onOpenRecord: (recordId: string) => void;
+  recordLink: RecordAnchor;
   className?: string;
 }) {
   return (
@@ -42,14 +43,13 @@ export function TimelineView({
             {bars.map((bar) => (
               <li className="flex items-center border-b border-line last:border-b-0" key={bar.record.id}>
                 <div className="w-48 shrink-0 px-2 py-2">
-                  <button
-                    className="flex min-w-0 items-center gap-1.5 text-left text-ui text-ink transition-colors hover:text-accent"
-                    onClick={() => onOpenRecord(bar.record.id)}
-                    type="button"
+                  <a
+                    className="record-title flex min-w-0 items-center gap-1.5 text-left text-ui text-ink transition-colors hover:text-accent"
+                    {...recordLink(bar.record.id)}
                   >
                     {showRecordIcon ? <RecordIconMark icon={bar.record.icon} /> : null}
                     <span className="truncate">{bar.record.title}</span>
-                  </button>
+                  </a>
                 </div>
                 <div className="relative h-9 flex-1 border-l border-line">
                   <div

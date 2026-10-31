@@ -41,6 +41,27 @@ export async function homeJourney(state, people) {
     else await expect(alice.page.getByRole('main')).toContainText('Handbook');
     await alice.page.goto(origin + '/app', { waitUntil: 'networkidle' });
   }
+  // SL1: a database and its record are recent and favourite at their one addresses, and each opens there.
+  const database = (await ok(alice.context, origin, 'POST', '/api/databases', { operationKey: randomUUID(), containerId: privateSpace, title: 'Launch tracker' })).value;
+  const entry = (await ok(alice.context, origin, 'POST', `/api/databases/${database.id}/records`, { operationKey: randomUUID(), title: 'Launch checklist', values: {} })).value;
+  const databaseAddress = `/app/databases/${database.id}`, recordAddress = `${databaseAddress}/records/${entry.pageId}`;
+  for (const address of [databaseAddress, recordAddress]) {
+    await alice.page.goto(origin + address, { waitUntil: 'networkidle' });
+    await openPageAction(alice.page, 'Add to favourites');
+  }
+  await expect.poll(async () => (await ok(alice.context, origin, 'GET', '/api/navigation')).favourites.filter(item => item.href === databaseAddress || item.href === recordAddress).length).toBe(2);
+  await alice.page.goto(origin + '/app', { waitUntil: 'networkidle' });
+  for (const [area, name, destination] of [
+    [recents, 'Launch tracker', databaseAddress],
+    [recents, 'Launch checklist', recordAddress],
+    [favourites, 'Launch tracker', databaseAddress],
+    [favourites, 'Launch checklist', recordAddress],
+  ]) {
+    await area.getByRole('link', { name, exact: true }).click();
+    await expect(alice.page).toHaveURL(origin + destination);
+    await expect(alice.page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue(name);
+    await alice.page.goto(origin + '/app', { waitUntil: 'networkidle' });
+  }
 
   const shared = await grant(alice.context, origin, created.pageId, bob.id, 'view');
   const beforeVisit = await ok(bob.context, origin, 'GET', '/api/navigation');

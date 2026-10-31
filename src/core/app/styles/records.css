@@ -1,0 +1,98 @@
+/*
+ * SL1, option C: a database and each record at one address. At rest the database's page (top bar, title, description and
+ * page panel) and its list share one grid. With a record open the record is the page: from 1280 px beside the list's index,
+ * centred over the list or a full page (Record layout), and under 1280 px its own page. The list stays mounted, hidden.
+ */
+.slate-app .database-route { --record-rail: var(--rail-width); display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.slate-app .app:has(.sidebar[data-collapsed="true"]) .database-route { --record-rail: 72px; }
+.slate-app .database-route > .topbar { grid-row: 1; grid-column: 1 / -1; }
+.slate-app .database-route > :not(.topbar, .record-index, .right) { grid-column: 1; }
+
+/* At rest: the page's head and the list form one column, with the page's panel beside both. */
+.slate-app .database-route:not([data-record-layout]) > .content-frame { display: contents; }
+.slate-app .database-route .database-head { grid-row: 2; grid-column: 1; padding-bottom: 0; }
+.slate-app .database-route:not([data-record-layout]) > .database-list { grid-row: 3; padding-top: 0; }
+.slate-app .database-route:not([data-record-layout]) > .database-list .db-toolbar { margin-top: 4px; }
+.slate-app .database-route:not([data-record-layout]) > .content-frame > .right { grid-row: 2 / span 2; grid-column: 2; }
+.slate-app .database-route:not([data-record-layout]):has(> .content-frame > .right:not([data-popover])) { grid-template-columns: minmax(0, 1fr) 300px; }
+@media (max-width: 1200px) {
+  .slate-app .database-route:not([data-record-layout]):has(> .content-frame > .right:not([data-popover])) { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* A record: its way back and its layout control sit above its title. */
+.slate-app .record-lead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+.slate-app .record-back { display: inline-flex; align-items: center; gap: 4px; min-width: 0; min-height: max(var(--slate-tap-target, 0px), 32px); color: var(--slate-ink-muted); font-size: 15px; font-weight: 500; }
+.slate-app .record-back:hover { color: var(--slate-ink-strong); }
+.slate-app .record-back svg { flex: none; width: 16px; height: 16px; }
+.slate-app .record-back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slate-app .record-layout { display: none; margin-left: auto; }
+.slate-app .database-route > .record-index { display: none; }
+
+@media (min-width: 1280px) {
+  .slate-app .record-layout { display: inline-flex; }
+
+  /* Beside the list: a 280 px index with no card, sticky, as tall as the window and scrolling on its own. */
+  .slate-app .database-route[data-record-layout="beside"] { grid-template-columns: 280px minmax(0, 1fr); }
+  .slate-app .database-route[data-record-layout="beside"] > :not(.topbar, .record-index) { grid-column: 2; }
+  .slate-app .database-route[data-record-layout="beside"] > .content-frame { grid-row: 2; }
+  .slate-app .database-route[data-record-layout="beside"] > .record-index { display: flex; grid-row: 2; grid-column: 1; }
+  .slate-app .database-route[data-record-layout="beside"]:not(:has(> .content-frame > .right:not([data-popover]))) .record-lead > .record-back { display: none; }
+  /* A panel folds the index to its way back, which then heads the record, and the record takes the width. */
+  .slate-app .database-route[data-record-layout="beside"]:has(> .content-frame > .right:not([data-popover])) { grid-template-columns: minmax(0, 1fr); }
+  .slate-app .database-route[data-record-layout="beside"]:has(> .content-frame > .right:not([data-popover])) > :not(.topbar) { grid-column: 1; }
+  .slate-app .database-route[data-record-layout="beside"]:has(> .content-frame > .right:not([data-popover])) > .record-index { display: none; }
+
+  /* Centred: a sheet about 1000 px wide over the database's list, which stays visible and is not dimmed. */
+  .slate-app .database-route[data-record-layout="centred"] > .content-frame {
+    position: fixed;
+    z-index: 35;
+    top: calc(var(--topbar-height) + 12px);
+    bottom: 12px;
+    left: calc(var(--record-rail) + max(16px, (100vw - var(--record-rail) - 1000px) / 2));
+    width: min(1000px, calc(100vw - var(--record-rail) - 32px));
+    overflow: auto;
+    border: 1px solid var(--slate-line);
+    border-radius: 10px;
+    background: var(--slate-main);
+    box-shadow: var(--slate-shadow-popover);
+  }
+  .slate-app .database-route[data-record-layout="centred"] > .database-list { grid-row: 2; }
+}
+
+/* The index: the way back, the count, the view (two or more), Find, the rows, then New record. */
+.slate-app .record-index {
+  position: sticky;
+  top: 0;
+  flex-direction: column;
+  gap: 8px;
+  height: 100dvh;
+  overflow-y: auto;
+  padding: 24px 12px 24px 20px;
+  border-right: 1px solid var(--slate-line);
+  background: var(--slate-main);
+}
+.slate-app .record-index > .record-back { align-self: flex-start; color: var(--slate-ink-strong); }
+.slate-app .record-index-count { margin: -6px 0 4px; color: var(--slate-ink-muted); font-size: 14px; }
+.slate-app .record-index-view select { width: 100%; font-size: 14px; }
+.slate-app .record-index-find input { width: 100%; }
+.slate-app .record-index-rows { display: grid; gap: 2px; margin: 4px 0 0; padding: 0 0 12px; border-bottom: 1px solid var(--slate-line); list-style: none; }
+.slate-app .record-index-rows a { display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; color: var(--slate-ink); }
+.slate-app .record-index-rows a:hover { background-color: var(--slate-wash); }
+.slate-app .record-index-rows a[aria-current="true"] { background-color: var(--slate-accent-soft); }
+.slate-app .record-index-name { color: var(--slate-ink-strong); font-size: 15px; font-weight: 500; line-height: 22px; overflow-wrap: anywhere; }
+.slate-app .record-index-meta { color: var(--slate-ink-muted); font-size: 14px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slate-app .record-index-new { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; border-color: transparent; background-color: var(--slate-main); color: var(--slate-ink-muted); font-size: 14px; }
+.slate-app .record-index-new:hover { background-color: var(--slate-wash); color: var(--slate-ink-strong); }
+.slate-app .record-index-new svg { width: 14px; height: 14px; }
+
+@media (max-width: 700px) {
+  /* A database's top bar wraps its trail above its tools; a record's keeps only its parent crumb as the way back. */
+  .slate-app .topbar.page-topbar.database-topbar { flex-wrap: wrap; }
+  .slate-app .page-topbar.database-topbar .crumbs { display: block; flex: 1 1 100%; }
+  .slate-app .page-topbar.record-topbar .crumbs { display: block; flex: 1 1 auto; min-width: 0; }
+  .slate-app .page-topbar.record-topbar .tools { width: auto; }
+  .slate-app .record-topbar .crumbs li:not(:nth-last-child(2)) { display: none; }
+  .slate-app .record-topbar .crumbs li:nth-last-child(2)::before { content: "\2039"; }
+  .slate-app .record-topbar .crumbs li:nth-last-child(2) > a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slate-app .record-lead { display: none; }
+}

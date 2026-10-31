@@ -4,6 +4,7 @@ import { currentSubject } from "../sharing/current-access";
 import { readPage } from "../pages/service";
 import { fileVisibility } from "../media/service";
 import { database, fields } from "./repository";
+import { pageAddresses } from "./addresses";
 export async function listDatabases(ctx: FeatureContext, containerId?: string) {
   await currentSubject(ctx);
   const rows = await ctx.db
@@ -75,19 +76,18 @@ export async function resolveReferences(
       .first<{ id: string; display_name: string }>();
     if (member) items.push({ id, label: member.display_name, kind: "person" });
   }
+  const records: ReferenceLabel[] = [];
   for (const id of new Set(input.pageIds ?? [])) {
     try {
       const p = await readPage(ctx, id);
-      items.push({
-        id,
-        label: p.page.title,
-        kind: "record",
-        url: `/app/pages/${id}`,
-      });
+      records.push({ id, label: p.page.title, kind: "record" });
     } catch (e) {
       if (!(e instanceof ApiProblem) || e.status !== 404) throw e;
     }
   }
+  // SL1: a relation chip opens the related record's one address.
+  const addresses = await pageAddresses(ctx, records.map((record) => record.id));
+  items.push(...records.map((record) => ({ ...record, url: addresses.get(record.id) })));
   // File metadata follows the media door: a reader learns only of files they could open.
   const pages = new Map<string, ReturnType<typeof fileVisibility>>();
   for (const id of new Set(input.fileIds ?? [])) {

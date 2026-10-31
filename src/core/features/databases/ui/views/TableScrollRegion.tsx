@@ -10,7 +10,8 @@ export function TableScrollRegion({ children, className }: { children: ReactNode
   useEffect(() => {
     const node = scroll.current;
     if (!node) return;
-    const measure = () => setOverflowing(node.scrollWidth > node.clientWidth + 1);
+    // A list hidden behind an open record measures nothing; keep its hint as it was, so returning moves no row (SL1).
+    const measure = () => { if (node.clientWidth) setOverflowing(node.scrollWidth > node.clientWidth + 1); };
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     if (node.firstElementChild) observer.observe(node.firstElementChild);

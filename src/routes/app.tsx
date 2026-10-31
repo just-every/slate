@@ -15,6 +15,8 @@ export const Route = createFileRoute("/app")({
   beforeLoad: async ({location,preload}) => {
     const panelNavigation = "slatePanelNavigation" in location.state && location.state.slatePanelNavigation === true;
     const workspace = await loadWorkspace({data:{path:location.pathname+location.searchStr,visit:!preload && !panelNavigation}});
+    // SL1: one hop to a database's or record's one address; a client move keeps its fragment.
+    if ("canonical" in workspace) throw redirect({ href: workspace.canonical + (location.hash ? `#${location.hash}` : ""), replace: true });
     if (workspace.setup.required && workspace.setup.canComplete) throw redirect({ to: "/setup" });
     return { workspace };
   },

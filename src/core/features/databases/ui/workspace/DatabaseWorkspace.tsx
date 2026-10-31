@@ -1,361 +1,131 @@
-import {ViewCriteria} from "./ViewCriteria";
-import {FavouriteControl} from "../../../navigation/ui/workspace/FavouriteControl";
-import {RecordPeek} from "./RecordPeek";
-import {AutomationWorkspace} from "../../../automation/ui/workspace/AutomationWorkspace";
-import {RecordTemplates} from "./RecordTemplates";
-import {DatabaseToolbar, type DatabaseMode} from "./DatabaseToolbar";
-import {FieldsMenu, ViewMenu} from "./DatabaseMenus";
-import {IconLink} from "../../../../app/ui/header/IconAction";
-import {TopBar} from "../../../../app/ui/header/TopBar";
-import {PageTitle} from "../../../../app/ui/header/PageTitle";
-import { Info } from "lucide-react";
-import { useState } from "react";
-import { useRecordReferences } from "../../../../client/useRecordReferences";
-import { useResource } from "../../../../client/useResource";
-import {
-  mutate,
-  operationKey,
-  errorMessage,
-} from "../../../../client/transport";
-import {
-  fieldView,
-  recordView,
-  storedValue,
-  type DatabaseDto,
-  type QueryDto,
-  type ViewDto,
-  type RecordDto,
-  type FieldDto,
-} from "../../../../client/records";
-import type { DocumentView } from "../../../../client/content";
+import { ChevronLeft } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import { useRouteContext, useRouter } from "@tanstack/react-router";
+import { InitialResourcesProvider } from "../../../../client/InitialResources";
 import { RequestState } from "../../../../app/ui/RequestState";
-import { ActionDialog } from "../../../../app/ui/ActionDialog";
-import { DatabaseChart } from "./DatabaseChart";
-import { FieldDialog } from "./FieldDialog";
-import { RemoveFieldDialog } from "./RemoveFieldDialog";
-import { ExportViewCsv } from "./ExportViewCsv";
-import { RecordLayouts } from "./RecordLayouts";
-import { ViewDialog } from "./ViewDialog";
-import { ReferenceValueDialog } from "./ReferenceValueDialog";
-import { RecordValueDialog } from "./RecordValueDialog";
-import type { FieldValue } from "../types";
-export function DatabaseWorkspace({ id }: { id: string }) {
-  const [peek,setPeek]=useState<string>();
-  const [peekMode,setPeekMode]=useState<"side"|"center">("side");
-  const resource = useResource<DatabaseDto>(`/api/databases/${id}`);
-  const page = useResource<DocumentView>(
-    resource.data ? `/api/pages/${resource.data.database.page_id}` : null,
-  );
-  const [active, setActive] = useState<string>();
-  const view =
-    resource.data?.views.find((item) => item.id === active) ??
-    resource.data?.views[0];
-  const query = useResource<QueryDto>(
-    view ? `/api/databases/${id}/views/${view.id}` : null,
-  );
-  const [fieldEdit, setFieldEdit] = useState<FieldDto>();
-  const [fieldRemove, setFieldRemove] = useState<FieldDto>();
-  const [mode, setMode] = useState<DatabaseMode>("records");
-  const [dialog, setDialog] = useState<"new" | "view" | "delete-view" | null>(null);
-  const [edit, setEdit] = useState<{ record: RecordDto; field: FieldDto }>();
+import { TopBar } from "../../../../app/ui/header/TopBar";
+import { PageWorkspace } from "../../../pages/ui/workspace/PageWorkspace";
+import { usePageTrail } from "../../../pages/ui/workspace/usePageTrail";
+import { databaseAddress, recordAddress } from "../../../../shared/knowledge/addresses";
+import { DatabaseDialogs } from "./DatabaseDialogs";
+import { DatabaseList, type DatabaseDialog } from "./DatabaseList";
+import { RecordIndex } from "./RecordIndex";
+import { RecordLayoutMenu, useBesideWidth, useRecordLayout } from "./RecordLayoutMenu";
+import { RecordWorkspace } from "./RecordWorkspace";
+import { useDatabaseList } from "./useDatabaseList";
+
+/** A plain click opens in place; a modified click keeps the browser's own (a new tab or window). */
+const inPlace = (event: MouseEvent) => event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && !event.defaultPrevented;
+
+/**
+ * SL1, option C: one database at one address, each record at its own. At rest the database's page carries its title,
+ * description and page tools above its list. With a record open the record is the page: beside an index of the list from
+ * 1280 px (or centred over the list, or a full page, as Record layout chooses), and its own page under 1280 px. The list
+ * stays mounted throughout, so its view, Find text, scroll and calendar month survive opening and closing records.
+ */
+export function DatabaseWorkspace({ id, recordId }: { id: string; recordId?: string }) {
+  const router = useRouter();
+  const { workspace } = useRouteContext({ from: "/app" });
+  const list = useDatabaseList(id);
+  const [layout, setLayout] = useRecordLayout();
+  const wide = useBesideWidth();
+  const [dialog, setDialog] = useState<DatabaseDialog | null>(null);
   const [error, setError] = useState<unknown>();
-  const [search, setSearch] = useState("");
-  const canEdit = page.data?.permissions.canEdit ?? false;
-  const locked = !!resource.data?.database.structure_locked_at;
-  const title = page.data?.page.title ?? "Records";
-  const newView = (position: number): ViewDto => ({
-    id: crypto.randomUUID(),
-    name: "New view",
-    layout: "table",
-    filters: [],
-    sorts: [],
-    groups: [],
-    calculations: {},
-    display: {},
-    position,
-    revisionId: "",
+  const page = list.page.data;
+  const title = page?.page.title ?? "";
+  const trail = usePageTrail(page);
+  const listHref = databaseAddress(id, list.viewParam);
+  const centred = wide && layout === "centred";
+  // Where the list was when a record opened from it, so closing the record returns there (scroll ±0, focus on the row).
+  const rest = useRef(0);
+  const shown = useRef(recordId);
+
+  function openRecord(record: string) {
+    if (!recordId) rest.current = window.scrollY;
+    void router.navigate({ href: recordAddress(id, record, list.viewParam), resetScroll: !centred });
+  }
+  const closeRecord = useCallback(() => void router.navigate({ href: listHref, resetScroll: false }), [router, listHref]);
+  const recordLink = (record: string) => ({
+    href: recordAddress(id, record, list.viewParam),
+    "data-record-id": record,
+    onClick: (event: MouseEvent<HTMLAnchorElement>) => { if (inPlace(event)) { event.preventDefault(); openRecord(record); } },
   });
-  async function reload() {
-    if(!await resource.reload())throw new Error('The change was saved, but the database could not be refreshed. Reload it before editing again.');
-    await query.reload();
+  const back = (event: MouseEvent<HTMLAnchorElement>) => { if (inPlace(event)) { event.preventDefault(); closeRecord(); } };
+  // A relation chip opens the related record at its one address; one of this database's opens beside the list.
+  function openLink(pageId: string) {
+    const href = list.references.get(pageId)?.url ?? `/app/pages/${encodeURIComponent(pageId)}`;
+    const record = new RegExp(`^/app/databases/${encodeURIComponent(id)}/records/([^/?]+)$`).exec(href);
+    if (record) openRecord(decodeURIComponent(record[1]));
+    else void router.navigate({ href });
   }
-  async function saveView(next: ViewDto) {
-    if (!resource.data) return;
-    const { revisionId: _revisionId, ...input } = next;
-    await mutate(`/api/databases/${id}/views`, {
-      operationKey: operationKey(),
-      expectedRevisionId: resource.data.database.revision_id,
-      view: input,
-    });
-    setActive(next.id);
-    await reload();
-  }
-  async function saveValue(record: RecordDto, field: FieldDto, value: unknown) {
-    await mutate(
-      `/api/databases/${id}/records/${record.pageId}`,
-      {
-        operationKey: operationKey(),
-        expectedRevisionId: record.revisionId,
-        values: { [field.id]: value },
-      },
-      "PATCH",
+
+  useLayoutEffect(() => {
+    const previous = shown.current;
+    shown.current = recordId;
+    if (recordId || !previous) return;
+    if (!centred) window.scrollTo(0, rest.current);
+    window.document.querySelector<HTMLElement>(`.database-list [data-record-id="${CSS.escape(previous)}"]`)?.focus({ preventScroll: true });
+  }, [recordId]);
+  // Escape closes the record unless a field, the editor, a menu, a dialog or an open panel takes it first.
+  useEffect(() => {
+    if (!recordId) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"], [data-slate-editable], [role="menu"], [role="dialog"], dialog')) return;
+      if (window.document.querySelector('dialog[open], [role="dialog"], [role="menu"], .database-route .right')) return;
+      closeRecord();
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [recordId, closeRecord]);
+  // A renamed or trashed record, or a renamed database, updates the list and the trail in place.
+  useEffect(() => {
+    const changed = () => { void list.query.reload(); void list.page.reload(); };
+    window.addEventListener("slate:navigation-changed", changed);
+    return () => window.removeEventListener("slate:navigation-changed", changed);
+  }, [list.query.reload, list.page.reload]);
+
+  const data = list.resource.data;
+  if (!data || !page) {
+    return (
+      <>
+        <TopBar trail={trail} />
+        <section className="main">
+          <RequestState loading={list.resource.loading || list.page.loading} error={list.resource.error ?? list.page.error} retry={() => void list.reload().catch(setError)} />
+        </section>
+      </>
     );
-    await query.reload();
   }
-  function update(recordId: string, fieldId: string, value: FieldValue | null) {
-    const record = query.data?.records.find((item) => item.pageId === recordId),
-      field = resource.data?.fields.find((item) => item.id === fieldId);
-    if (!record || !field) return;
-    let stored = storedValue(value);
-    if (["select", "status"].includes(field.type) && Array.isArray(stored))
-      stored = stored[0] ?? null;
-    void saveValue(record, field, stored).catch(setError);
-  }
-  const fields = resource.data?.fields ?? [];
-  const references = useRecordReferences(fields, query.data?.records ?? []);
-  const shown = fields.filter(
-    (field) =>
-      !Array.isArray(view?.display.visibleFieldIds) ||
-      view.display.visibleFieldIds.includes(field.id),
-  );
-  const records = (query.data?.records ?? []).filter((record) =>
-    record.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+  const listHidden = !!recordId && !centred;
+  const resources = workspace.resources ?? {};
+  const lead = (
+    <div className="record-lead">
+      <a className="record-back" href={listHref} onClick={back}>
+        <ChevronLeft aria-hidden="true" />
+        <span>{title}</span>
+      </a>
+      <RecordLayoutMenu layout={layout} onLayout={setLayout} />
+    </div>
   );
   return (
-    <>
-      {peek?<RecordPeek databaseId={id} id={peek} mode={peekMode} onMode={setPeekMode} onClose={()=>setPeek(undefined)}/>:null}
-      <TopBar trail={[{ label: "Databases" }, { label: title }]}>
-        <FavouriteControl iconOnly kind="database" id={id}/>
-        {page.data ? (
-          <IconLink label="About this database" tooltipAlign="end" href={`/app/pages/${page.data.page.id}`}>
-            <Info aria-hidden="true" />
-          </IconLink>
-        ) : null}
-      </TopBar>
-      <section className="main database-workspace" data-layout="wide">
-        <PageTitle>{title}</PageTitle>
-        <RequestState
-          loading={resource.loading || page.loading}
-          error={resource.error ?? page.error}
-          retry={reload}
-        >
-          {resource.data ? (
-            <>
-              {canEdit && view?.display.tableOrigin ? <button className="secondary-button" onClick={()=>{void mutate<{value:{pageId:string}}>(`/api/databases/${id}/to-table`,{operationKey:operationKey(),expectedRevisionId:resource.data!.database.revision_id,viewId:view.id,expectedViewRevisionId:view.revisionId}).then(result=>window.location.assign(`/app/pages/${result.value.pageId}`)).catch(setError);}}>Convert back to table</button>:null}
-              <DatabaseToolbar
-                views={resource.data.views}
-                activeViewId={view?.id}
-                onSelectView={(next) => { setMode("records"); setActive(next); }}
-                mode={mode}
-                onMode={setMode}
-                search={search}
-                onSearch={setSearch}
-              >
-                {canEdit ? (
-                  <ViewMenu
-                    hasView={!!view}
-                    locked={locked}
-                    onSettings={() => setDialog("view")}
-                    onAdd={() => void saveView(newView(resource.data!.views.length)).catch(setError)}
-                    onDuplicate={() => view && void saveView({ ...view, id: crypto.randomUUID(), name: `${view.name} copy`, position: resource.data!.views.length, revisionId: "" }).catch(setError)}
-                    onDelete={() => setDialog("delete-view")}
-                  />
-                ) : null}
-                <FieldsMenu
-                  fields={fields}
-                  canEdit={canEdit}
-                  canShare={page.data?.permissions.canShare ?? false}
-                  locked={locked}
-                  onAddField={() => setFieldEdit({ id: crypto.randomUUID(), name: "", type: "text", config: {}, position: fields.length })}
-                  onEditField={setFieldEdit}
-                  onToggleLock={() =>
-                    void mutate(`/api/databases/${id}/lock`, {
-                      operationKey: operationKey(),
-                      expectedRevisionId: resource.data!.database.revision_id,
-                      locked: !resource.data!.database.structure_locked_at,
-                    })
-                      .then(reload)
-                      .catch(setError)
-                  }
-                />
-                {mode === "records" && view ? (
-                  <ExportViewCsv databaseId={id} viewId={view.id} title={title} search={search} onError={setError} />
-                ) : null}
-                {canEdit ? (
-                  <button className="tool tool-primary" type="button" onClick={() => setDialog("new")}>
-                    New record
-                  </button>
-                ) : null}
-              </DatabaseToolbar>
-              {mode === "automations" ? <AutomationWorkspace sourceId={id}/> : mode === "templates" ? <RecordTemplates databaseId={id} fields={fields} canEdit={canEdit} onCreated={query.reload}/> : <>
-              {view?<ViewCriteria view={view} fields={fields} canClear={canEdit&&!locked} onClear={()=>void saveView({...view,filters:[]}).catch(setError)}/>:null}
-              {locked ? (
-                <p className="muted">
-                  Structure locked by{" "}
-                  {resource.data.database.structure_locked_by_name ??
-                    "a workspace member"}
-                  . Record values remain editable.
-                </p>
-              ) : null}
-              {mode === "chart" && view ? (
-                <DatabaseChart
-                  databaseId={id}
-                  viewId={view.id}
-                  fields={fields}
-                />
-              ) : null}
-              {error ? <p role="alert">{errorMessage(error)}</p> : null}
-              {mode === "records" ? <RequestState
-                loading={query.loading}
-                error={query.error}
-                retry={query.reload}
-              >
-                {view && query.data ? (
-                  <RecordLayouts
-                    canEditStructure={canEdit && !resource.data.database.structure_locked_at}
-                    view={view}
-                    onCreateRequiredField={type=>setFieldEdit({id:crypto.randomUUID(),name:type==='date'?'Date':'Group',type,config:{},position:fields.length})}
-                    query={query.data}
-                    rawFields={fields}
-                    rawRecords={records}
-                    props={{
-                      fields: shown.map(fieldView),
-                      records: records.map((record) =>
-                        recordView(record, fields, references),
-                      ),
-                      showRecordIcon:
-                        page.data?.policyProfile["record.page-parity.v1"] ===
-                        "record-is-page",
-                      canEditRecords: canEdit,
-                      onOpenRecord: (recordId) => page.data?.policyProfile["record.page-parity.v1"] === "record-is-page" ? setPeek(recordId) : window.location.assign(`/app/databases/${id}/records/${recordId}`),
-                      onValueChange: update,
-                      onEditValue: (recordId, fieldId) => {
-                        const record = query.data!.records.find(
-                            (item) => item.pageId === recordId,
-                          ),
-                          field = fields.find((item) => item.id === fieldId);
-                        if (record && field) setEdit({ record, field });
-                      },
-                      onOpenLink: (link) =>
-                        window.location.assign(`/app/pages/${link}`),
-                      onNewRecord: () => setDialog("new"),
-                    }}
-                    onGroupMove={(recordId, value) => {
-                      const record = records.find(
-                          (item) => item.pageId === recordId,
-                        ),
-                        field = fields.find(
-                          (item) => item.id === view.groups[0]?.field,
-                        );
-                      if (record && field)
-                        void saveValue(record, field, value).catch(setError);
-                    }}
-                    onHideEmpty={(hide) =>
-                      void saveView({
-                        ...view,
-                        groups: view.groups.map((group, index) =>
-                          index ? group : { ...group, hideEmpty: hide },
-                        ),
-                      }).catch(setError)
-                    }
-                    onCalculation={(fieldId, kind) =>
-                      void saveView({
-                        ...view,
-                        calculations: { ...view.calculations, [fieldId]: kind },
-                      }).catch(setError)
-                    }
-                  />
-                ) : null}
-                {query.data?.records.length === 0 ? (
-                  <p className="muted">No records match this view.</p>
-                ) : null}
-              </RequestState> : null}
-              </>}
-            </>
-          ) : null}
-        </RequestState>
-        {fieldEdit ? (
-          <FieldDialog
-            field={fieldEdit}
-            fields={fields}
-            onRemove={fields.some(field => field.id === fieldEdit.id) ? () => {
-              setFieldRemove(fieldEdit);
-              setFieldEdit(undefined);
-            } : undefined}
-            onClose={() => setFieldEdit(undefined)}
-            onSave={async (field) => {
-              const {
-                evaluationState: _evaluationState,
-                readOnly: _readOnly,
-                ...input
-              } = field;
-              await mutate(`/api/databases/${id}/fields`, {
-                operationKey: operationKey(),
-                expectedRevisionId: resource.data!.database.revision_id,
-                field: input,
-              });
-              await reload();
-            }}
-          />
-        ) : null}
-        {fieldRemove ? (
-          <RemoveFieldDialog field={fieldRemove} onClose={() => setFieldRemove(undefined)} onRemove={async () => {
-            const { evaluationState: _evaluationState, readOnly: _readOnly, ...field } = fieldRemove;
-            await mutate(`/api/databases/${id}/fields`, {
-              operationKey: operationKey(),
-              expectedRevisionId: resource.data!.database.revision_id,
-              field,
-              delete: true,
-            });
-            await reload();
-          }} />
-        ) : null}
-        {dialog === "view" && view ? (
-          <ViewDialog
-            view={view}
-            fields={fields}
-            onSave={saveView}
-            onClose={() => setDialog(null)}
-          />
-        ) : null}
-        {dialog==='delete-view'&&view?<ActionDialog title="Delete this saved view?" action="Delete view" onClose={()=>setDialog(null)} onSubmit={async()=>{const {revisionId:_revisionId,...input}=view;await mutate(`/api/databases/${id}/views`,{operationKey:operationKey(),expectedRevisionId:resource.data!.database.revision_id,view:input,delete:true});setActive(undefined);if(!await resource.reload())throw new Error('The view was deleted. Reload the database to see its remaining views.');}}><p>Delete “{view.name}”. Its records and other saved views remain available.</p></ActionDialog>:null}
-        {dialog === "new" ? (
-          <ActionDialog
-            title="New record"
-            action="Create record"
-            onClose={() => setDialog(null)}
-            onSubmit={async (form) => {
-              await mutate(`/api/databases/${id}/records`, {
-                operationKey: operationKey(),
-                title: String(form.get("title")),
-                values: {},
-              });
-              await query.reload();
-            }}
-          >
-            <label>
-              Name
-              <input name="title" required autoFocus />
-            </label>
-          </ActionDialog>
-        ) : null}
-        {edit && ["relation", "person", "file"].includes(edit.field.type) ? (
-          <ReferenceValueDialog
-            databaseId={id}
-            field={edit.field}
-            value={edit.record.values[edit.field.id]}
-            onClose={() => setEdit(undefined)}
-            onSave={(value) => saveValue(edit.record, edit.field, value)}
-          />
-        ) : edit ? (
-          <RecordValueDialog
-            field={edit.field}
-            value={edit.record.values[edit.field.id]}
-            onClose={() => setEdit(undefined)}
-            onSave={(value) => saveValue(edit.record, edit.field, value)}
-          />
-        ) : null}
+    <div className="database-route" data-record-layout={recordId ? layout : undefined}>
+      {recordId ? (
+        <InitialResourcesProvider key={`record:${recordId}`} resources={resources}>
+          <RecordWorkspace databaseId={id} id={recordId} trail={[...trail, { label: title, href: listHref, onClick: back }]} lead={lead} onSaved={() => void list.query.reload()} />
+        </InitialResourcesProvider>
+      ) : (
+        <InitialResourcesProvider key="database" resources={resources}>
+          <PageWorkspace pageId={data.database.page_id} host={{ database: true, topBarClassName: "database-topbar", address: databaseAddress(id) }} />
+        </InitialResourcesProvider>
+      )}
+      {recordId ? (
+        <RecordIndex list={list} title={title} backHref={listHref} onBack={back} openId={recordId} recordLink={recordLink} canEdit={page.permissions.canEdit} onNewRecord={() => setDialog({ kind: "new" })} />
+      ) : null}
+      <section className="main database-workspace database-list" data-layout="wide" hidden={listHidden} inert={listHidden}>
+        <DatabaseList list={list} title={title} canEdit={page.permissions.canEdit} canShare={page.permissions.canShare} parity={page.policyProfile["record.page-parity.v1"]} recordLink={recordLink} onOpenLink={openLink} onDialog={setDialog} error={error} onError={setError} />
       </section>
-    </>
+      <DatabaseDialogs list={list} dialog={dialog} onDialog={setDialog} />
+    </div>
   );
 }

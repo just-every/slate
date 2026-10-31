@@ -77,7 +77,7 @@ export function RecordLayouts({
         }
         hideEmptyGroups={view.groups[0]?.hideEmpty ?? false}
         onHideEmptyGroupsChange={onHideEmpty}
-        onOpenRecord={props.onOpenRecord}
+        recordLink={props.recordLink}
         onOpenLink={props.onOpenLink}
         onMoveRecord={(id, index) =>
           onGroupMove(id, grouped.groups[Number(index)].value)
@@ -120,7 +120,7 @@ export function RecordLayouts({
           ]}
           dateFieldName={field.name}
           showRecordIcon={props.showRecordIcon}
-          onOpenRecord={props.onOpenRecord}
+          recordLink={props.recordLink}
         />
       );
     }
@@ -151,7 +151,7 @@ export function RecordLayouts({
         days={days}
         dateFieldName={field.name}
         showRecordIcon={props.showRecordIcon}
-        onOpenRecord={props.onOpenRecord}
+        recordLink={props.recordLink}
         onPreviousMonth={() =>
           setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
         }

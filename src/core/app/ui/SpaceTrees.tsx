@@ -29,8 +29,7 @@ export function SpaceTrees({
 }) {
   const { pathname } = useLocation();
   const preferences = navigation.data?.preferences;
-  const databasePages = new Map(databases.data?.items.map((database) => [database.pageId, database.id]));
-  const treePages = pages.data?.items.map((page) => ({ ...page, databaseId: databasePages.get(page.id) })) ?? [];
+  const treePages = pages.data?.items ?? [];
   const sharedPages = treePages.filter(page => page.sharedWithMe);
   const regularPages = treePages.filter(page => !page.sharedWithMe);
   const sharedIds = new Set(sharedPages.map(page => page.id));

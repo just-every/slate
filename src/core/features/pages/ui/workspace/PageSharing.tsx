@@ -29,7 +29,8 @@ interface Grant {
 
 }
 function accessLabel(level: string) { return ({view:"View",comment:"Comment",edit:"Edit",full:"Manage access"} as Record<string,string>)[level] ?? level; }
-export function PageSharing({ document }: { document: DocumentView }) {
+/** `address` is the page's one address (SL1), which Copy page link writes. */
+export function PageSharing({ document, address }: { document: DocumentView; address?: string }) {
   const { workspace, localDevelopment, member } = useWorkspace();
   const grants = useResource<{ items: Grant[]; inheritedItems?:Grant[]; effectiveItems?:Grant[];levels?:string[];container?:{id:string;name:string};restricted?:boolean }>(
     document.permissions.canShare
@@ -93,7 +94,7 @@ export function PageSharing({ document }: { document: DocumentView }) {
         type="button"
         onClick={() => {
           void navigator.clipboard
-            .writeText(`${window.location.origin}/app/pages/${document.page.id}`)
+            .writeText(`${window.location.origin}${address ?? `/app/pages/${document.page.id}`}`)
             .then(() => setCopied(true))
             .catch(setError);
         }}

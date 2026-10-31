@@ -40,12 +40,6 @@
 .slate-app .native-effect fieldset button { justify-self: start; }
 
 .slate-app .shortcut {color:var(--slate-ink-muted)}
-.slate-app .record-peek {max-height:95dvh;overflow:auto;border:1px solid var(--slate-line);background:var(--slate-surface);color:var(--slate-ink);padding:16px}
-.slate-app .record-peek-side {position:fixed;inset:0 0 auto auto;z-index:35;width:min(850px,95vw);max-height:calc(100dvh - var(--topbar-height) - 24px);margin:calc(var(--topbar-height) + 12px) 0 12px auto}
-@media(max-width:700px){.slate-app .record-peek-side {max-height:calc(100dvh - var(--topbar-height) - 85px);margin-top:calc(var(--topbar-height) + 73px)}}
-.slate-app .record-peek-center {position:fixed;inset:0 0 auto;z-index:35;width:min(1000px,95vw);max-height:calc(100dvh - var(--topbar-height) - 24px);margin:calc(var(--topbar-height) + 12px) auto 12px}
-@media(max-width:700px){.slate-app .record-peek-center {max-height:calc(100dvh - var(--topbar-height) - 85px);margin-top:calc(var(--topbar-height) + 73px)}}
-.slate-app .record-peek .main {padding:20px;max-width:100%}
 .slate-app .page-status-chip {display:inline-block;border:1px solid currentColor;border-radius:12px;padding:2px 8px;font-size: var(--text-small);margin-inline:8px}
 .slate-app .favourite-row {display:flex;align-items:center;gap:4px;min-width:0}.slate-app .favourite-row>a {min-width:0;flex:1}
 .slate-app .tools {flex-wrap:wrap}

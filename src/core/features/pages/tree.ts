@@ -15,6 +15,8 @@ import { pageRow, pageGuard, ref, revisionStatement, snapshot, contentEvent } fr
 import { createPage, readPage, destination, prepareCreatePage } from './service';
 import type { PageRow } from './types';
 import { validatePlacement, prepareOrder, treeTopologyGuard, destinationGuards, type MovePlacement } from './tree-order';
+import { pageTargets } from '../databases/addresses';
+import { pageAddress } from '../../shared/knowledge/addresses';
 export async function descendants(ctx: FeatureContext, id: string) { return (await ctx.db.prepare('WITH RECURSIVE tree(id) AS (SELECT id FROM pages WHERE id=? AND workspace_id=? UNION SELECT p.id FROM pages p JOIN tree t ON p.parent_page_id=t.id WHERE p.deleted_at IS NULL) SELECT p.* FROM pages p JOIN tree t ON t.id=p.id').bind(id, ctx.actor.workspaceId).all<PageRow>()).results; }
 export async function listPages(ctx: FeatureContext, containerId?: string, label?:string) {
     if(label&&label.length>80)throw new ApiProblem(400,'INVALID_LABEL','Use a label of at most 80 characters.');
@@ -57,6 +59,15 @@ export async function listPages(ctx: FeatureContext, containerId?: string, label
         out.push({ ...ref(p), ...schedules.get(p.id), title, icon, labels:visibleLabels, parentPageId: p.parent_page_id, treePosition: p.tree_position, pageKind: p.page_kind, containerLabel: p.containerLabel ?? '', sharedWithMe, permissions: { level: access.level!, canEdit: !p.locked_at && (access.level === 'edit' || access.level === 'full'), canUnlock: access.level === 'edit' || access.level === 'full' } });
     }
     return { items: out };
+}
+/** The app's page list: each row also links its page's one address, and a database's row names its database (SL1). The public API keeps `listPages`. */
+export async function listTreePages(ctx: FeatureContext, containerId?: string, label?: string) {
+    const { items } = await listPages(ctx, containerId, label);
+    const targets = await pageTargets(ctx, items.map(item => item.id));
+    return { items: items.map(item => {
+        const target = targets.get(item.id);
+        return { ...item, href: pageAddress(item.id, target), ...(target?.kind === 'database' ? { databaseId: target.databaseId } : {}) };
+    }) };
 }
 export interface MoveInput extends MovePlacement {
     operationKey: string;

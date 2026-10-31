@@ -10,12 +10,14 @@ import { TopBar, type Crumb } from "../../../../app/ui/header/TopBar";
  */
 export function PageTopBar({
   trail,
+  className,
   flagship,
   detail,
   onToggle,
   more,
 }: {
   trail: Crumb[];
+  className?: string;
   flagship: boolean;
   detail: string | null;
   onToggle: (panel: string) => void;
@@ -23,7 +25,7 @@ export function PageTopBar({
   more: ReactNode;
 }) {
   return (
-    <TopBar className="page-topbar" trail={trail}>
+    <TopBar className={className ? `page-topbar ${className}` : "page-topbar"} trail={trail}>
       {flagship ? (
         <button className="tool desktop-page-tool" type="button" aria-expanded={detail === "ask"} onClick={() => onToggle("ask")}>
           Ask

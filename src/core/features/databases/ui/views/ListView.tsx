@@ -11,7 +11,7 @@ export function ListView({
   records,
   showRecordIcon,
   canEditRecords,
-  onOpenRecord,
+  recordLink,
   onOpenLink,
   onNewRecord,
   className,
@@ -27,7 +27,7 @@ export function ListView({
             <RecordTitle
               className="min-w-0 flex-1"
               icon={record.icon}
-              onOpen={() => onOpenRecord(record.id)}
+              link={recordLink(record.id)}
               showIcon={showRecordIcon}
               title={record.title}
             />

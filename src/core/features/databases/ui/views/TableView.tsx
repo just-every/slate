@@ -21,7 +21,7 @@ export function TableView({
   calculations,
   titleColumnLabel,
   lock = null,
-  onOpenRecord,
+  recordLink,
   onValueChange,
   onEditValue,
   onOpenLink,
@@ -70,7 +70,7 @@ export function TableView({
                 <RecordTitle
                   className="w-full"
                   icon={record.icon}
-                  onOpen={() => onOpenRecord(record.id)}
+                  link={recordLink(record.id)}
                   showIcon={showRecordIcon}
                   title={record.title}
                 />

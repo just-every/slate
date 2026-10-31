@@ -14,6 +14,9 @@ import { WorkspaceProvider } from "./WorkspaceContext";
 import { useAppearance } from "../../client/useAppearance";
 import { TooltipDismissal } from "../../ui/tooltip";
 
+/** A database and its records share one shell, so the list stays mounted while its records open and close (SL1). */
+const shellScope = (path?: string) => path?.replace(/^(\/app\/databases\/[^/]+)\/records\/[^/]+$/, "$1");
+
 export function AppShell({
   snapshot,
   children,
@@ -51,7 +54,7 @@ export function AppShell({
   return (
     <LaunchProfileProvider initial={snapshot.profile}><WorkspaceProvider snapshot={snapshot}>
       {snapshot.editorEnabled && member.role === 'owner' ? <EditorMount ownerId={member.id} /> : null}
-      <InitialResourcesProvider key={snapshot.resourcePath} resources={snapshot.resources ?? {}}><WorkspaceGate>
+      <InitialResourcesProvider key={shellScope(snapshot.resourcePath)} resources={snapshot.resources ?? {}}><WorkspaceGate>
         <div className="slate-app">
           <TooltipDismissal />
           <PublicDuplicate />

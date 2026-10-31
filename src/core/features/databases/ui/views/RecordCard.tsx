@@ -10,6 +10,7 @@ import {
 import { FieldCell, FieldGlyph } from "../fields";
 import { RecordIconMark } from "../RecordTitle";
 import type { DatabaseField, DatabaseRecord } from "../types";
+import type { RecordAnchor } from "./shared";
 
 /** One record as a card, used by the board and the gallery layouts. */
 export function RecordCard({
@@ -18,7 +19,7 @@ export function RecordCard({
   showRecordIcon,
   coverClass,
   moveTargets,
-  onOpen,
+  link,
   onMove,
   onOpenLink,
   className,
@@ -31,7 +32,7 @@ export function RecordCard({
   coverClass?: string | null;
   /** `DB-006`: the groups this record can be moved into, empty when the field forbids it. */
   moveTargets?: readonly { id: string; label: string }[];
-  onOpen: () => void;
+  link: ReturnType<RecordAnchor>;
   onMove?: (groupId: string) => void;
   onOpenLink: (linkId: string) => void;
   className?: string;
@@ -41,14 +42,13 @@ export function RecordCard({
       {coverClass ? <div aria-hidden="true" className={cn("h-20 w-full", coverClass)} /> : null}
       <div className="flex flex-col gap-1.5 p-2">
         <div className="flex items-start justify-between gap-1">
-          <button
-            className="flex min-w-0 items-start gap-1.5 text-left text-ui font-medium text-ink transition-colors hover:text-accent"
-            onClick={onOpen}
-            type="button"
+          <a
+            className="record-title flex min-w-0 items-start gap-1.5 text-left text-ui font-medium text-ink transition-colors hover:text-accent"
+            {...link}
           >
             {showRecordIcon ? <RecordIconMark className="mt-0.5" icon={record.icon} /> : null}
             <span className="line-clamp-2">{record.title}</span>
-          </button>
+          </a>
           {moveTargets && moveTargets.length > 0 && onMove ? (
             <DropdownMenu>
               <DropdownMenuTrigger

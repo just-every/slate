@@ -3,6 +3,7 @@ import { Button, cn } from "../../../../ui";
 import { knowledgeNoun } from "../../../../shared/knowledge/vocabulary";
 import { RecordIconMark } from "../RecordTitle";
 import type { CalendarDay } from "../types";
+import type { RecordAnchor } from "./shared";
 
 /**
  * `DB-004` calendar layout. The month, its weekday headings and its days arrive
@@ -14,7 +15,7 @@ export function CalendarView({
   days,
   dateFieldName,
   showRecordIcon,
-  onOpenRecord,
+  recordLink,
   onPreviousMonth,
   onNextMonth,
   onToday,
@@ -26,7 +27,7 @@ export function CalendarView({
   days: readonly CalendarDay[];
   dateFieldName: string;
   showRecordIcon: boolean;
-  onOpenRecord: (recordId: string) => void;
+  recordLink: RecordAnchor;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
@@ -78,15 +79,14 @@ export function CalendarView({
                   {day.isToday ? <span className="sr-only"> — today</span> : null}
                 </span>
                 {day.records.map((record) => (
-                  <button
-                    className="flex min-w-0 items-center gap-1 rounded-control bg-sidebar-hover px-1 py-0.5 text-left text-tiny text-ink transition-colors hover:bg-line"
+                  <a
+                    className="record-title flex min-w-0 items-center gap-1 rounded-control bg-sidebar-hover px-1 py-0.5 text-left text-tiny text-ink transition-colors hover:bg-line"
                     key={record.id}
-                    onClick={() => onOpenRecord(record.id)}
-                    type="button"
+                    {...recordLink(record.id)}
                   >
                     {showRecordIcon ? <RecordIconMark className="size-3" icon={record.icon} /> : null}
                     <span className="truncate">{record.title}</span>
-                  </button>
+                  </a>
                 ))}
                 {day.records.length === 0 ? (
                   <span className="sr-only">No {knowledgeNoun("record")}s on this day</span>

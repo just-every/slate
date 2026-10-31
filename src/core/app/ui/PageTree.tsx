@@ -11,7 +11,10 @@ import { lazy, Suspense, useState } from "react";
 import { ArrowUpDown, ChevronRight, Database, FileText, Plus } from "lucide-react";
 import type { PageRef } from "../../shared/api/content";
 export type TreePage = PageRef & {
+  /** Set on a database's page. */
   databaseId?: string;
+  /** The page's one address (SL1): a database's page opens the database, a record its record address. */
+  href?: string;
   parentPageId?: string | null;
   treePosition?: string|null;
   icon?: string | null;
@@ -80,6 +83,10 @@ function TreeItem({
   const creation = useCreatePage();
   const [error,setError] = useState<unknown>();
   const canMove = page.permissions?.canEdit === true;
+  const href = page.href ?? `/app/pages/${page.id}`;
+  // One row is current: the open record's when it shows, else its database's (SL1).
+  const record = activePath?.startsWith(`${href}/records/`);
+  const current = activePath === href || (!!page.databaseId && !!record && !(open && pages.some(item => item.parentPageId === page.id && item.href === activePath)));
   return (
     <li>
       <div className="tree-row" draggable={canMove} onDragStart={event=>{if(!canMove){event.preventDefault();return;}event.dataTransfer.setData("application/x-slate-page",page.id);event.dataTransfer.effectAllowed="move";}} onDragOver={event=>{if(event.dataTransfer.types.includes("application/x-slate-page")){event.preventDefault();event.dataTransfer.dropEffect="move";}}} onDrop={event=>{event.preventDefault();const source=pages.find(item=>item.id===event.dataTransfer.getData("application/x-slate-page"));if(!source||!source.permissions?.canEdit||source.id===page.id)return;const box=event.currentTarget.getBoundingClientRect();const before=event.clientY<box.top+box.height/3,after=event.clientY>box.bottom-box.height/3;setMove({page:source,destination:{containerId:page.containerId,parentPageId:before||after?page.parentPageId??null:page.id,...(before?{beforeId:page.id}:after?{afterId:page.id}:{})}});}}>
@@ -102,7 +109,7 @@ function TreeItem({
         ) : (
           <span className="tree-spacer" />
         )}
-        <a className="navlink" href={page.databaseId ? `/app/databases/${page.databaseId}` : `/app/pages/${page.id}`} aria-current={activePath === (page.databaseId ? `/app/databases/${page.databaseId}` : `/app/pages/${page.id}`) ? "page" : undefined}>
+        <a className="navlink" href={href} aria-current={current ? "page" : undefined}>
           {page.icon ? <StoredIcon icon={page.icon}/> : page.databaseId ? <Database aria-hidden="true" /> : <FileText aria-hidden="true" />}
           <span>{page.title || "Untitled"}<ScheduledPublication page={page}/></span>
         </a>
