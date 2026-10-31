@@ -184,7 +184,7 @@
       "id": "SAVE-003",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of SAVE-003 — Revision conflicts. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Native tests/e2e/saving/failed-writes.test.ts and the loaded two-person browser journeys exercise starting revisions, retained drafts and explicit conflict resolution for body, title, properties, structure and order. Independent release and landing receipts remain separate from these local assertions.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/http.test.ts",

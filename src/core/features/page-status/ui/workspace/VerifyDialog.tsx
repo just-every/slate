@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { mutate, operationKey } from "../../../../client/transport";
+import { useRef, useState } from "react";
+import { usePageRevisionSave } from "../../../../client/usePagePropertySave";
+import { PagePropertyConflict } from "../../../pages/ui/workspace/PagePropertyConflict";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import type { VerificationExpiryChoice } from "../types";
 
@@ -31,6 +32,8 @@ export function VerifyDialog({ pageId, statusKey, expectedRevisionId, attestRevi
   onVerified: () => void | Promise<void>;
 }) {
   const [choice, setChoice] = useState<VerificationExpiryChoice>("90");
+  const pending = usePageRevisionSave(expectedRevisionId);
+  const reviewed = useRef({ attestRevisionId, reviewRequest });
   return (
     <ActionDialog
       title="Verify this exact revision"
@@ -39,12 +42,10 @@ export function VerifyDialog({ pageId, statusKey, expectedRevisionId, attestRevi
       onSubmit={async (data) => {
         const date = String(data.get("expiryDate") ?? "");
         if (choice === "date" && !date) throw new Error("Choose the date the verification expires.");
-        await mutate(`/api/status/page/${pageId}`, {
-          operationKey: operationKey(),
-          expectedRevisionId,
+        await pending.save(`/api/status/page/${pageId}`, {
           statusKey,
-          attestRevisionId,
-          ...(reviewRequest ? { reviewRequest } : {}),
+          attestRevisionId: reviewed.current.attestRevisionId,
+          ...(reviewed.current.reviewRequest ? { reviewRequest: reviewed.current.reviewRequest } : {}),
           ...(choice === "date" ? { expiresAt: endOfDay(date) } : choice === "none" ? { expiresAt: null } : { expiresInDays: Number(choice) }),
         });
         // The attestation is saved. A pending queue refresh must not keep the
@@ -54,6 +55,7 @@ export function VerifyDialog({ pageId, statusKey, expectedRevisionId, attestRevi
         return false;
       }}
     >
+      {pending.conflict ? <PagePropertyConflict/> : null}
       <p>
         You confirm that you read this page as it is now and that it is right.
         Slate records you as its verifier. No automated check can do this for you.

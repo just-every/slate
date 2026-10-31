@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
-import { request, mutate, operationKey } from "../../../../client/transport";
+import { request, operationKey } from "../../../../client/transport";
+import { usePagePropertySave } from "../../../../client/usePagePropertySave";
+import { PagePropertyConflict } from "./PagePropertyConflict";
 import type { DocumentView } from "../../../../client/content";
 import { galleries, type PageCover } from "./PageAppearance";
 
@@ -21,12 +23,9 @@ export function PageAppearanceDialog({
   const props = document.properties as (NonNullable<DocumentView["properties"]> & { cover?: PageCover | null }) | undefined;
   const cover = props?.cover;
   const [mode, setMode] = useState("gallery");
+  const pending = usePagePropertySave(document.page.id, revision);
   async function save(properties: object) {
-    const result = await mutate<{ value: { revisionId: string } }>(
-      `/api/pages/${document.page.id}`,
-      { operationKey: operationKey(), expectedRevisionId: revision, properties },
-      "PATCH",
-    );
+    const result = await pending.save(properties);
     onSaved(result.value.revisionId);
   }
   async function submit(form: FormData) {
@@ -46,6 +45,7 @@ export function PageAppearanceDialog({
   }
   return (
     <ActionDialog title={kind === "icon" ? "Page icon" : "Page cover"} action="Save appearance" onClose={onClose} onSubmit={submit}>
+      {pending.conflict ? <PagePropertyConflict/> : null}
       {kind === "cover" ? (
         <label>
           Cover source

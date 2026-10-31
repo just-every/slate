@@ -9,6 +9,8 @@ import { PageRuleFlags } from "../../rules/ui/PageRuleFlags";
 import { VerifyDialog } from "./VerifyDialog";
 import { reviewChanged } from "./ReviewQueue";
 import { VerificationSummary, type VerificationView } from "./VerificationSummary";
+import { usePageRevisionSave } from "../../../../client/usePagePropertySave";
+import { PagePropertyConflict } from "../../../pages/ui/workspace/PagePropertyConflict";
 export type StatusEntry = {
   key: string;
   label: string;
@@ -41,6 +43,7 @@ export function PageStatusPanel({
     return () => window.removeEventListener("slate:page-opened", opened);
   }, [verification.reload]);
   const [custom,setCustom]=useState(false);
+  const pending = usePageRevisionSave(revision);
   const [selected, setSelected] = useState<string | null>(null);
   const key = useRef("");
   const selectedStatus = statuses.data?.items.find(
@@ -73,6 +76,7 @@ export function PageStatusPanel({
               <select
                 value=""
                 onChange={(event) => {
+                  pending.begin(revision);
                   key.current = operationKey();
                   setSelected(event.target.value);
                 }}
@@ -98,8 +102,8 @@ export function PageStatusPanel({
         ) : null}
       </RequestState>
       <PageReviewRequests pageId={pageId} pageRevisionId={revision} onSaved={async()=>{await verification.reload();await onSaved();}}/>
-      {!verificationOnly && canEdit && member.role==='owner'?<button onClick={()=>setCustom(true)}>Create a custom status</button>:null}
-      {custom?<ActionDialog title="Create custom page status" action="Create and set status" onClose={()=>setCustom(false)} onSubmit={async data=>{const statusKey=crypto.randomUUID();await mutate('/api/status',{operationKey:operationKey(),key:statusKey,label:String(data.get('label')),color:String(data.get('color')),requiresVerification:false});await mutate(`/api/status/page/${pageId}`,{operationKey:operationKey(),expectedRevisionId:revision,statusKey});await statuses.reload();await onSaved();}}><label>Custom status label<input name="label" maxLength={20} required/></label><label>Status colour<input name="color" type="color" defaultValue="#54735b"/></label></ActionDialog>:null}
+      {!verificationOnly && canEdit && member.role==='owner'?<button onClick={()=>{pending.begin(revision);setCustom(true);}}>Create a custom status</button>:null}
+      {custom?<ActionDialog title="Create custom page status" action="Create and set status" onClose={()=>setCustom(false)} onSubmit={async data=>{const statusKey=crypto.randomUUID();await mutate('/api/status',{operationKey:operationKey(),key:statusKey,label:String(data.get('label')),color:String(data.get('color')),requiresVerification:false});await pending.save(`/api/status/page/${pageId}`,{statusKey});await statuses.reload();await onSaved();}}>{pending.conflict?<PagePropertyConflict/>:null}<label>Custom status label<input name="label" maxLength={20} required/></label><label>Status colour<input name="color" type="color" defaultValue="#54735b"/></label></ActionDialog>:null}
       {again && verification.data?.verification ? (
         <VerifyDialog
           pageId={pageId}
@@ -127,15 +131,15 @@ export function PageStatusPanel({
           action="Set status"
           onClose={() => setSelected(null)}
           onSubmit={async () => {
-            await mutate(`/api/status/page/${pageId}`, {
+            await pending.save(`/api/status/page/${pageId}`, {
               operationKey: key.current,
-              expectedRevisionId: revision,
               statusKey: selected === "__clear" ? null : selected,
             });
             await verification.reload();
             await onSaved();
           }}
         >
+          {pending.conflict ? <PagePropertyConflict/> : null}
           <p>
             {selected === "__clear"
               ? "Remove the current status."

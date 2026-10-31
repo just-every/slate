@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import { useResource } from "../../../../client/useResource";
 import { mutate, operationKey } from "../../../../client/transport";
+import { usePageRevisionSave } from "../../../../client/usePagePropertySave";
+import { PagePropertyConflict } from "./PagePropertyConflict";
 type Plan = {
   containerId: string;
   parentPageId: string | null;
@@ -51,6 +53,7 @@ export function PageTransferDialog({
   const [plan, setPlan] = useState<Plan | null>(null);
   const advancing = useRef(false);
   const key = useRef(operationKey());
+  const pending = usePageRevisionSave(revision ?? "");
   if (plan)
     return (
       <ActionDialog
@@ -58,9 +61,8 @@ export function PageTransferDialog({
         action="Move page"
         onClose={onClose}
         onSubmit={async () => {
-          await mutate(`/api/pages/${pageId}/move`, {
+          await pending.save(`/api/pages/${pageId}/move`, {
             operationKey: key.current,
-            expectedRevisionId: revision,
             containerId: plan.containerId,
             parentPageId: plan.parentPageId,
             atEnd:true,
@@ -70,6 +72,7 @@ export function PageTransferDialog({
           onDone(pageId);
         }}
       >
+        {pending.conflict ? <PagePropertyConflict/> : null}
         <p>
           {pages.data?.items.some((page) => page.parentPageId === pageId) ? "The page and its children will move together." : "The page will move; it has no child pages."} Current access changes:
         </p>

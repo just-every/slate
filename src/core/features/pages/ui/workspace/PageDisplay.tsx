@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DocumentView } from "../../../../client/content";
-import { contentApi } from "../../../../client/content";
+import { usePagePropertySave } from "../../../../client/usePagePropertySave";
+import { PagePropertyConflict } from "./PagePropertyConflict";
 import { errorMessage } from "../../../../client/transport";
 
 /** The page's labels and reading display: typeface, small text and full width. Editors only. */
@@ -8,6 +9,7 @@ export function PageDisplay({ document, revision, reload }: { document: Document
   const [error, setError] = useState<unknown>();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const properties = usePagePropertySave(document.page.id, revision);
   if (!document.permissions.canEdit) return <section><h2>Display settings</h2><p>You can read this page. Editing options require edit access.</p></section>;
   return (
     <section>
@@ -22,7 +24,7 @@ export function PageDisplay({ document, revision, reload }: { document: Document
           setSaved(false);
           setSaving(true);
           try {
-            await contentApi.properties(document.page.id, revision, {
+            await properties.save({
               labels: String(data.get("labels") ?? "")
                 .split(",")
                 .map((value) => value.trim())
@@ -64,6 +66,7 @@ export function PageDisplay({ document, revision, reload }: { document: Document
         {saved ? <p role="status">Display settings saved.</p> : null}
       </form>
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
+      {properties.conflict ? <PagePropertyConflict/> : null}
     </section>
   );
 }

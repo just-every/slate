@@ -41,6 +41,7 @@ import { accessible, setupWorkspace, withWorkspace } from './browser-support.mjs
 import { commentJourney, searchJourney, settingsJourney, shareJourney, writeJourney } from './core-journeys.mjs';
 import { askDraftJourney } from './ask-journey.mjs';
 import { withSecondPerson, call } from './two-people-support.mjs';
+import { revisionConflictsJourney } from './revision-conflicts-journey.mjs';
 import { concurrentEditingJourney } from './two-people-editing.mjs';
 import { accessChangeJourney } from './two-people-access.mjs';
 import { historyJourney } from './two-people-history.mjs';
@@ -93,6 +94,7 @@ for (const width of [390, 1440]) {
         await state.runScheduled();
         await chatJourney(state, width);
         if (width === 390) {
+          await withSecondPerson(state, width, people => step('SAVE-003 — native stale property and structure choices remain recoverable', () => revisionConflictsJourney(state, people)));
           await templateCaptureJourney(state);
           await withSecondPerson(state, width, people => step('DB-015 — template handover and revoked-saver pause on a phone', () => recordTemplatesJourney(state, people)));
           // One phone smoke visits the main screens; functional journeys use desktop
@@ -194,6 +196,7 @@ for (const width of [1440]) {
       await setupWorkspace(state);
       await withSecondPerson(state, width, async people => {
         await step('different blocks, same block, title and unreachable server', () => concurrentEditingJourney(state, people));
+        await step('SAVE-003 — native stale property and structure choices remain recoverable', () => revisionConflictsJourney(state, people));
         await step('removed, narrowed and expired access with unsaved typing', () => accessChangeJourney(state, people, width));
         await step('restore writes a new revision; citations resolve to theirs', () => historyJourney(state, people));
       });

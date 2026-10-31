@@ -157,6 +157,8 @@ export async function savedAfterCommit(page, blockId, edit, { whileSaving } = {}
     await edit();
     await expect.poll(() => !!intercepted, { timeout: 15000 }).toBe(true);
     const submitted = intercepted.request().postDataJSON();
+    assert.equal(submitted.expectedRevisionId, blockId ? persisted(before).revisionId : before.page.revisionId,
+      'A native body write names its starting block revision; a title write names its starting page revision.');
     const badge = page.locator(blockStatus);
     await expect(badge).toHaveText(/^Saving/);
     assert.deepEqual(persisted(await ok(page.context(), origin, 'GET', `/api/pages/${pageId}`)), persisted(before), 'The pending write has not changed durable content.');

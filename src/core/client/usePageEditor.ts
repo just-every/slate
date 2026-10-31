@@ -56,6 +56,8 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
   const [workingRevisionId, setWorkingRevisionId] = useState(document.workingRevisionId);
   const [firstBlockDirty,setFirstBlockDirty]=useState(false);
   const [structureState,setStructureState]=useState<"saving"|"saved"|null>(null);
+  const [structureConflict, setStructureConflict] = useState<EditorBlock[] | null>(null);
+  const structureConflictBlock = useRef<string | undefined>(undefined);
   const current = useRef(blocks);
   const structureBusy=useRef(false);
   const revisions = useRef(
@@ -305,6 +307,7 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
   }
   async function structure(next: EditorBlock[], expectedBlocks?: Record<string, string>) {
     if (!alive.current || !canEdit.current) throw new Error("This page is read-only with your current access.");
+    if (structureConflict) throw new Error("Reload the saved blocks before changing the page structure again. Your pending choices remain below.");
     // Enter in the title moves focus immediately; its receipt advances the
     // same page revision used by the first body block's creation.
     await pendingTitle?.();
@@ -334,6 +337,10 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
             atLabel: "since you loaded it",
           },
         });
+      if (error instanceof ApiError && error.status === 409) {
+        structureConflictBlock.current = conflict;
+        setStructureConflict(next);
+      }
       throw error;
     }
     invalidateRead();
@@ -376,6 +383,10 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
       status(id, { status: "idle" });
       persistDraft();
     }
+    if (structureConflictBlock.current === id) {
+      structureConflictBlock.current = undefined;
+      setStructureConflict(null);
+    }
   }
   function receive(fresh: DocumentView) {
     if(!alive.current || fresh.page.id!==pageId || structureBusy.current)return;
@@ -406,8 +417,16 @@ export function usePageEditor(document: DocumentView, invalidateRead: () => void
     revision,
     workingRevisionId,
     structureState,
+    structureConflict,
+    async reloadStructure() {
+      const fresh = await contentApi.document(pageId);
+      adopt(fresh);
+      if (structureConflictBlock.current) status(structureConflictBlock.current, { status: "idle" });
+      structureConflictBlock.current = undefined;
+      setStructureConflict(null);
+    },
     setFirstBlockDirty,
-    hasUnsavedChanges: firstBlockDirty || structureState === "saving" || pending.current.size > 0 || busy.current.size > 0,
+    hasUnsavedChanges: firstBlockDirty || structureState === "saving" || structureConflict !== null || pending.current.size > 0 || busy.current.size > 0,
     setRevision: updateRevision,
     change,
     structure,

@@ -100,6 +100,7 @@ export async function concurrentEditingJourney(state, people) {
 
   // (b) Same block. Alice drafts in the second block from its old revision while Bob saves it.
   const conflict = async (bobWords, aliceWords) => {
+    const starting = await ok(alice.context, origin, 'GET', `/api/pages/${pageId}`);
     const drafting = keepTyping(alice.page, second, aliceWords);
     await alice.page.waitForTimeout(600);
     const bobCommit = await savedAfterCommit(bob.page, second, async () => {
@@ -110,7 +111,9 @@ export async function concurrentEditingJourney(state, people) {
     await alice.page.waitForTimeout(3500);
     const refused = alice.page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().includes(`/blocks/${second}`));
     await drafting.stop();
-    assert.equal((await refused).status(), 409, 'An edit against a superseded block revision is rejected with 409.');
+    const refusedWrite = await refused;
+    assert.equal(refusedWrite.status(), 409, 'An edit against a superseded block revision is rejected with 409.');
+    assert.equal(refusedWrite.request().postDataJSON().expectedRevisionId, starting.blocks.find(block => block.id === second).revisionId, 'The draft retains its starting block revision.');
     const badge = alice.page.locator(`[data-block-id="${second}"] [role="alert"]`);
     await expect(badge).toContainText('Your draft is kept and nothing was merged.');
     assert.ok((await text(alice.page, second)).includes(drafting.typed().trim()), "Alice's draft stays in the editor after the 409.");
@@ -152,6 +155,7 @@ export async function concurrentEditingJourney(state, people) {
   const title = alice.page.getByRole('textbox', { name: 'Page title', exact: true });
   let bobTitleRevision;
   const titleConflict = async (bobTitle, aliceSuffix) => {
+    const starting = await ok(alice.context, origin, 'GET', `/api/pages/${pageId}`);
     await title.click();
     await alice.page.keyboard.press('End');
     await alice.page.keyboard.type(aliceSuffix);
@@ -163,7 +167,9 @@ export async function concurrentEditingJourney(state, people) {
     bobTitleRevision = bobSave.revisionId;
     const refused = alice.page.waitForResponse(response => response.request().method() === 'PATCH' && new URL(response.url()).pathname === `/api/pages/${pageId}`);
     await title.blur();
-    assert.equal((await refused).status(), 409, 'A title saved against a superseded page revision is rejected with 409.');
+    const refusedWrite = await refused;
+    assert.equal(refusedWrite.status(), 409, 'A title saved against a superseded page revision is rejected with 409.');
+    assert.equal(refusedWrite.request().postDataJSON().expectedRevisionId, starting.page.revisionId, 'The title retains its starting page revision.');
     const alert = alice.page.locator('.page-document [role="alert"]').filter({ hasText: /Compare saved title/ });
     await expect(alert.getByRole('button', { name: 'Keep my title', exact: true })).toBeVisible();
     await expect(alert.getByRole('button', { name: 'Reload saved title', exact: true })).toBeVisible();

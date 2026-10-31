@@ -258,12 +258,20 @@ export function PageEditorBody({
       }}/>:null}
       {editedQuery?.type==='content-query'?<ContentQueryDialog block={editedQuery} onClose={()=>setQueryEditor(null)} onSave={async definition=>{await editor.structure(editor.blocks.map(block=>block.id===editedQuery.id?{...editedQuery,definition,results:[],lastRanLabel:"Not run yet"}:block));}}/>:null}
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
+      {editor.structureConflict ? <section aria-label="Unsaved structure change">
+        <p role="alert">The saved page changed. Your structure choices are kept below; nothing was overwritten.</p>
+        <details open><summary>Your pending blocks in order</summary><ol>{editor.structureConflict.map(block => <li key={block.id} data-pending-block-id={block.id} data-pending-indent={block.indent ?? 0}>
+          {block.indent ? <p>Nested {block.indent} level{block.indent === 1 ? "" : "s"}</p> : null}
+          <BlockView block={block} canEdit={false} onChange={() => {}}/>
+        </li>)}</ol></details>
+        <button type="button" onClick={() => void editor.reloadStructure().then(() => setError(undefined)).catch(setError)}>Reload saved blocks</button>
+      </section> : null}
       {insertion.conflicts.length ? <section aria-label="Recovered block conflict">
         <p role="alert">Recovered blocks conflict with saved changes. The page shows the saved content. Copy any recovered content you need before using the saved blocks.</p>
         <details><summary>Your recovered blocks</summary>{insertion.conflicts.map(block => <BlockView key={block.id} block={block} canEdit={false} onChange={() => {}}/>)}</details>
         <button onClick={insertion.discard}>Use saved blocks</button>
       </section> : insertion.error ? <p role="alert">{insertion.error} <button onClick={() => void insertion.retry()}>Try saving inserted blocks again</button></p> : null}
-      {document.permissions.canEdit && !insertion.conflicts.length && titleState!=="failed" && !Object.values(editor.saveState).some(state=>["saving","failed","offline","unsaved","conflict"].includes(state.status)) ? <p className="editor-save-status" role="status" suppressHydrationWarning>{insertion.error ? "Unsaved inserted blocks" : insertion.pending || editor.hasUnsavedChanges || titleState==="saving" ? "Saving…" : "Saved"}</p> : null}
+      {document.permissions.canEdit && !insertion.conflicts.length && !editor.structureConflict && titleState!=="failed" && !Object.values(editor.saveState).some(state=>["saving","failed","offline","unsaved","conflict"].includes(state.status)) ? <p className="editor-save-status" role="status" suppressHydrationWarning>{insertion.error ? "Unsaved inserted blocks" : insertion.pending || editor.hasUnsavedChanges || titleState==="saving" ? "Saving…" : "Saved"}</p> : null}
       <BlockEditor
         emptyBlockId={!editor.blocks.length ? visibleBlocks[0]?.id : undefined}
         blocks={liveQueries.blocks.map(block=>{
