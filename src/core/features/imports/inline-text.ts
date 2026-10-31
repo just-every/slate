@@ -9,7 +9,9 @@ export function importedHref(link: ImportedLink | undefined, idFor: IdFor): stri
   if (!link.targetSourceId) return link.href;
   return link.kind === "attachment"
     ? `/api/media/${idFor("file", link.targetSourceId)}`
-    : `/app/pages/${idFor("page", link.targetSourceId)}`;
+    : link.kind === "database"
+      ? `/app/databases/${idFor("database", link.targetSourceId)}`
+      : `/app/pages/${idFor("page", link.targetSourceId)}`;
 }
 
 /** Ranges let a status label and a link coexist without styling surrounding prose. */

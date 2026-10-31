@@ -4,6 +4,7 @@ import {createApi} from '../../../src/core/app/hono';
 import {parseImport,type ImportFormat} from '../../../src/core/features/imports';
 import {seedWorkspace,seedMember,sessionFor} from '../setup/fixtures';
 import {resetDatabase} from '../setup/reset-database';
+import {notionOutcome} from './notion-outcome';
 
 const resetCase=async()=>{vi.restoreAllMocks();await resetDatabase(env.DB);await env.DB.exec('DROP TABLE IF EXISTS _rer_deploy_migrations');};
 beforeEach(resetCase);
@@ -69,6 +70,10 @@ it('reviews, applies and reverses real Notion and Confluence content without los
   }
   expect((await app.request(`https://slate.example/api/pages/${restricted!.id}`,{},env)).status).toBe(401);
  }
+ if(format==='notion-workspace')await notionOutcome(bytes,await call(`/${id}`),async path=>{
+  const response=await app.request(`https://slate.example/api${path}`,{headers:{Cookie:cookie}},env);
+  const data=await response.json();expect(response.status,JSON.stringify(data)).toBe(200);return data;
+ },async(path,authenticated=true)=>app.request(`https://slate.example/api${path}`,{headers:authenticated?{Cookie:cookie}:{}},env));
  const downloaded=await app.request(`https://slate.example/api/imports/${id}/original`,{headers:{Cookie:cookie}},env);
  expect(new Uint8Array(await downloaded.arrayBuffer())).toEqual(new Uint8Array(bytes));
  const edited=pages.find(p=>!pages.some(child=>child.parent_page_id===p.id))!;

@@ -791,7 +791,7 @@
         "IMP-003",
         "IMP-016"
       ],
-      "reason": "Through actual Worker HTTP routes, the committed small anonymised export is previewed without target writes, explicitly applied and resumed, indexed before Completed, downloaded exactly and undone while preserving a native edit and reporting its conflict. This supports the listed flows only; it does not establish generated scale, hosted capacity, all UI states or complete product acceptance."
+      "reason": "Through native Worker HTTP upload, Preview, Apply and resume, the retained incumbent Notion export reconciles every source page and complete native tree, equivalent ordered blocks and link labels, canonical page and database targets, seven typed databases, 22 opened records, all 15 supplied media files against served and stored R2 bytes, every paged omission and warning, live revisions and anonymous refusal. The incumbent parser and provenance remain separately committed. Retains Confluence restrictions, original download, indexed completion and Undo preserving native edits. IMP-002 native acceptance is recorded in CONTRACT.md; the other listed clauses retain supporting scope."
     },
     {
       "file": "tests/e2e/imports/undo-cross-references.test.ts",

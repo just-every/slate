@@ -48,13 +48,16 @@ const imageTag = /<img\s[^>]*?src="([^"]*)"[^>]*?>/i;
 const altAttribute = /\balt="([^"]*)"/i;
 const bareUrl = /^(https?:\/\/\S+)$/i;
 
-export function stripInline(value: string): string {
+function inlineText(value: string): string {
   return value
     .replace(inlineLink, (_match, bang: string, label: string, href: string) => (label.trim() ? label : bang ? "" : href))
     .replace(/<[^>]+>/g, "")
     .replace(/\*\*|__|[*_`~]/g, "")
-    .replace(/&nbsp;/g, " ")
-    .trim();
+    .replace(/&nbsp;/g, " ");
+}
+
+export function stripInline(value: string): string {
+  return inlineText(value).trim();
 }
 
 function toLines(markdown: string): Line[] {
@@ -74,10 +77,21 @@ function makeBlock(sourceId: string, cursor: Cursor, kind: ImportedBlock["kind"]
 }
 
 function attachLinks(block: ImportedBlock, source: string) {
+  const text = inlineText(source);
+  const leading = text.length - text.trimStart().length;
+  inlineLink.lastIndex = 0;
   for (const match of source.matchAll(inlineLink)) {
     if (match[1] === "!") continue;
     const link = safeImportLink(match[3]!.trim());
-    if (link) block.links.push(link);
+    if (link) {
+      // Offsets refer to the rendered plain text, after Markdown and HTML
+      // markers are removed. Each label keeps its own destination; surrounding
+      // prose must never inherit the first link in a paragraph.
+      const textStart = Math.max(0, inlineText(source.slice(0, match.index)).length - leading);
+      const label = match[2]!.trim() ? match[2]! : match[3]!;
+      const textEnd = Math.min(block.text?.length ?? 0, textStart + inlineText(label).length);
+      block.links.push({ ...link, textStart, textEnd });
+    }
   }
 }
 

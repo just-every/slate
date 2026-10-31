@@ -124,7 +124,7 @@ export function nativeTargets(job:NativeImportBinding,writes:()=>number):D1Targe
 // everything else pointing at an imported entity is a preservation dependency.
 const deletionTables=[
   ['comments','thread_id'],['comment_threads','page_id'],
-  ['content_published_revisions','page_id'],['federation_import_mappings','id'],['database_records','page_id'],['database_fields','id'],['databases','id'],
+  ['content_published_revisions','page_id'],['federation_import_mappings','id'],['database_records','page_id'],['database_views','id'],['database_fields','id'],['databases','id'],
   ['files','id'],['page_grants','id'],['page_labels','page_id'],['blog_posts','page_id'],['task_origins','block_id'],['page_blocks','id'],['page_revisions','id'],
   ['page_contributors','page_id'],['content_events','page_id'],['record_revisions','id'],['structured_revisions','id'],
   ['container_grants','id'],['container_members','container_id'],['container_owners','container_id'],
