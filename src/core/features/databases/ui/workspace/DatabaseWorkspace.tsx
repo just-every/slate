@@ -9,7 +9,7 @@ import {IconLink} from "../../../../app/ui/header/IconAction";
 import {TopBar} from "../../../../app/ui/header/TopBar";
 import {PageTitle} from "../../../../app/ui/header/PageTitle";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecordReferences } from "../../../../client/useRecordReferences";
 import { useResource } from "../../../../client/useResource";
 import {
@@ -56,6 +56,20 @@ export function DatabaseWorkspace({ id }: { id: string }) {
   const [fieldEdit, setFieldEdit] = useState<FieldDto>();
   const [fieldRemove, setFieldRemove] = useState<FieldDto>();
   const [mode, setMode] = useState<DatabaseMode>("records");
+  useEffect(() => {
+    if (!view || mode !== "records") return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    // Re-read through the native query's current-authority boundary. Serialize
+    // reads so a slow response cannot accumulate background work. useResource
+    // fences superseded responses and clears data when access is refused.
+    const refresh = async () => {
+      await query.reload();
+      if (!stopped) timer = setTimeout(refresh, 750);
+    };
+    timer = setTimeout(refresh, 750);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [id, view?.id, mode, query.reload]);
   const [dialog, setDialog] = useState<"new" | "view" | "delete-view" | null>(null);
   const [edit, setEdit] = useState<{ record: RecordDto; field: FieldDto }>();
   const [error, setError] = useState<unknown>();

@@ -312,9 +312,10 @@
       "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input",
       "kind": "supporting-regression",
       "clauses": [
-        "BASE-ACCESS-002"
+        "BASE-ACCESS-002",
+        "DB-007"
       ],
-      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance."
+      "reason": "Retains session refusal and authorized creation. DB-007 support additionally saves every calculation, filters populated records including empty and zero values before aggregating under two reader grants, preserves selections, refuses read-only changes without changing data, and refuses a revoked grant after replay. Native footer and deadline acceptance is in databaseCalculationsJourney through the existing responsive browser callers."
     },
     {
       "file": "tests/flagship/structured/template-permissions.test.ts",

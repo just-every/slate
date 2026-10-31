@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
+export { databaseCalculationsJourney } from './database-calculations-journey.mjs';
 
 /** Identity comes from the shared harness; all database setup and assertions use real public routes. */
 export async function databaseJourney({ page, origin, context, api }) {

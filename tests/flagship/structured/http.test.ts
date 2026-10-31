@@ -111,6 +111,54 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
       }
     ).database.id,
   ).toBe(body.value.id);
+  // The same native session door serves persisted calculations only after
+  // current record access and the saved filter have both been applied.
+  const base = `/api/databases/${body.value.id}`;
+  const call = async (method: string, path: string, session: string, input?: unknown) => {
+    const response = await SELF.fetch('http://localhost' + path, {
+      method, headers: { cookie: session, origin: 'http://localhost', 'content-type': 'application/json' },
+      ...(input ? { body: JSON.stringify(input) } : {}),
+    });
+    expect(response.status, await response.clone().text()).toBeLessThan(300);
+    return response.json() as Promise<any>;
+  };
+  let revision = (await call('GET', base, cookie)).database.revision_id;
+  for (const field of [
+    { id: 'amount', name: 'Amount', type: 'number', config: {}, position: 0 },
+    { id: 'included', name: 'Included', type: 'checkbox', config: {}, position: 1 },
+  ]) revision = (await call('POST', base + '/fields', cookie, { operationKey: crypto.randomUUID(), expectedRevisionId: revision, field })).value.revisionId;
+  const readerSession = await sessionFor(reader.actor.id);
+  const grantInput = { operationKey: crypto.randomUUID(), targetKind: 'page', targetId: (await call('GET', base, cookie)).database.page_id, principalKind: 'member', principalId: reader.actor.id, level: 'view' };
+  const granted = await call('POST', '/api/sharing', cookie, grantInput);
+  const records: string[] = [];
+  for (const [amount, included] of [[0, true], [6, true], [null, true], [-2, true], [8, true], [900, false]]) {
+    const record = await call('POST', base + '/records', cookie, { operationKey: crypto.randomUUID(), title: 'synthetic-slate-' + records.length, values: { amount, included } });
+    records.push(record.value.pageId);
+  }
+  const privatePage = await call('GET', '/api/pages/' + records[4], cookie);
+  await call('POST', '/api/sharing', cookie, { operationKey: crypto.randomUUID(), targetKind: 'page', targetId: records[4], principalKind: 'member', principalId: ctx.actor.id, level: 'full' });
+  await call('PUT', `/api/sharing/pages/${records[4]}/inheritance`, cookie, { operationKey: crypto.randomUUID(), expectedRevisionId: privatePage.page.revisionId, restricted: true });
+  const view = { id: 'calculation-view', name: 'Included', layout: 'table', filters: [{ field: 'included', op: 'eq', value: true }], sorts: [], groups: [], display: {}, position: 0 };
+  for (const [operation, ownerTotal, readerTotal] of [
+    ['count', 5, 4], ['filled', 4, 3], ['empty', 1, 1], ['sum', 12, 4],
+    ['average', 3, 4 / 3], ['minimum', -2, -2], ['maximum', 8, 6], ['range', 10, 8], ['percent', 80, 75],
+  ] as const) {
+    revision = (await call('POST', base + '/views', cookie, { operationKey: crypto.randomUUID(), expectedRevisionId: revision, view: { ...view, calculations: { amount: operation } } })).value.revisionId;
+    for (const [session, total, ids] of [[cookie, ownerTotal, records.slice(0, 5)], [readerSession, readerTotal, records.slice(0, 4)]] as const) {
+      const result = await call('GET', base + '/views/' + view.id, session);
+      expect(result.records.map((item: { pageId: string }) => item.pageId).sort()).toEqual([...ids].sort());
+      expect(result.calculations.amount).toBe(total);
+      expect(result.view.calculations.amount).toBe(operation);
+    }
+  }
+  const before = await call('GET', base + '/records/' + records[0], cookie);
+  const refused = await SELF.fetch('http://localhost' + base + '/records/' + records[0], { method: 'PATCH', headers: { cookie: readerSession, origin: 'http://localhost', 'content-type': 'application/json' }, body: JSON.stringify({ operationKey: crypto.randomUUID(), expectedRevisionId: before.revisionId, values: { amount: 100 } }) });
+  expect(refused.status).toBe(404);
+  expect(await call('GET', base + '/records/' + records[0], cookie)).toEqual(before);
+  await call('POST', '/api/sharing', cookie, { ...grantInput, operationKey: crypto.randomUUID(), id: granted.value.id, revoke: true });
+  await call('POST', '/api/sharing', cookie, grantInput);
+  const revoked = await SELF.fetch('http://localhost' + base + '/views/' + view.id, { headers: { cookie: readerSession } });
+  expect(revoked.status).toBe(404);
 });
 
 test("database file references list only attachments the reader could open", async () => {

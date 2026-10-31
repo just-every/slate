@@ -191,7 +191,7 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 - `DB-004`: *Tier:* Core
 - `DB-005`: *Tier:* Core
 - `DB-006`: *Tier:* Core
-- `DB-007`: *Tier:* Core
+- `DB-007`: *Tier:* Core · *Cites:* BASE-ACCESS-002, BASE-ACCESS-004
 - `DB-008`: *Tier:* Core
 - `DB-009`: *Tier:* Core
 - `DB-010`: *Tier:* Core
@@ -3978,9 +3978,9 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4097,7 +4097,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `DB-004` | Layouts | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A view is a table, a board, a list, a gallery, a calendar or a timeline."<br>No validated CI-run proof for this acceptance point: "A board or calendar requires the field it groups or dates by, and offers to create it rather than failing when it is missing." |
 | `DB-005` | Filter and sort | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A view carries filter rules over any field, combined with and or or, and an ordered list of sorts."<br>No validated CI-run proof for this acceptance point: "Both are stored on the view, are shown in force above the records, and are cleared in one action." |
 | `DB-006` | Group | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A view groups its records by a select, status, person, checkbox or date field, shows the count in each group, allows a record to be moved between groups where the field permits it, and hides empty groups on request." |
-| `DB-007` | Calculations | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Each column in a table view carries a calculation under it — count, filled, empty, sum, average, minimum, maximum, range or percent — computed over the view's filtered records and updated within 2 seconds of a change." |
+| `DB-007` | Calculations | published | done | `tests/qualification/ui-convergence/database-calculations-journey.mjs` — "databaseCalculationsJourney": acceptance 1 and 2, nine native footer selections over filtered populated records, independent owner and reader totals including empty and zero values, persisted choices, receipt-timed local and second-session updates within two seconds, and revoked-grant replay refusal; loaded by `tests/qualification/ui-convergence/journeys.test.mjs` — "spreadsheet tables merge, sort and round-trip through edited database records at 1440px" and "real core-wiki and touch-member journeys at 390px" (phone screen and persistence); `tests/flagship/structured/http.test.ts` — "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input": native calculation and session authority support; retained `tests/flagship/structured/structured.test.ts` — "structured records, computation, readers, templates, automation, policies and views retain durable semantics". | |
 | `DB-008` | Charts | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A chart is built over one view, showing counts or a numeric field aggregated by a grouping field, and can be embedded in a page (`DB-011`)."<br>No validated CI-run proof for this acceptance point: "It reads the same filtered records the view shows and states which view it reads." |
 | `DB-009` | Lock structure | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A database's structure can be locked, which rejects field, view, filter, sort and layout changes while allowing record edits, names who locked it, and is unlocked by anyone with `full` access." |
 | `DB-010` | A record is a page | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every record has an identifier that is also a page identifier, a field map, an optional body of blocks, an optional icon and an optional position in the tree."<br>No validated CI-run proof for this acceptance point: "`record-is-page` shows the per-record icon, opens a record as a side peek, a center peek or a full page, offers its body, and lists it in the tree and in page search."<br>No validated CI-run proof for this acceptance point: "`record-is-row` opens a record as a field list with a print action, and hides the icon, the body area, the tree position and the record from page search."<br>No validated CI-run proof for this acceptance point: "The body is stored under both values and is never dropped, so a workspace can be switched back and an imported record with a body keeps it." |

@@ -1081,11 +1081,15 @@
       "id": "DB-007",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of DB-007 — Calculations. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Workers calculations and current-reader refusals are supporting regressions. Full public-door acceptance is tracked in CONTRACT.md through databaseCalculationsJourney in the existing database desktop and core phone registrations; exact-candidate Verify and guarded landing supply recorded acceptance.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/structured.test.ts",
           "testName": "structured records, computation, readers, templates, automation, policies and views retain durable semantics"
+        },
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
         }
       ]
     },
