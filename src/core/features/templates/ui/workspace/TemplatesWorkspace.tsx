@@ -21,7 +21,7 @@ interface Template {
   snapshot?:TemplatePreviewSnapshot;
 }
 /** `embedded` puts only the templates inside another screen (a space's Templates tab), which already has a top bar and a title. */
-export function TemplatesWorkspace({ templateId,defaultContainerId,embedded }: { templateId?: string;defaultContainerId?:string;embedded?:boolean }) {
+export function TemplatesWorkspace({ templateId,defaultContainerId,embedded,creationDestination }: { templateId?: string;defaultContainerId?:string;embedded?:boolean;creationDestination?:{containerId:string;parentPageId:string|null} }) {
   const [state, setState] = useState("active");
   const [query, setQuery] = useState("");
   const [category,setCategory]=useState("");
@@ -42,6 +42,8 @@ export function TemplatesWorkspace({ templateId,defaultContainerId,embedded }: {
     selected&&state!=="deleted" ? `/api/templates/${selected}` : null,
   );
   const [apply, setApply] = useState(false);
+  const initialDestination = creationDestination ? preview.data?.applyDestinations?.findIndex(item =>
+    item.containerId === creationDestination.containerId && item.parentPageId === creationDestination.parentPageId) : -1;
   const body = <>
         <div className="action-row template-filters">
           <label>
@@ -157,7 +159,7 @@ export function TemplatesWorkspace({ templateId,defaultContainerId,embedded }: {
           >
             <label>
               Create in
-              <select name="destination" required defaultValue="">
+              <select name="destination" required defaultValue={initialDestination !== undefined && initialDestination >= 0 ? String(initialDestination) : ""}>
                 <option value="" disabled>
                   Choose a space
                 </option>

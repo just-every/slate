@@ -28,3 +28,10 @@ export function inferPageSpace({
   const find = (id: string | null | undefined) => (id ? writable.find((space) => space.id === id) : undefined);
   return find(current) ?? recents?.map((recent) => find(recent.containerId)).find(Boolean) ?? writable[0] ?? null;
 }
+
+/** A creation entry point carries its exact destination into the template picker. */
+export function templateCreationHref(containerId: string, parentPageId?: string) {
+  const query = new URLSearchParams({ containerId });
+  if (parentPageId) query.set("parentPageId", parentPageId);
+  return `/app/templates?${query}`;
+}

@@ -11,17 +11,16 @@ async function permitted(check: () => Promise<unknown>) {
   try { await check(); return true; }
   catch (error) {
     if (error instanceof ApiProblem && [403,404].includes(error.status)) return false;
-    if (error instanceof ApiProblem && ["DESTINATION_UNAVAILABLE","PAGE_READ_ONLY","INVALID_PARENT"].includes(error.code)) return false;
+    if (error instanceof ApiProblem && ["DESTINATION_UNAVAILABLE","PAGE_READ_ONLY","PAGE_LOCKED","INVALID_PARENT"].includes(error.code)) return false;
     throw error;
   }
 }
 /** Choices contain only destinations the current actor can actually create under. */
 export async function templateDestinations(ctx: FeatureContext): Promise<TemplateDestination[]> {
   const containers = await ctx.db.prepare("SELECT id,name FROM containers WHERE workspace_id=? AND archived_at IS NULL AND trashed_at IS NULL ORDER BY name,id").bind(ctx.actor.workspaceId).all<{id:string;name:string}>();
-  const choices: TemplateDestination[] = [], roots = new Set<string>();
+  const choices: TemplateDestination[] = [];
   for (const container of containers.results) {
     if (await permitted(()=>destination(ctx,container.id))) {
-      roots.add(container.id);
       choices.push({containerId:container.id,parentPageId:null,label:container.name});
     }
   }
@@ -29,7 +28,7 @@ export async function templateDestinations(ctx: FeatureContext): Promise<Templat
   // gaining a container listing or permission to create at its root.
   const pages = await ctx.db.prepare("SELECT id,container_id,title FROM pages WHERE workspace_id=? AND deleted_at IS NULL AND trashed_at IS NULL AND archived_at IS NULL ORDER BY title,id").bind(ctx.actor.workspaceId).all<{id:string;container_id:string;title:string}>();
   for (const page of pages.results) {
-    if (!roots.has(page.container_id) && await permitted(()=>destination(ctx,page.container_id,page.id)))
+    if (await permitted(()=>destination(ctx,page.container_id,page.id)))
       choices.push({containerId:page.container_id,parentPageId:page.id,label:`Inside ${page.title}`});
   }
   return choices;

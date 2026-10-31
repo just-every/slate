@@ -5,8 +5,7 @@ import {ScheduledPublication} from './ScheduledPublication';
 import {StoredIcon} from "../../features/pages/ui/workspace/PageAppearance";
 import {useResource} from "../../client/useResource";
 import {mutate, operationKey, errorMessage} from "../../client/transport";
-import {useCreatePage} from "./useCreatePage";
-import {DEFAULT_PAGE_TITLE} from "./pageDestination";
+import {TreeCreatePage} from "./TreeCreatePage";
 import { lazy, Suspense, useState } from "react";
 import { ArrowUpDown, ChevronRight, Database, FileText, Plus } from "lucide-react";
 import type { PageRef } from "../../shared/api/content";
@@ -77,7 +76,6 @@ function TreeItem({
   const expansion = useResource<{expanded:boolean}>(hasChildren ? `/api/pages/${page.id}/expansion` : null);
   const open = visibleIds !== undefined || (expansion.data?.expanded ?? false);
   const [move,setMove]=useState<{page:TreePage;destination?:TreeDestination}|null>(null);
-  const creation = useCreatePage();
   const [error,setError] = useState<unknown>();
   const canMove = page.permissions?.canEdit === true;
   return (
@@ -107,10 +105,9 @@ function TreeItem({
           <span>{page.title || "Untitled"}<ScheduledPublication page={page}/></span>
         </a>
         <button className="iconbutton tree-action" aria-label={`Move ${page.title} in tree`} data-tooltip="Move page" data-tooltip-align="end" disabled={!canMove} onClick={()=>setMove({page})}><ArrowUpDown aria-hidden="true"/></button>
-        <button className="iconbutton tree-action" aria-label={`Create child of ${page.title}`} data-tooltip="Add child" data-tooltip-align="end" disabled={!canMove} aria-busy={creation.pending||undefined} onClick={event=>{event.stopPropagation();void creation.create(async()=>({containerId:page.containerId,parentPageId:page.id,title:DEFAULT_PAGE_TITLE}));}}><Plus aria-hidden="true"/></button>
+        <TreeCreatePage containerId={page.containerId} name={page.title} parentPageId={page.id} disabled={!canMove} />
       </div>
       {move?<Suspense fallback={null}><TreeMoveDialog page={move.page} pages={pages} initial={move.destination} onClose={()=>setMove(null)}/></Suspense>:null}
-      {creation.error ? <p role="alert">{errorMessage(creation.error)}</p> : null}
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
       {expansion.error ? <p role="alert">{errorMessage(expansion.error)} <button onClick={() => void expansion.reload()}>Retry tree expansion</button></p> : null}
       {open ? (

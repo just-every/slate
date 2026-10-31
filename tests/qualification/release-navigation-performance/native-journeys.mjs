@@ -74,6 +74,7 @@ try {
 
   await link('Renamed navigation parent').hover();
   await tree.getByRole('button', {name: 'Create child of Renamed navigation parent', exact: true}).click();
+  await page.getByRole('menuitem', {name: 'Blank page', exact: true}).click();
   await page.waitForURL(url => url.pathname.startsWith('/app/pages/') && !url.pathname.endsWith(parent));
   const childTitle = page.getByRole('textbox', {name: 'Page title', exact: true});
   await expect(childTitle).toBeFocused();

@@ -37,10 +37,12 @@ export async function createInPlaceJourney({ page, context, origin, api, switchI
   assert.ok(await longFooter.locator('span').evaluate(element => element.scrollWidth <= element.clientWidth && getComputedStyle(element).whiteSpace === 'normal'), 'The whole destination wraps instead of being truncated.');
   await shot('long-destination');
   await tree.getByRole('button', { name: 'Create page in Handbook', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Blank page', exact: true }).click();
   const root = await created('Engineering handbook');
   await openNavigation(page);
   await tree.getByRole('link', { name: 'Engineering handbook', exact: true }).hover();
   await tree.getByRole('button', { name: 'Create child of Engineering handbook', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Blank page', exact: true }).click();
   const child = await created('Incident response', root);
   await openNavigation(page);
   await page.getByRole('button', { name: 'Create', exact: true }).click();
@@ -55,6 +57,7 @@ export async function createInPlaceJourney({ page, context, origin, api, switchI
   await footer.scrollIntoViewIfNeeded();
   await shot('content-footer');
   await footer.click();
+  await page.getByRole('menuitem', { name: 'Blank page', exact: true }).click();
   const content = await created('Support escalation');
   const treeAfter = (await api('/api/pages')).items;
   assert.equal(treeAfter.length, pagesBefore.length + 4);

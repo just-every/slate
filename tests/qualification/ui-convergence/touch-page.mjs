@@ -7,6 +7,7 @@ export async function touchWriteJourney({page,origin,api,containerName}) {
   const navigation=page.getByRole('button',{name:'Open navigation',exact:true});
   if(await navigation.isVisible()) await tap(navigation);
   await tap(page.getByRole('button',{name:`Create page in ${containerName}`,exact:true}));
+  await tap(page.getByRole('menuitem',{name:'Blank page',exact:true}));
   await page.waitForURL(url=>url.pathname.startsWith('/app/pages/'));
   const id=new URL(page.url()).pathname.split('/').at(-1);
   await type(page,page.getByRole('textbox',{name:'Page title',exact:true}),'Field response guide');

@@ -19,6 +19,7 @@ import {
   LockKeyholeOpen,
   Palette,
   Presentation,
+  Plus,
   Scale,
   Send,
   Sparkles,
@@ -33,6 +34,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { PageActionDialogs, type PageDialog } from "./PageActionDialogs";
 import { usePageFollowing } from "./usePageFollowing";
 import { errorMessage } from "../../../../client/transport";
+import { useCreatePage } from "../../../../app/ui/useCreatePage";
+import { DEFAULT_PAGE_TITLE, templateCreationHref } from "../../../../app/ui/pageDestination";
 import { ReminderDialog } from '../../../editor/ui/blocks/ReminderDialog';
 
 /** A trailing mark on items that open a dialog or a panel; it is not part of the item's name. */
@@ -63,6 +66,7 @@ export function PageMoreMenu({
   /** Opens a side panel; `returnTo` is where focus goes when it closes. */
   onOpenPanel: (kind: string, returnTo: HTMLElement | null) => void;
 }) {
+  const creation = useCreatePage();
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const [reminder,setReminder]=useState(false);
   const [locking,setLocking]=useState(false);
@@ -175,6 +179,12 @@ export function PageMoreMenu({
               {item(<Palette aria-hidden="true" />, "Display settings", panel("display"))}
               {item(<Scale aria-hidden="true" />, "Add decision record", dialogItem("decision"))}
               {item(<FolderInput aria-hidden="true" />, "Move page", dialogItem("move"))}
+              <DropdownMenuItem disabled={creation.pending} onSelect={() => void creation.create(async () => ({containerId: document.page.containerId, parentPageId: document.page.id, title: DEFAULT_PAGE_TITLE}))}>
+                <Plus aria-hidden="true" />Create child page
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => window.location.assign(templateCreationHref(document.page.containerId, document.page.id))}>
+                <LayoutTemplate aria-hidden="true" />Child from template
+              </DropdownMenuItem>
             </>
           ) : null}
           {item(<Copy aria-hidden="true" />, "Duplicate page", dialogItem("duplicate"))}
@@ -212,6 +222,7 @@ export function PageMoreMenu({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+      {creation.error ? <p role="alert">{errorMessage(creation.error)}</p> : null}
       {lockError ? <p role="alert">{errorMessage(lockError)}</p> : null}
       <PageActionDialogs
         dialog={dialog}
