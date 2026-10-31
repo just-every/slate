@@ -1,3 +1,5 @@
+import {createRequire} from 'node:module';
+import {realpath} from 'node:fs/promises';
 import {launchMailRuntime} from '../e2e/mail-runtime.mjs';
 import {signInWithOutbox} from '../e2e/outbox-auth.mjs';
 import {testDevKey,devKeyHeaders,sourceDevOrigins} from '../e2e/dev-key.mjs';
@@ -41,6 +43,21 @@ export async function runtime(directory){
   }
   await invoke(['d1','migrations','apply','DB']);
   return {origin,persist,start,close,
+    async inventory(){
+      assert.equal(worker,undefined,'Stop the Worker before inspecting its R2 namespace.');
+      const require=createRequire(await realpath(path.join(root,'node_modules/wrangler/package.json')));
+      const wrangler=require('wrangler'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
+      const selected=wrangler.unstable_getMiniflareWorkerOptions(wrangler.unstable_readConfig({config:configPath}));
+      const contents=`export default {async fetch(request,env){
+        const objects=[];let cursor;
+        do{const page=await env.FILES.list({cursor});objects.push(...page.objects.map(({key,size,etag})=>({key,size,etag})));cursor=page.truncated?page.cursor:undefined;}while(cursor);
+        return Response.json(objects.sort((a,b)=>a.key.localeCompare(b.key)));
+      }}`;
+      const options=convertV4MiniflareOptions({host:'127.0.0.1',port:await availablePort(),workers:[{name:'inventory',compatibilityDate:emitted.compatibility_date,modules:[{type:'ESModule',path:'inventory.mjs',contents}],r2Buckets:selected.workerOptions.r2Buckets}]});
+      const storage=new Miniflare({...options,resourcePersistencePath:path.join(persist,'v3')});
+      try{return await(await storage.dispatchFetch('http://localhost/')).json();}
+      finally{await storage.dispose();}
+    },
     async scheduled(){const response=await fetch(origin+'/cdn-cgi/local/scheduled?cron='+encodeURIComponent('* * * * *'));assert.equal(response.status,200,'The emitted Worker runs its real scheduled handler.');},
     async sql(sql){assert.equal(worker,undefined,'Stop the Worker before opening D1 from the fixture helper.');return JSON.parse(await invoke(['d1','execute','DB','--command',sql,'--json']));},
     async cli(action,file,cookie){let output;try{output=await command('nice',['-n','15',process.execPath,'src/core/features/portability/command.mjs',action==='export'?'backup':'restore',file],{cwd:root,env:{...env,SLATE_APP_URL:origin,SLATE_SESSION_COOKIE:cookie}});}catch(cause){const code=cause.message.match(/\"code\":\"([A-Z_]+)\"/)?.[1]??'COMMAND_FAILED';throw Error(`Native ZIP ${action} failed against the local deployment: ${code}.`);}const line=output.trim().split('\n').at(-1);const receipt=JSON.parse(line);assert.equal(receipt.state,'completed');return receipt;}};

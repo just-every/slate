@@ -3978,9 +3978,9 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 33 | 193 | 0 | 226 |
+| Published | 34 | 192 | 0 | 226 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 49 | 248 | 40 | 337 |
+| All | 50 | 247 | 40 | 337 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4152,7 +4152,7 @@ Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e66
 | `PORT-003` | Visible jobs | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Export and import show Queued, Running, Completed or Failed with record counts and, on failure, a report naming what failed."<br>No validated CI-run proof for this acceptance point: "A failed job is never shown as complete." |
 | `PORT-004` | Search rebuild | published | partial | `tests/e2e/imports/preview-undo.test.ts` | Missing an import completion journey that reads canonical search and dirty-generation state and checks the promised search behavior before lazy refresh; the cited reviewed-import flow counts indexed pages but does not check the complete search bar. |
 | `PORT-005` | Access boundary | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public export/restore journey that checks all secret exclusions, sole active owner and unpublished restored pages, then tries an unsafe activation; the cited test parses historical actors only. |
-| `PORT-006` | Atomic import | published | partial | `tests/qualification/authority/atomic-recovery.test.ts` | Missing a public restore journey that completes and reads a valid restore and refuses a late-failing archive without changing the destination; the cited atomic-recovery test invokes restore services directly. |
+| `PORT-006` | Atomic import | published | done | `tests/qualification/authority/atomic-recovery.test.ts` — "PORT-006 — a late D1 restore failure rolls back prior records and staged R2 originals, then the exact archive retries successfully" (acceptance 1–2); `tests/portability/roundtrip.test.mjs` — "BASE-DATA-001 PORT-001 PORT-002 PORT-005 PORT-006 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment" (acceptance 1–2). | |
 | `PORT-007` | Exporting a page or a container | published | partial | `tests/flagship/federation/federation.test.ts` | Missing a public page, subtree and container export journey opening Markdown, HTML, PDF and CSV media and re-importing the tree; the cited federation flow invokes readable-export services directly and re-imports a narrower case. |
 | `LINK-001` | Permanent URLs | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every page, page revision, container, database, record, comment thread and template has a permanent URL."<br>No validated CI-run proof for this acceptance point: "Renaming a record, moving it, changing its container, archiving it or restoring it never changes that URL, and every existing link, mention, citation, content query and search result continues to resolve to it." |
 | `LINK-002` | Tombstones | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A link to a deleted or erased record resolves to a tombstone naming the record kind and the time it was deleted, not an error page or an empty view, and exposes no erased content or personal metadata." |

@@ -10,7 +10,7 @@ import {populatedFixture,attachments,pageIds} from './fixture.mjs';
 import {equivalent,unpack} from './equivalence.mjs';
 import {bootstrapAuditPredicate} from '../../src/core/features/portability/bootstrap-audit.ts';
 
-test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment',{timeout:240000},async t=>{
+test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 PORT-006 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment',{timeout:360000},async t=>{
   const scratch=await mkdtemp(path.join(path.dirname(root),'portability-'));
   let source,target;
   try{
@@ -65,8 +65,39 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     await target.close();await target.start({localOwner:true});
     // The first-run page uses the real gated dev entry, not an emailed proof.
     const localCookie=await signIn(target);
-    const form=new FormData();form.set('operationKey',randomUUID());form.set('file',new Blob([await readFile(first)],{type:'application/zip'}),'workspace.zip');
-    const staged=await fetch(target.origin+'/api/exports/jobs/restore',{method:'POST',headers:{Cookie:localCookie,Origin:target.origin},body:form});
+    const archive=await readFile(first);
+    const stage=async operationKey=>{
+      const form=new FormData();form.set('operationKey',operationKey);form.set('file',new Blob([archive],{type:'application/zip'}),'workspace.zip');
+      return fetch(target.origin+'/api/exports/jobs/restore',{method:'POST',headers:{Cookie:localCookie,Origin:target.origin},body:form});
+    };
+    await target.close();
+    const inventoryBefore=await target.inventory();
+    const snapshotSql="SELECT * FROM workspaces; SELECT * FROM members; SELECT * FROM workspace_policies; SELECT * FROM status_entries; SELECT type,name,sql FROM sqlite_master WHERE name<>'portability_restore_abort' ORDER BY type,name";
+    const bootstrapBefore=(await target.sql(snapshotSql)).map(result=>result.results);
+    await target.sql("CREATE TRIGGER portability_restore_abort BEFORE INSERT ON page_blocks BEGIN SELECT RAISE(ABORT,'labelled late recovery fault'); END");
+    await target.start({localOwner:true});
+    const failedKey=randomUUID(),failure=await stage(failedKey);
+    assert.equal(failure.status,202);
+    const failedJob=await failure.json();
+    assert.equal(failedJob.state,'queued');
+    const failedRestore=await(await api(target,localCookie,`/api/exports/jobs/${failedJob.id}/run`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
+    assert.equal(failedRestore.state,'failed');assert.equal(failedRestore.report.code,'RESTORE_FAILED');assert.deepEqual(failedRestore.counts,{});
+    const durable=await(await api(target,localCookie,`/api/exports/jobs/${failedJob.id}`)).json();
+    assert.deepEqual(durable,failedRestore,'The native status door retains the failed result.');
+    assert.deepEqual(await(await stage(failedKey)).json(),failedRestore,'Replaying the failed operation never publishes content.');
+    for(const pageId of pageIds)assert.equal((await fetch(target.origin+`/api/pages/${pageId}`,{headers:{Cookie:localCookie,...devKeyHeaders}})).status,404);
+    for(const original of originals)assert.equal((await fetch(target.origin+`/api/media/${original.id}`,{headers:{Cookie:localCookie,...devKeyHeaders}})).status,404);
+    await target.close();
+    const [rollback,staging]=await target.sql("SELECT (SELECT COUNT(*) FROM containers) AS containers,(SELECT COUNT(*) FROM pages) AS pages,(SELECT COUNT(*) FROM page_blocks) AS blocks,(SELECT COUNT(*) FROM page_revisions) AS revisions,(SELECT COUNT(*) FROM files) AS files,(SELECT COUNT(*) FROM groups) AS groups,(SELECT COUNT(*) FROM comments) AS comments; SELECT cleanup_json FROM portability_jobs WHERE state='failed' AND kind='restore'");
+    assert.deepEqual(rollback.results,[{containers:0,pages:0,blocks:0,revisions:0,files:0,groups:0,comments:0}]);
+    assert.equal(staging.results.length,1);
+    assert.equal(JSON.parse(staging.results[0].cleanup_json).length,before.manifest.blobs.length,'Every original was staged before the late D1 failure.');
+    assert.deepEqual(await target.inventory(),inventoryBefore,'Neither staged source ZIP nor staged originals leak into R2.');
+    assert.deepEqual((await target.sql(snapshotSql)).map(result=>result.results),bootstrapBefore,'Rollback retains the complete bootstrap identity, policy, vocabulary and schema.');
+    await target.sql("DROP TRIGGER portability_restore_abort");
+    await target.start({localOwner:true});
+    assert.deepEqual(await(await api(target,localCookie,`/api/exports/jobs/${failedJob.id}`)).json(),failedRestore,'Failed status survives a Worker restart.');
+    const staged=await stage(randomUUID());
     const restoreJob=await staged.json();
     assert.equal(staged.status,202,JSON.stringify(restoreJob));
     const imported=await(await api(target,localCookie,`/api/exports/jobs/${restoreJob.id}/run`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
