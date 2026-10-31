@@ -2,7 +2,7 @@ import {initializeEmbedEdge,readEmbedRequests} from '../../helpers/embed-edge.mj
 import { initializeWebhookEdge, setWebhookFailure } from '../../helpers/webhook-edge.mjs';
 import { testDevKey } from '../../e2e/dev-key.mjs';
 import assert from 'node:assert/strict';
-import { signInWithOutbox } from '../../e2e/outbox-auth.mjs';
+import { inbox, newOutboxLink, signInWithOutbox } from '../../e2e/outbox-auth.mjs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, expect, request } from '@playwright/test';
@@ -221,7 +221,34 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
   }
 }
 
-export async function setupWorkspace({ page, origin, api, records }) {
+export async function setupWorkspace({ page, context, origin, api, records }) {
+  const completion = () => ({ operationKey: crypto.randomUUID(), workspaceName: 'Refused workspace', containerName: 'Refused space', pageTitle: 'Refused page' });
+  const freshView = async (cookie, run) => {
+    const view = await context.browser().newContext({ viewport: page.viewportSize() });
+    try {
+      if (cookie) await view.addCookies([{ name: 'slate_session', value: cookie.split('=')[1], url: origin }]);
+      await run(view, await view.newPage());
+    } finally { await view.close(); }
+  };
+  // Separate native sessions keep the server's admission independent of an
+  // already-mounted owner's router or cached setup state.
+  const revoked = await signInWithOutbox(origin, ownerEmail);
+  const signOut = await fetch(origin + '/auth/signout', { method: 'POST', headers: { origin, cookie: revoked.cookie } });
+  assert.equal(signOut.status, 204);
+  for (const cookie of [undefined, 'slate_session=synthetic-slate-invalid', revoked.cookie]) {
+    await freshView(cookie, async (view, visitor) => {
+      await visitor.goto(origin + '/setup', { waitUntil: 'networkidle' });
+      assert.equal(new URL(visitor.url()).pathname, '/signin');
+      await expect(visitor.getByRole('heading', { name: 'Name this workspace', exact: true })).toHaveCount(0);
+      assert.equal((await view.request.get(origin + '/api/workspace/first-run')).status(), 401);
+      assert.equal((await view.request.post(origin + '/api/workspace/first-run', { headers: { origin }, data: completion() })).status(), 401);
+    });
+  }
+  for (const route of ['/app', '/app/search', '/app/settings']) {
+    await page.goto(origin + route, { waitUntil: 'networkidle' });
+    assert.equal(new URL(page.url()).pathname, '/setup', 'Every unfinished owner entry reaches the native wizard.');
+  }
+  assert.deepEqual(await api('/api/workspace/first-run'), { required: true, canComplete: true });
   await page.goto(origin + '/app', { waitUntil: 'networkidle' });
   assert.deepEqual(await records(), { workspaces: 1, spaces: 0, pages: 0 }, 'The fixture supplies identity only before first run.');
   await expect(page.getByRole('heading', { name: 'Name this workspace', exact: true })).toBeVisible();
@@ -267,6 +294,41 @@ export async function setupWorkspace({ page, origin, api, records }) {
   await expect(page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue('Welcome');
   await expect(page.getByTestId('workspace-name')).toHaveText('Field notes');
   await accessible(page, 'first page');
+  assert.deepEqual(await api('/api/workspace/first-run'), { required: false, canComplete: false });
+  const before = await api('/api/workspace');
+  const repeat = await context.request.post(origin + '/api/workspace/first-run', { headers: { origin }, data: completion() });
+  assert.equal(repeat.status(), 409, 'A new completion cannot create another initial space or page.');
+  assert.deepEqual(await api('/api/workspace'), before);
+  // A genuinely new native session for a later member must never inherit the
+  // owner's wizard, including on a direct setup URL after a reload.
+  const laterEmail = ['later-' + crypto.randomUUID(), 'test.invalid'].join('@');
+  const mail = await inbox(origin);
+  const invite = await context.request.post(origin + '/api/invitations', { headers: { origin }, data: { operationKey: crypto.randomUUID(), email: laterEmail, kind: 'member' } });
+  assert.equal(invite.status(), 200);
+  const link = new URL(await newOutboxLink(origin, mail));
+  const accepted = await fetch(origin + '/api/auth/invitation/accept', { method: 'POST', redirect: 'manual', headers: { origin, 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: link.searchParams.get('token') }) });
+  assert.equal(accepted.status, 303);
+  const laterCookie = accepted.headers.get('set-cookie').split(';', 1)[0];
+  await freshView(laterCookie, async (view, member) => {
+    const session = await (await view.request.get(origin + '/api/session')).json();
+    assert.equal(session.member.email, laterEmail);
+    assert.equal(session.member.role, 'member');
+    for (const route of ['/app', '/setup']) {
+      await member.goto(origin + route, { waitUntil: 'networkidle' });
+      assert.equal(new URL(member.url()).pathname, '/app');
+      await expect(member.getByRole('main')).toBeVisible();
+      await expect(member.getByRole('heading', { name: 'Name this workspace', exact: true })).toHaveCount(0);
+      await member.reload({ waitUntil: 'networkidle' });
+      assert.equal(new URL(member.url()).pathname, '/app');
+    }
+    assert.deepEqual(await (await view.request.get(origin + '/api/workspace/first-run')).json(), { required: false, canComplete: false });
+    assert.equal((await view.request.post(origin + '/api/workspace/first-run', { headers: { origin }, data: completion() })).status(), 403);
+  });
+  await page.goto(origin + '/setup', { waitUntil: 'networkidle' });
+  assert.equal(new URL(page.url()).pathname, '/app', 'Completed owners return to their workspace.');
+  assert.deepEqual(await records(), { workspaces: 1, spaces: 1, pages: 1 }, 'Refused and repeated setup creates no domain records.');
+  await page.goto(origin + '/app/pages/' + pages.items[0].id, { waitUntil: 'networkidle' });
+  await expect(page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue('Welcome');
 }
 
 export async function openNavigation(page) {

@@ -139,11 +139,15 @@
       "id": "WORK-013",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "The registered Workers regression covers durable first-run records and repeated completion. The separate Node CLI browser journey specified in tests/requirements/cli-journey.md exercises native setup routing and wizard completion at 1440 and 390; it is outside this Workers report. Complete requirement-level acceptance remains unproven.",
+      "unmetReason": "This Workers-only report covers native first-run records and repeated completion, both native owner claim doors, configured defaults, continued editing, replay refusal and atomic rollback. The complete responsive wizard, session refusals and genuinely later invited-member routing run separately in the push-loaded core browser registrations; the emitted admission registration runs in the contract job. CONTRACT.md retains main’s partial judgment and records these supporting regressions; this inventory does not consume Node browser results.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/security.test.ts",
           "testName": "core durable authority first-run, operation replay, atomic rollback and membership policies preserve authority"
+        },
+        {
+          "file": "tests/flagship/core/preview-owner-signin.test.ts",
+          "testName": "preview and bootstrap owner sign-in preserve identity and single-use authority"
         }
       ]
     },

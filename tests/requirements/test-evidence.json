@@ -874,9 +874,10 @@
       "kind": "supporting-regression",
       "clauses": [
         "BASE-DATA-005",
-        "BASE-ACCESS-001"
+        "BASE-ACCESS-001",
+        "WORK-013"
       ],
-      "reason": "Asserts POST /auth/bootstrap claims the setup owner once with the setup token and keeps it afterwards. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Local Worker journey: a grant written as RER's preview writer writes it signs the owner in once on a Worker bound RER_PREVIEW_OWNER_SIGNIN=/auth/owner-signin; reuse, expiry, a missing token and a non-preview Worker go to the sign-in page with no session. Hosted preview evidence is recorded separately. Local Worker journey: on a Worker bound RER_PREVIEW_OWNER_SIGNIN the sign-in mail subject, text and html and the native confirmation page name the app as a preview and carry the preview banner; a live Worker's mail and page carry neither. Hosted preview evidence is recorded separately."
+      "reason": "Asserts POST /auth/bootstrap claims the setup owner once with the setup token and keeps it afterwards. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Local Worker journey: a grant written as RER's preview writer writes it signs the owner in once on a Worker bound RER_PREVIEW_OWNER_SIGNIN=/auth/owner-signin; reuse, expiry, a missing token and a non-preview Worker go to the sign-in page with no session. Hosted preview evidence is recorded separately. Local Worker journey: on a Worker bound RER_PREVIEW_OWNER_SIGNIN the sign-in mail subject, text and html and the native confirmation page name the app as a preview and carry the preview banner; a live Worker's mail and page carry neither. Hosted preview evidence is recorded separately. WORK-013 native bootstrap and signed-claim HTTP journeys verify configured workspace name, General and Welcome, completed state, meaningful workspace, space and page edits, refusal of invalid and foreign claims, one-use replay and replay after revocation, and native D1 rollback after the final canonical insert fails. Responsive setup routing and wizard coverage is loaded separately by the core browser registrations."
     },
     {
       "file": "tests/flagship/discovery/following.test.ts",
