@@ -121,8 +121,12 @@ for (const width of [390]) {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await treeFilterJourney(state);
-      await state.switchIdentity('owner');
-      await withSecondPerson(state, width, people => pageAppearanceJourney(state, people));
+      // Appearance reloads and projection reads have their own operator budget,
+      // independent of the invitation and authority journeys that follow.
+      await withWorkspace({ width, height: 844 }, 'core-wiki', async appearanceState => {
+        await setupWorkspace(appearanceState);
+        await withSecondPerson(appearanceState, width, people => pageAppearanceJourney(appearanceState, people));
+      });
       await state.switchIdentity('owner');
       await settingsJourney(state,width);
       await workspaceAuthorityJourney(state,width);

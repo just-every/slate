@@ -5376,7 +5376,7 @@
       "executable": false
     },
     "src/core/app/styles/navigation.css": {
-      "sha256": "50d3ade70ae21398af21a7a9fcc6c85bcb5f66cc250d82bc21556bd48602d492",
+      "sha256": "6edeb3b89064760b8ba9e61e1f19236485da256d1b6bad985a4d878dc9ce93c5",
       "executable": false
     },
     "src/core/app/styles/page.css": {
@@ -11968,7 +11968,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "223a930395a5d02e93b872992599cb6f176c01d260ea14af7166e564162c4d30",
+      "sha256": "acb211d09c58123e5ecf33d0571adada7e3b856153262300a6a75cd7e42a6131",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {
