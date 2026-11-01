@@ -8,10 +8,10 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 49 | 248 | 34 | 331 |
+| Core | 50 | 247 | 34 | 331 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 49 | 248 | 40 | 337 |
+| Full target | 50 | 247 | 40 | 337 |
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
@@ -401,7 +401,7 @@ Core · published · **partial**
 
 #### PAGE-006 — Icon and cover
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A page takes an icon from emoji, a supplied icon set or an upload, and a cover from a gallery, an upload or a link.
 
@@ -409,8 +409,8 @@ Core · published · **partial**
 1. Both are removable, both render in the tree and in search results where the surface has room, and neither is required.
 2. Icon from emoji, icon set or upload and cover from gallery, upload or link render in tree and search and are removable.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "A page takes an icon from emoji, a supplied icon set or an upload, and a cover from a gallery, an upload or a link."<br>No validated CI-run proof for this acceptance point: "Both are removable, both render in the tree and in search results where the surface has room, and neither is required."
+**Evidence.** `tests/qualification/ui-convergence/page-appearance-journey.mjs` — "pageAppearanceJourney", loaded by `tests/qualification/ui-convergence/journeys.test.mjs` — "page display settings are shared and survive export and import at 1440px" and "space tree title filtering preserves ancestors, access and expansion at 390px": native emoji, supplied symbols, uploaded icons, gallery, uploaded and linked covers; source replacement, independent removal and neither appearance after reload; canonical page, tree and search projections, selected uploaded bytes, interaction-gated links, immediate keyboard-focus tooltips within the viewport, published-reader isolation, refused edits and immediate revocation. `tests/e2e/search/fts-permissions.test.ts` — "Indexed search uses current native authority for literal matches, totals, facets and cursors" retains the published and working descriptor boundary.
+**Gap.** None.
 
 #### PAGE-007 — Details
 
