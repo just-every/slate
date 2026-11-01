@@ -1,3 +1,4 @@
+import { rejectErasedPage } from '../pages/erased';
 import type {FeatureContext} from '../../app/feature-context';
 import {ApiProblem} from '../../app/problems';
 import {pageRow} from './repository';
@@ -6,6 +7,7 @@ import {loadPageTrust} from '../search/trust';
 import {readRevision} from '../versions/service';
 
 export async function pageLinkCard(ctx:FeatureContext,pageId:string,revisionId?:string) {
+  await rejectErasedPage(ctx,pageId);
   if(revisionId==='')throw new ApiProblem(400,'INVALID_REVISION','Choose an exact page revision.');
   const access=await requirePageLevel(ctx,pageId,'view');
   const page=await pageRow(ctx,pageId);

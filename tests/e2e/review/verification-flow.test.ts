@@ -1,6 +1,8 @@
 import { env } from 'cloudflare:test';
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { reviewFixture } from './fixture';
+import { sessionFor } from '../setup/fixtures';
+import { createApi } from '../../../src/core/app/hono';
 import { scheduledDiscovery } from '../../../src/core/features/notifications/jobs';
 import type { AppBindings } from '../../../src/core/app/types';
 
@@ -125,4 +127,99 @@ test('Verifying offers 7, 30 or 90 days, a date or none, only on the opened revi
   expect((await request('owner', 'POST', `/api/pages/${id}/open`, {operationKey: op(), revisionId: changed.workingRevisionId})).status).toBe(200);
   const bulk = await request('owner', 'POST', '/api/status/review/bulk-verify', {items: [{pageId: id, operationKey: op(), pageRevisionId: revision, attestRevisionId: changed.workingRevisionId, statusKey: 'verified'}]});
   expect(bulk.data.items).toEqual([{pageId: id, verified: true}]);
+  await citationJourney(f);
 }, 60_000);
+
+
+/** Exact citations use native writes and current authority, with substitution only at the clock. */
+async function citationJourney(f: Awaited<ReturnType<typeof reviewFixture>>) {
+  const api=createApi(),origin=new URL(String(env.APP_URL)).origin;
+  const request=async(actor:string,method:string,path:string,body?:unknown)=>{
+    if(path.startsWith('/p/'))return f.request(actor,method,path,body);
+    const response=await api.request(origin+path,{method,headers:{origin,...(actor==='anonymous'?{}:{cookie:f.cookies[actor]}),'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)},env);
+    const text=await response.text();
+    return {status:response.status,data:JSON.parse(text),text};
+  };
+  let sequence=0;
+  const op=()=>`synthetic-slate-citation-${++sequence}`;
+  const success=async(actor:string,method:string,path:string,body?:unknown)=>{
+    const result=await request(actor,method,path,body);
+    expect(result.status,result.text).toBe(200);
+    return result.data;
+  };
+  const w=await success('owner','GET','/api/workspace');
+  const settings={expectedRevisionId:w.revisionId,name:w.name,mark:w.mark,description:w.description,guestAccess:w.guestAccess,publicLinkAccess:'allowed',anonymousAccess:'allowed',policies:{...w.policies,'page.lifecycle.v1':'draft-then-publish'}};
+  await success('owner','PUT','/api/workspace',{operationKey:op(),...settings});
+  const container=await success('owner','GET','/api/containers/c');
+  await success('owner','POST','/api/sharing/container-settings',{operationKey:op(),id:'c',expectedRevisionId:container.revisionId,visibility:container.visibility,guestAccess:'allowed',publicLinkAccess:'allowed',anonymousAccess:'allowed'});
+  const created=await success('owner','POST','/api/pages',{operationKey:op(),containerId:'c',title:'Cited handbook',blocks:[{id:'synthetic-slate-cited-block',blockType:'paragraph',treePosition:'0',content:{text:[{text:'Committed citation body.'}]}}]});
+  const id=created.value.pageId;
+  let revision=created.receipt.revisionId;
+  const share=async(principalId:string,level:string,extra={})=>success('owner','POST','/api/sharing',{operationKey:op(),targetKind:'page',targetId:id,principalKind:'member',principalId,level,...extra});
+  await share('owner','full');
+  const restricted=await success('owner','PUT',`/api/sharing/pages/${id}/inheritance`,{operationKey:op(),expectedRevisionId:revision,restricted:true});
+  revision=restricted.receipt.revisionId;
+  const published=await success('owner','POST',`/api/pages/${id}/publish`,{operationKey:op(),expectedRevisionId:revision});
+  revision=published.receipt.revisionId;
+  const snapshot=(await success('owner','GET',`/api/pages/${id}`)).publishedRevisionId;
+  const readerGrant=await share('reader','view');
+  const changed=await success('owner','PATCH',`/api/pages/${id}`,{operationKey:op(),expectedRevisionId:revision,properties:{title:'Working-only private title'}});
+  const working=changed.value.revisionId;
+  const card=await success('owner','GET',`/api/pages/${id}/link-card?revision=${snapshot}`);
+  expect(card).toMatchObject({href:`/app/pages/${id}?revision=${snapshot}`,title:'Cited handbook'});
+  const exact=await success('reader','GET',`/api/revisions/${id}/${snapshot}`);
+  expect(exact).toMatchObject({id:snapshot,properties:{title:'Cited handbook'},newerRevisionExists:true});
+  expect(exact.blocks[0].content.text).toEqual([{text:'Committed citation body.'}]);
+  expect((await request('reader','GET',`/api/revisions/${id}/${working}`)).status).toBe(404);
+  await share('reader','view',{id:readerGrant.value.id,revoke:true});
+  const revoked=await request('reader','GET',`/api/revisions/${id}/${snapshot}`);
+  expect(revoked.status).toBe(404);
+  expect(revoked.text).not.toContain('Committed citation body.');
+  const clock=Date.now();
+  vi.useFakeTimers({toFake:['Date']});
+  try {
+    vi.setSystemTime(clock);
+    await share('reader','view',{id:readerGrant.value.id,expiresAt:new Date(clock+60000).toISOString()});
+    expect((await request('reader','GET',`/api/revisions/${id}/${snapshot}`)).status).toBe(200);
+    vi.setSystemTime(clock+60001);
+    const expired=await request('reader','GET',`/api/revisions/${id}/${snapshot}`);
+    expect(expired.status).toBe(404);
+    expect(expired.text).not.toContain('Committed citation body.');
+  } finally { vi.useRealTimers(); }
+  expect((await request('anonymous','GET',`/api/revisions/${id}/${snapshot}`)).status).toBe(401);
+  expect((await request('anonymous','GET',`/p/cited-handbook?revision=${snapshot}`)).status).toBe(404);
+  const current=await success('owner','GET',`/api/pages/${id}`);
+  await success('owner','POST',`/api/publishing/${id}`,{operationKey:op(),expectedRevisionId:current.page.revisionId,host:'localhost:8787',slug:'cited-handbook',indexable:false});
+  const publicRevision=await request('anonymous','GET',`/p/cited-handbook?revision=${snapshot}`);
+  expect(publicRevision.status,publicRevision.text).toBe(200);
+  expect(publicRevision.text).toContain('Committed citation body.');
+  expect(publicRevision.text).toContain('A newer revision exists.');
+  expect(publicRevision.text).not.toContain('Working-only private title');
+  const privateRevision=await request('anonymous','GET',`/p/cited-handbook?revision=${working}`);
+  expect(privateRevision.status).toBe(404);
+  expect(privateRevision.text).not.toContain('Working-only private title');
+  // A freshly proven native session authorizes deletion; no stale grant authorizes a replay.
+  f.cookies.owner=await sessionFor('owner',{freshProof:true});
+  await success('owner','POST',`/api/archive/${id}`,{operationKey:op(),expectedRevisionId:current.page.revisionId,action:'trash'});
+  const refused=await request('owner','POST',`/api/archive/${id}/permanent-delete`,{operationKey:op(),confirmedPageIds:[]});
+  expect(refused.status,refused.text).toBe(409);
+  expect(refused.data.code).toBe('CONFIRM_CASCADE');
+  await success('owner','POST',`/api/archive/${id}`,{operationKey:op(),expectedRevisionId:current.page.revisionId,action:'restore'});
+  expect((await success('owner','GET',`/api/revisions/${id}/${snapshot}`)).blocks).toEqual(exact.blocks);
+  await success('owner','POST',`/api/archive/${id}`,{operationKey:op(),expectedRevisionId:current.page.revisionId,action:'trash'});
+  const deletion={operationKey:op(),confirmedPageIds:[id]};
+  expect((await success('owner','POST',`/api/archive/${id}/permanent-delete`,deletion)).value.deletedPageIds).toEqual([id]);
+  await success('owner','POST',`/api/archive/${id}/permanent-delete`,deletion);
+  for(const path of [`/api/pages/${id}`,`/api/revisions/${id}/${snapshot}`,`/api/pages/${id}/link-card?revision=${snapshot}`]) {
+    const tombstone=await request('owner','GET',path);
+    expect(tombstone.status).toBe(404);
+    expect(tombstone.data).toEqual({code:'PAGE_ERASED',message:'This record was permanently deleted.',details:{kind:'page',deletedAt:expect.any(String)}});
+    expect(Number.isFinite(Date.parse(tombstone.data.details.deletedAt))).toBe(true);
+  }
+  const replay=await request('owner','PATCH',`/api/pages/${id}`,{operationKey:op(),expectedRevisionId:working,properties:{title:'Resurrected content'}});
+  expect(replay.status).toBe(404);
+  expect((await request('denied','GET',`/api/revisions/${id}/${snapshot}`)).data.code).toBe('NOT_FOUND');
+  const erasedPublic=await request('anonymous','GET',`/p/cited-handbook?revision=${snapshot}`);
+  expect(erasedPublic.status).toBe(404);
+  expect(erasedPublic.text).not.toContain('Committed citation body.');
+}

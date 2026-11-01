@@ -56,7 +56,7 @@ export function createPublicPagesRoutes() {
             throw new ApiProblem(404, 'NOT_FOUND', 'Not found.');
         const display = c.req.query('display'), inline = !!display && blocks.some((b: any) => b.id === display && b.blockType === 'media' && b.content.kind !== 'file' && (b.content.source?.fileId === f.id || b.content.source?.url === `/api/media/${f.id}`));
         return mediaResponse(c.env.FILES, f, inline);
-    }).get('/*', async (c) => { try { const p = await publicPage(c.env.DB, new URL(c.req.url).host, decodeURIComponent(new URL(c.req.url).pathname.slice(3))); await authorizePublic(c, p); if (!c.get('member'))
+    }).get('/*', async (c) => { try { const p = await publicPage(c.env.DB, new URL(c.req.url).host, decodeURIComponent(new URL(c.req.url).pathname.slice(3)),c.req.query('revision')); await authorizePublic(c, p); if (!c.get('member'))
         await publicViewStatement(c.env.DB, { viewId: createUlid(), pageId: p.page_id, host: new URL(c.req.url).host, slug: p.slug, now: new Date().toISOString() }).run(); p.body_json=JSON.stringify(await projectPublicSynced(c.env.DB,p,JSON.parse(p.body_json))); const { links, titles } = await publicTargets(c.env.DB, p), shown = await publicHeader(c.env.DB, await publicQueries(c.env.DB, p), c.req.query('q')??'');
         const refusedHosts=new Set<string>();
         for(const block of JSON.parse(p.body_json)){if(block.blockType!=='link-card')continue;const embed=providerEmbed(block.content.url);if(embed&&(await observedEmbed(c.env.DB,p.workspace_id,embedDeployment(c.get('runtimeConfig')?.appUrl??new URL(c.req.url).origin,c.get('runtimeConfig')?.publicPageHost),block.content.url))?.verdict!=='embeddable')refusedHosts.add(new URL(embed.url).hostname);}

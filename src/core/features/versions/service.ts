@@ -1,3 +1,4 @@
+import { rejectErasedPage } from '../pages/erased';
 import {projectSynced} from '../editor/synced/read';
 import { labelForReader } from '../pages/mentions';
 import { filterRecordProperties } from '../databases/property-access';
@@ -9,11 +10,13 @@ import { pageRow, revisionRow, pageGuard, writable } from '../pages/repository';
 import { contentPolicy } from '../pages/policy';
 import { restorePageContent } from '../lifecycle/service';
 export async function revisionHistory(ctx: FeatureContext, pageId: string) {
+    await rejectErasedPage(ctx,pageId);
     const access = await requirePageLevel(ctx, pageId, 'view');
     const editor = access.decision.level === 'edit' || access.decision.level === 'full';
     return (await ctx.db.prepare("SELECT r.id,r.origin,r.author_member_id AS authorMemberId,COALESCE(m.display_name,'Former member') AS authorDisplayName,r.ordinal,r.label,r.status_key AS statusKey,r.created_at AS createdAt,r.deleted_at AS deletedAt,r.deleted_by_member_id AS deletedByMemberId FROM page_revisions r LEFT JOIN members m ON m.id=r.author_member_id AND m.workspace_id=? WHERE r.page_id=? AND (? OR EXISTS (SELECT 1 FROM content_published_revisions v WHERE v.page_id=r.page_id AND v.revision_id=r.id)) ORDER BY r.created_at DESC,r.id DESC").bind(ctx.actor.workspaceId,pageId,+editor).all()).results;
 }
 export async function readRevision(ctx: FeatureContext, pageId: string, id: string) {
+    await rejectErasedPage(ctx,pageId);
     const access = await requirePageLevel(ctx, pageId, 'view');
     const r = await revisionRow(ctx, pageId, id);
     if (access.decision.level === 'view' || access.decision.level === 'comment') {

@@ -26,12 +26,22 @@ export async function historyJourney(state, people) {
   await expect(page.locator('.comment-thread')).toContainText('Who owns the rota?');
   const [thread] = (await ok(alice.context, origin, 'GET', `/api/comments/page/${pageId}`)).threads;
   await page.locator('.detail-close').click();
-  // A child page and, where the space allows it, a public link.
+  // Explicit local exposure preconditions, through the owner's native settings.
+  const workspace = await ok(alice.context, origin, 'GET', '/api/workspace');
+  const saveWorkspace = async changes => {
+    const w = await ok(alice.context, origin, 'GET', '/api/workspace');
+    return ok(alice.context, origin, 'PUT', '/api/workspace', {operationKey:randomUUID(),expectedRevisionId:w.revisionId,name:w.name,mark:w.mark,description:w.description,guestAccess:w.guestAccess,publicLinkAccess:w.publicLinkAccess,anonymousAccess:w.anonymousAccess,policies:w.policies,...changes});
+  };
+  await saveWorkspace({publicLinkAccess:'allowed',anonymousAccess:'allowed'});
+  const space = await ok(alice.context, origin, 'GET', `/api/containers/${spaceId}`);
+  await ok(alice.context, origin, 'POST', '/api/sharing/container-settings', {operationKey:randomUUID(),id:spaceId,expectedRevisionId:space.revisionId,visibility:space.visibility,guestAccess:space.guestAccess,publicLinkAccess:'allowed',anonymousAccess:'allowed'});
+  // A child page and a required public exposure.
   const child = await ok(alice.context, origin, 'POST', '/api/pages', { operationKey: randomUUID(), containerId: spaceId, parentPageId: pageId, title: `Runbook appendix ${tag}`, blocks: [] });
   let current = await ok(alice.context, origin, 'GET', `/api/pages/${pageId}`);
   const slug = `runbook-${tag}`;
   const exposureResult = await call(alice.context, origin, 'POST', `/api/publishing/${pageId}`, { operationKey: randomUUID(), expectedRevisionId: current.page.revisionId, host: new URL(origin).host, slug, indexable: false, theme: 'default', headerControls: [], duplicateAsTemplate: false, socialPreview: {}, revoke: false });
-  const published = exposureResult.status === 200;
+  assert.equal(exposureResult.status, 200, JSON.stringify(exposureResult.body));
+  const published = true;
   record('publicLink', published ? { slug, status: exposureResult.status } : { status: exposureResult.status, code: exposureResult.body?.code, message: exposureResult.body?.message });
 
   // Several edits: text in the second block (the revision we will restore), then
@@ -123,7 +133,9 @@ export async function historyJourney(state, people) {
   await accessible(page, 'restored revision');
 
   // REV-005: the pre-restore revision opens exactly as committed, with a newer-revision notice.
-  const citation = `${origin}/app/pages/${pageId}?detail=history&revision=${before.revision}`;
+  const card = await ok(alice.context, origin, 'GET', `/api/pages/${pageId}/link-card?revision=${before.revision}`);
+  assert.equal(card.href, `/app/pages/${pageId}?revision=${before.revision}`);
+  const citation = new URL(card.href, origin).href;
   await page.goto(citation, { waitUntil: 'networkidle' });
   await expect(preview).toContainText('A newer revision exists.');
   await expect(preview).toContainText('Write the review within a day.');
@@ -131,8 +143,17 @@ export async function historyJourney(state, people) {
   const positions = ['Check the pager', 'Close the incident', 'Call the vendor'].map(line => shown.indexOf(line));
   assert.ok(positions.every((at, index) => at >= 0 && (index === 0 || at > positions[index - 1])), 'The cited revision shows its committed block order.');
   await shot('alice', 'citation to pre-restore revision');
+  // Follow a native rich-text link carrying the exact address emitted above.
+  const reference = await restrictedPage({context:alice.context,origin},`Citations ${tag}`,['Open cited revision']);
+  const source = await ok(alice.context,origin,'GET',`/api/pages/${reference.pageId}`);
+  await ok(alice.context,origin,'PATCH',`/api/pages/${reference.pageId}/blocks/${reference.blockIds[0]}`,{operationKey:randomUUID(),expectedRevisionId:source.blocks[0].revisionId,content:{text:[{text:'Open cited revision',link:{href:card.href}}]}});
+  await grant(alice.context,origin,reference.pageId,bob.id,'view');
+  await bob.page.goto(`${origin}/app/pages/${reference.pageId}`,{waitUntil:'networkidle'});
+  const link=bob.page.getByRole('link',{name:'Open cited revision',exact:true});
+  await expect(link).toHaveAttribute('href',card.href);
+  await link.click();
+  await expect(bob.page).toHaveURL(citation);
   // Bob could read it; after his access is removed his copied citation gives nothing.
-  await bob.page.goto(citation, { waitUntil: 'networkidle' });
   await expect(bob.page.locator('.revision-preview')).toContainText('Write the review within a day.');
   const grants = await ok(alice.context, origin, 'GET', `/api/sharing/pages/${pageId}`);
   const bobGrant = grants.items.find(item => item.principalId === bob.id);
@@ -142,6 +163,18 @@ export async function historyJourney(state, people) {
   assert.ok(!(await bob.page.locator('body').innerText()).includes('Write the review within a day.'), 'A member who lost access gets no historical content.');
   assert.ok([403, 404].includes((await call(bob.context, origin, 'GET', `/api/revisions/${pageId}/${before.revision}`)).status));
   await shot('bob', 'citation after access removed');
+  // Regrant with a genuine short expiry: the same generated citation opens,
+  // then stops at current authority without reviving its published history.
+  const expiresAt = new Date(Date.now() + 4000).toISOString();
+  await grant(alice.context, origin, pageId, bob.id, 'view', {id:bobGrant.id,expiresAt});
+  await bob.page.goto(citation, {waitUntil:'networkidle'});
+  await expect(bob.page.locator('.revision-preview')).toContainText('Write the review within a day.');
+  await expect.poll(async () => (await ok(alice.context, origin, 'GET', `/api/sharing/pages/${pageId}`)).items.find(item => item.id===bobGrant.id)?.status, {timeout:10000}).toBe('expired');
+  await bob.page.reload({waitUntil:'networkidle'});
+  await expect(bob.page.getByRole('heading',{name:'Access needed',exact:true})).toBeVisible();
+  await expect(bob.page.locator('body')).not.toContainText('Write the review within a day.');
+  assert.equal((await call(bob.context,origin,'GET',`/api/revisions/${pageId}/${before.revision}`)).status,404);
+  await shot('bob','citation after grant expired');
   // An anonymous reader of a page that is not published gets nothing.
   const { pageId: privatePage } = await restrictedPage({ context: alice.context, origin }, `Private notes ${tag}`, [`Private body ${tag}.`]);
   const privateRevision = (await ok(alice.context, origin, 'GET', `/api/pages/${privatePage}`)).workingRevisionId;
@@ -151,6 +184,64 @@ export async function historyJourney(state, people) {
   assert.ok(!(await stranger.locator('body').innerText()).includes(`Private body ${tag}`), 'An anonymous reader of an unpublished page gets no content.');
   assert.equal((await anonymous.request.get(`${origin}/api/revisions/${privatePage}/${privateRevision}`)).status(), 401);
   await stranger.screenshot({ path: `${people.evidence}/anonymous-citation-unpublished.png`, fullPage: true });
+  // The generated member address admits anonymous readers only for a published
+  // revision under a current public exposure. Working-only content never opens.
+  await stranger.goto(citation, {waitUntil:'networkidle'});
+  await expect(stranger.locator('.public-document')).toContainText('Write the review within a day.');
+  await expect(stranger.locator('.public-document')).toContainText('A newer revision exists.');
+  await stranger.screenshot({path:`${people.evidence}/anonymous-citation-published.png`,fullPage:true});
+  await saveWorkspace({policies:{...workspace.policies,'page.lifecycle.v1':'draft-then-publish'}});
+  current = await ok(alice.context,origin,'GET',`/api/pages/${pageId}`);
+  const unpublished = await ok(alice.context,origin,'PATCH',`/api/pages/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:current.page.revisionId,properties:{title:`Unpublished citation ${tag}`}});
+  const unpublishedCard = await ok(alice.context,origin,'GET',`/api/pages/${pageId}/link-card?revision=${unpublished.value.revisionId}`);
+  await stranger.goto(new URL(unpublishedCard.href,origin).href,{waitUntil:'networkidle'});
+  await expect(stranger.locator('body')).not.toContainText(`Unpublished citation ${tag}`);
+  assert.equal((await anonymous.request.get(`${origin}/p/${slug}?revision=${unpublished.value.revisionId}`)).status(),404);
+  assert.equal((await call(bob.context,origin,'GET',`/api/revisions/${pageId}/${unpublished.value.revisionId}`)).status,404);
+  await stranger.goto(citation,{waitUntil:'networkidle'});
+  await expect(stranger.locator('.public-document')).toContainText('Write the review within a day.');
+  await expect(stranger.locator('body')).not.toContainText(`Unpublished citation ${tag}`);
+  // Public access switches and revocation apply to that same old citation now.
+  await saveWorkspace({anonymousAccess:'forbidden'});
+  await stranger.goto(citation,{waitUntil:'networkidle'});
+  await expect(stranger.locator('body')).not.toContainText('Write the review within a day.');
+  await saveWorkspace({anonymousAccess:'allowed'});
+
+  // Native trash and explicit cascade confirmation: a refused incomplete list
+  // destroys nothing, then the full confirmation erases content and is replay-safe.
+  current = await ok(alice.context,origin,'GET',`/api/pages/${pageId}`);
+  await ok(alice.context,origin,'POST',`/api/archive/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:current.page.revisionId,action:'trash'});
+  const refused = await call(alice.context,origin,'POST',`/api/archive/${pageId}/permanent-delete`,{operationKey:randomUUID(),confirmedPageIds:[pageId]});
+  assert.equal(refused.status,409);
+  assert.equal(refused.body.code,'CONFIRM_CASCADE');
+  await ok(alice.context,origin,'POST',`/api/archive/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:current.page.revisionId,action:'restore'});
+  assert.equal((await ok(alice.context,origin,'GET',`/api/revisions/${pageId}/${before.revision}`)).blocks.length,3);
+  await ok(alice.context,origin,'POST',`/api/archive/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:current.page.revisionId,action:'trash'});
+  const deletion = {operationKey:randomUUID(),confirmedPageIds:[pageId,child.value.pageId]};
+  const erased = await ok(alice.context,origin,'POST',`/api/archive/${pageId}/permanent-delete`,deletion);
+  assert.deepEqual(new Set(erased.value.deletedPageIds),new Set(deletion.confirmedPageIds));
+  await ok(alice.context,origin,'POST',`/api/archive/${pageId}/permanent-delete`,deletion);
+  for (const route of [`/api/pages/${pageId}`,`/api/revisions/${pageId}/${before.revision}`,`/api/pages/${pageId}/link-card?revision=${before.revision}`]) {
+    const gone = await call(alice.context,origin,'GET',route);
+    assert.equal(gone.status,404);
+    assert.equal(gone.body.code,'PAGE_ERASED');
+    assert.deepEqual(Object.keys(gone.body.details).sort(),['deletedAt','kind']);
+    assert.equal(gone.body.details.kind,'page');
+    assert.ok(Number.isFinite(Date.parse(gone.body.details.deletedAt)));
+  }
+  await page.goto(citation,{waitUntil:'networkidle'});
+  const tombstone = page.getByRole('article',{name:'Deleted record'});
+  await expect(tombstone).toContainText('Deleted page');
+  await expect(tombstone.locator('time')).toHaveAttribute('datetime',/T/);
+  for (const privateText of [`Runbook ${tag}`,`Unpublished citation ${tag}`,'Write the review within a day.','Who owns the rota?','Alex Owner','Morgan Reader']) await expect(tombstone).not.toContainText(privateText);
+  await expect(page.locator('.revision-preview')).toHaveCount(0);
+  await shot('alice','same citation after confirmed erasure');
+  await accessible(page,'erased revision citation');
+  await bob.page.goto(citation,{waitUntil:'networkidle'});
+  await expect(bob.page.getByRole('heading',{name:'Access needed',exact:true})).toBeVisible();
+  await stranger.goto(citation,{waitUntil:'networkidle'});
+  await expect(stranger.locator('body')).not.toContainText('Write the review within a day.');
   await anonymous.close();
+  await saveWorkspace({publicLinkAccess:workspace.publicLinkAccess,anonymousAccess:workspace.anonymousAccess,policies:workspace.policies});
   record('history', { restoredFrom: target.revisionId, newRevision: after.revision, revisionsBefore: before.history, revisionsAfter: after.history, activity: { action: activity.action, actor: alice.name, restoredRevisionId: activity.context.revisionId } });
 }

@@ -1,3 +1,4 @@
+import { rejectErasedPage } from '../pages/erased';
 import {projectSynced} from '../editor/synced/read';
 import {syncedGuards} from '../editor/synced/guards';
 import {canonicalGroupLabels} from '../comments/group-labels';
@@ -48,6 +49,7 @@ export async function readPage(ctx: FeatureContext, id: string): Promise<PageDoc
     updatedAt: string;
     authorMemberId: string;
 }> {
+    await rejectErasedPage(ctx,id);
     const [access,p]=await Promise.all([requirePageLevel(ctx,id,'view'),pageRow(ctx,id)]);
     if (p.trashed_at)
         throw new ApiProblem(404, 'NOT_FOUND', 'Not found.');

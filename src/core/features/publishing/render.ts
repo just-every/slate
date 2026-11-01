@@ -80,6 +80,6 @@ export function renderPublicDocument(exposure: Record<string, any>, links: Recor
         metadata: socialMetadata(exposure, properties.title),
         header: renderPublicHeader(exposure),
         fullWidth: !!properties.fullWidth,
-        content: `<style>${layoutStyles}</style><article class="public-document" data-typeface="${html(properties.typeface)}" data-small-text="${!!properties.smallText}">${cover}${icon}<h1 class="page-title">${html(properties.title)}</h1>${properties.byline ? `<p class="page-byline">${html(properties.byline)}</p>` : ''}<div class="page-body">${tree(null)}</div></article>`,
+        content: `<style>${layoutStyles}</style><article class="public-document" data-typeface="${html(properties.typeface)}" data-small-text="${!!properties.smallText}">${exposure.newerRevisionExists ? '<p>A newer revision exists. This is the exact selected version.</p>' : ''}${cover}${icon}<h1 class="page-title">${html(properties.title)}</h1>${properties.byline ? `<p class="page-byline">${html(properties.byline)}</p>` : ''}<div class="page-body">${tree(null)}</div></article>`,
     });
 }

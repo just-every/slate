@@ -63,10 +63,17 @@ export async function preparePublicExposure(ctx: FeatureContext, id: string, inp
         throw new ApiProblem(409, 'SLUG_RESERVED', 'This address is already reserved.');
     return { statements: [pageGuard(ctx, p, input.expectedRevisionId), ctx.db.prepare('INSERT INTO public_exposures (id,page_id,host,slug,indexable,theme,header_controls_json,duplicate_as_template,social_preview_json,published_at,revoked_at) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(page_id) DO UPDATE SET host=excluded.host,slug=excluded.slug,indexable=excluded.indexable,theme=excluded.theme,header_controls_json=excluded.header_controls_json,duplicate_as_template=excluded.duplicate_as_template,social_preview_json=excluded.social_preview_json,published_at=excluded.published_at,revoked_at=excluded.revoked_at').bind(old?.id ?? createUlid(), id, input.host, input.slug, +(input.indexable ?? !!old?.indexable), input.theme ?? old?.theme ?? 'default', input.headerControls === undefined ? old?.header_controls_json ?? '[]' : JSON.stringify(input.headerControls), +(input.duplicateAsTemplate ?? !!old?.duplicate_as_template), input.socialPreview === undefined ? old?.social_preview_json ?? '{}' : JSON.stringify(input.socialPreview), old?.published_at ?? ctx.now, input.revoke ? ctx.now : null)], entity: { id, kind: 'page', revisionId: p.revision_id }, value: { pageId: id, url: `https://${input.host}/p/${input.slug}`, revoked: !!input.revoke } };
 }
-export async function publicPage(db: D1Database, host: string, slug: string) {
+export async function publicPage(db: D1Database, host: string, slug: string, revisionId?: string) {
     const p = await db.prepare("SELECT p.id,p.workspace_id,p.published_revision_id,e.*,r.body_json,r.properties_json,c.public_link_access,c.anonymous_access,w.public_link_access AS workspace_public,w.anonymous_access AS workspace_anonymous FROM public_exposures e JOIN pages p ON p.id=e.page_id JOIN containers c ON c.id=p.container_id JOIN workspaces w ON w.id=p.workspace_id JOIN page_revisions r ON r.id=p.published_revision_id WHERE e.host=? AND e.slug=? AND e.revoked_at IS NULL AND p.deleted_at IS NULL AND p.trashed_at IS NULL AND p.archived_at IS NULL AND p.lifecycle IN ('live','live-with-unpublished-changes') AND r.deleted_at IS NULL").bind(host, slug).first<Record<string, any>>();
     if (!p || p.public_link_access === 'forbidden' || p.workspace_public === 'forbidden')
         throw new ApiProblem(404, 'NOT_FOUND', 'This link is no longer available.');
+    if (revisionId !== undefined) {
+        // Public exposure authorizes published snapshots only, never working history.
+        const revision = await db.prepare('SELECT r.body_json,r.properties_json FROM page_revisions r JOIN content_published_revisions v ON v.page_id=r.page_id AND v.revision_id=r.id WHERE r.page_id=? AND r.id=? AND r.deleted_at IS NULL').bind(p.page_id,revisionId).first<{body_json:string;properties_json:string}>();
+        if (!revision) throw new ApiProblem(404, 'NOT_FOUND', 'This link is no longer available.');
+        Object.assign(p, revision);
+        p.newerRevisionExists = (await db.prepare('SELECT working_revision_id FROM pages WHERE id=?').bind(p.page_id).first<{working_revision_id:string}>())?.working_revision_id !== revisionId;
+    }
     return p;
 }
 /** Anonymous links and published titles for the pages a public page mentions or links to. */

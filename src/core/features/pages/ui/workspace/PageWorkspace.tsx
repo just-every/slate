@@ -1,6 +1,6 @@
 import { InitialResourcesContext } from "../../../../client/InitialResources";
 import { useFlagshipEnabled } from "../../../../app/ui/LaunchProfile";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import {PageReactions} from './ReactionControls';
 import {PublicPageBanner} from './PublicPageBanner';
 import { PageStatusBadge } from "./PageStatusBadge";
@@ -62,6 +62,10 @@ function PageBoundary({pageId,host}:{pageId:string;host?:PageHost}) {
   const denied=resource.error instanceof ApiError && (resource.error.status===403 || resource.error.status===404);
   // SHARE-007: losing access while the page is open also drops it from the tree.
   useEffect(()=>{if(denied&&opened.current)window.dispatchEvent(new Event("slate:navigation-changed"));},[denied]);
+  if(resource.error instanceof ApiError && resource.error.code==='PAGE_ERASED') {
+    const erased=resource.error.details as {kind:string;deletedAt:string};
+    return <div className="content-frame"><article className="main page-document" aria-label="Deleted record"><h2>Deleted {erased.kind}</h2><p>Permanently deleted <time dateTime={erased.deletedAt}>{new Date(erased.deletedAt).toLocaleString()}</time>.</p></article></div>;
+  }
   if(denied)return <PageAccessNeeded pageId={pageId} changed={opened.current} keys={draftKeys(member.workspaceId,member.id,pageId)}/>;
   return <>
     {retained?<div role="alert">Refresh failed. Current server state is unconfirmed. Your unsaved edits remain here. <button onClick={()=>void resource.reload()}>Retry page refresh</button></div>:null}
@@ -81,6 +85,10 @@ function PageAccessNeeded({pageId,changed,keys}:{pageId:string;changed:boolean;k
     <UnsavedDraft keys={keys} reason="Your access to this page changed before this text was saved."/>
   </article></div>;
 }
+function selectedDetail(search:string) {
+  const params=new URLSearchParams(search);
+  return params.get('detail') ?? (params.has('revision')?'history':params.has('thread')||params.has('comment')?'comments':null);
+}
 function LoadedPage({
   document,
   reload,
@@ -98,6 +106,7 @@ function LoadedPage({
   const initial=useContext(InitialResourcesContext);
   const openedRevision=useRef<string | undefined>(initial[`/api/pages/${document.page.id}/opened`]?.revisionId);
   const navigate = useNavigate();
+  const search = useLocation({select:location=>location.searchStr});
   const flagship = useFlagshipEnabled();
   const trail = usePageTrail(document, host?.trail);
   const titleWrite = useRef<Promise<void> | null>(null);
@@ -110,7 +119,7 @@ function LoadedPage({
   const [selection,setSelection] = useState<PageSelection>();
   const [present, setPresent] = useState(false);
   const [reactionsOpen,setReactionsOpen]=useState(false);
-  const [detail, setDetailState] = useState<string | null>(() => typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("detail") ?? (new URLSearchParams(window.location.search).has("thread")||new URLSearchParams(window.location.search).has("comment")?"comments":null)) : null);
+  const [detail, setDetailState] = useState<string | null>(() => selectedDetail(search));
   function setDetail(value: string | null) {
     setDetailState(value);
     const url = new URL(window.location.href);
@@ -119,6 +128,8 @@ function LoadedPage({
       url.searchParams.delete("detail");
       url.searchParams.delete("thread");
       url.searchParams.delete("comment");
+      url.searchParams.delete("revision");
+      url.searchParams.delete("compare");
     }
     // A panel updates the current page URL without restoring an earlier page
     // scroll position after its own focus has already settled.
@@ -172,7 +183,7 @@ function LoadedPage({
     const input=titleInput.current;if(input){input.style.height="auto";input.style.height=`${input.scrollHeight}px`;}
   }
   const newPage=useNewPageArrival(titleInput,document.permissions.canEdit,title,changeTitle);
-  useEffect(()=>{setDetailState(new URLSearchParams(window.location.search).get("detail") ?? (new URLSearchParams(window.location.search).has("thread")||new URLSearchParams(window.location.search).has("comment")?"comments":null));},[]);
+  useEffect(()=>{setDetailState(selectedDetail(search));},[search]);
   // A title committed elsewhere replaces the shown title unless this tab is editing it.
   useEffect(() => {
     if (title === savedTitle && document.page.title !== savedTitle && !titleSaving) {

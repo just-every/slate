@@ -1,5 +1,6 @@
 import {ReadOnlyBlocks} from '../../../editor/ui/ReadOnlyBlocks';
-import { useState } from "react";
+import { useLocation } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useResource } from "../../../../client/useResource";
 import { mutate, operationKey } from "../../../../client/transport";
 import type { DocumentView } from "../../../../client/content";
@@ -36,14 +37,18 @@ export function PageHistory({
   const history = useResource<{ items: Revision[] }>(
     `/api/revisions/${document.page.id}`,
   );
-  const [selected, setSelected] = useState<string | null>(()=>new URLSearchParams(window.location.search).get("revision"));
-  const [compare,setCompare]=useState<string>(()=>new URLSearchParams(window.location.search).get("compare")??"");
+  const search=useLocation({select:location=>location.searchStr});
+  const params=new URLSearchParams(search),requestedRevision=params.get('revision'),requestedCompare=params.get('compare')??'';
+  const [selected, setSelected] = useState<string | null>(requestedRevision);
+  const [compare,setCompare]=useState<string>(requestedCompare);
+  useEffect(()=>{setSelected(requestedRevision);setCompare(requestedCompare);},[requestedRevision,requestedCompare]);
   const [deleting,setDeleting]=useState(false);
   const comparison=useResource<{blocks:{id:string;change:string;before:BlockView|null;after:BlockView|null}[];properties:{before:unknown;after:unknown}}>(selected&&compare?`/api/revisions/${document.page.id}/compare/${selected}/${compare}`:null);
   const [restoring, setRestoring] = useState(false);
   const snapshot = useResource<{
     id: string;
     blocks?: BlockView[];
+    properties?: {title?:string};
     deleted?: boolean;
     newerRevisionExists?: boolean;
   }>(selected ? `/api/revisions/${document.page.id}/${selected}` : null);
@@ -92,6 +97,7 @@ export function PageHistory({
           </p>
         ) : snapshot.data?.blocks ? (
           <div className="revision-preview">
+            {snapshot.data.properties?.title ? <h3>{snapshot.data.properties.title}</h3> : null}
             {snapshot.data.newerRevisionExists ? (
               <p className="muted">
                 A newer revision exists. This is the exact selected version.
