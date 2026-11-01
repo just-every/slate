@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c02cdef12a1da29dfb3359466dcf9d6f5081c32e20a67eae845b57dbbe067c35",
+      "sha256": "0da8103d871bacd1f777c0cc3781e4e79e49851c1f8d82ebcaf6582f7b02992d",
       "executable": false
     },
     "DEMO.md": {
@@ -10544,7 +10544,7 @@
       "executable": false
     },
     "tests/e2e/local-outbox.node.test.mts": {
-      "sha256": "ec56032b3f1daf637ba0f3b9e019cad6d6fd723e3e613033dcc26159e07908f8",
+      "sha256": "b849d8e9b42968b9ff4eaf7802e6119a16e22df9ec961324b78cf94f534dbc38",
       "executable": false
     },
     "tests/e2e/mail-runtime.d.mts": {
@@ -10851,12 +10851,16 @@
       "sha256": "5ee9d284d61a72f107dcc567e2c37b6def1abc16ac81271f5fb0ed2e941e3557",
       "executable": false
     },
+    "tests/flagship/core/mail-boundary.case.ts": {
+      "sha256": "ee6090e684b637e38a884d7c32dbc93c445efcbc288fa9777e96f523964c7e94",
+      "executable": false
+    },
     "tests/flagship/core/mail.node.test.mts": {
       "sha256": "8539f97e8f53bc31ff907c9acd1f247deb1adfc1d7492bf45e670fdc4f1b3e3c",
       "executable": false
     },
     "tests/flagship/core/mail.test.ts": {
-      "sha256": "94ea82424f2b0a2297d1c19d83d2d5f15456e2682dccfaba227c7f6556c60836",
+      "sha256": "4d583a2f6161b7906cd5553e4a43c4b7f42131294da5c73c57c3b9470734656f",
       "executable": false
     },
     "tests/flagship/core/owner-bootstrap.case.ts": {

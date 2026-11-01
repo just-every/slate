@@ -1,4 +1,5 @@
 import {sendgridMailCase} from './sendgrid-mail.case';
+import {mailBoundaryCase} from './mail-boundary.case';
 import {runFoldCases} from '../fold-cases';
 import {env} from 'cloudflare:test';
 import {beforeEach,test,expect,vi} from 'vitest';
@@ -159,6 +160,7 @@ try {
 } finally {}
 }}
   ,
-{name:"MAIL-002 BASE-ACCESS-001 SendGrid outcomes and expired leases retain durable attempts without blind resend",before:async()=>{await resetDeployment();},run:sendgridMailCase}
+{name:"MAIL-002 BASE-ACCESS-001 SendGrid outcomes and expired leases retain durable attempts without blind resend",before:async()=>{await resetDeployment();},run:sendgridMailCase},
+{name:"MAIL-001 Worker sign-in and invitation mail share one sender, wiki events and schedules send none, and replies are refused",before:async()=>{await resetDeployment();},run:mailBoundaryCase}
 ]);
 });
