@@ -73,6 +73,9 @@ export function DatabaseWorkspace({ id }: { id: string }) {
     return () => { stopped = true; clearTimeout(timer); };
   }, [id, view?.id, mode, query.reload]);
   const [dialog, setDialog] = useState<"new" | "view" | "delete-view" | null>(null);
+  // View settings save against the revision they opened on, so the background
+  // refresh never lets a stale form overwrite another member's view change.
+  const [opened, setOpened] = useState<{ view: ViewDto; revisionId: string }>();
   const [edit, setEdit] = useState<{ record: RecordDto; field: FieldDto }>();
   const [error, setError] = useState<unknown>();
   const [search, setSearch] = useState("");
@@ -95,12 +98,12 @@ export function DatabaseWorkspace({ id }: { id: string }) {
     if(!await resource.reload())throw new Error('The change was saved, but the database could not be refreshed. Reload it before editing again.');
     await query.reload();
   }
-  async function saveView(next: ViewDto) {
-    if (!resource.data) return;
+  async function saveView(next: ViewDto, expectedRevisionId = query.data?.database.revision_id ?? resource.data?.database.revision_id) {
+    if (!resource.data || !expectedRevisionId) return;
     const { revisionId: _revisionId, ...input } = next;
     await mutate(`/api/databases/${id}/views`, {
       operationKey: operationKey(),
-      expectedRevisionId: query.data?.database.revision_id ?? resource.data.database.revision_id,
+      expectedRevisionId,
       view: input,
     });
     setActive(next.id);
@@ -171,7 +174,11 @@ export function DatabaseWorkspace({ id }: { id: string }) {
                   <ViewMenu
                     hasView={!!view}
                     locked={locked}
-                    onSettings={() => setDialog("view")}
+                    onSettings={() => {
+                      if (!view || !resource.data) return;
+                      setOpened({ view, revisionId: query.data?.database.revision_id ?? resource.data.database.revision_id });
+                      setDialog("view");
+                    }}
                     onAdd={() => void saveView(newView(resource.data!.views.length)).catch(setError)}
                     onDuplicate={() => view && void saveView({ ...view, id: crypto.randomUUID(), name: `${view.name} copy`, position: resource.data!.views.length, revisionId: "" }).catch(setError)}
                     onDelete={() => setDialog("delete-view")}
@@ -326,11 +333,11 @@ export function DatabaseWorkspace({ id }: { id: string }) {
             await reload();
           }} />
         ) : null}
-        {dialog === "view" && view ? (
+        {dialog === "view" && opened ? (
           <ViewDialog
-            view={view}
+            view={opened.view}
             fields={fields}
-            onSave={saveView}
+            onSave={(next) => saveView(next, opened.revisionId)}
             onClose={() => setDialog(null)}
           />
         ) : null}

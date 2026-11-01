@@ -69,6 +69,27 @@ export async function databaseCalculationsJourney(state, { smoke = false } = {})
       await expect(footer(person.page)).toHaveAccessibleName(`Sum for Amount: ${person === reader ? 4 : 12}`);
       await expect(footer(person.page, note)).toHaveAccessibleName(`Percent for Note: ${person === reader ? 75 : 80}`);
     }
+    // An open View settings dialog saves against the revision it opened on: the
+    // display refresh must not let it overwrite another member's view change.
+    await page.getByRole('button', { name: 'View options' }).click();
+    await page.getByRole('menuitem', { name: 'View settings' }).click();
+    const settings = page.getByRole('dialog', { name: 'View settings' });
+    await settings.locator('input[name="name"]').fill('Renamed by the first member');
+    const current = (await ok(reader.context, origin, 'GET', queryPath)).view;
+    const sorted = { ...current, sorts: [{ field: amount.id, direction: 'desc' }] };
+    delete sorted.revisionId;
+    await ok(reader.context, origin, 'POST', base + '/views', { operationKey: randomUUID(), expectedRevisionId: (await ok(reader.context, origin, 'GET', base)).database.revision_id, view: sorted });
+    for (let reread = 0; reread < 2; reread++) await page.waitForResponse(response => new URL(response.url()).pathname === queryPath && response.request().method() === 'GET');
+    const conflict = page.waitForResponse(response => new URL(response.url()).pathname === base + '/views' && response.request().method() === 'POST');
+    await settings.getByRole('button', { name: 'Save view' }).click();
+    const refused = await conflict;
+    assert.equal(refused.status(), 409, await refused.text());
+    assert.equal((await refused.json()).code, 'REVISION_CONFLICT');
+    await expect(settings.getByRole('alert')).toBeVisible();
+    await settings.getByRole('button', { name: 'Cancel' }).click();
+    const kept = (await api(base)).views.find(item => item.id === view.id);
+    assert.deepEqual(kept.sorts, sorted.sorts);
+    assert.equal(kept.name, view.name);
     if (!smoke) {
       // A shared choice and its value must arrive as one authoritative query.
       await choose(amount, 'count', 'Count', reader.page);
