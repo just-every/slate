@@ -8,10 +8,10 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 51 | 246 | 35 | 332 |
+| Core | 52 | 245 | 35 | 332 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 51 | 246 | 41 | 338 |
+| Full target | 52 | 245 | 41 | 338 |
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
@@ -1113,7 +1113,7 @@ Core · published · **partial**
 
 #### REV-005 — A citation resolves to its revision
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A link, mention or AI citation that names a revision opens that revision with its content as committed, even after the page has changed, and says that a newer revision exists.
 
@@ -1122,8 +1122,8 @@ Core · published · **partial**
 2. When the page has been erased it opens a content-free tombstone (`LINK-002`) carrying no body, quote or personal metadata.
 3. A revision link opens that revision with a newer-revision notice, checked against current access, and a tombstone after erasure.
 
-**Evidence.** `tests/e2e/review/verification-flow.test.ts`
-**Gap.** Missing a citation journey that opens an exact old revision, revokes and expires access, then reads anonymous and erased states without disclosure; the cited verification flow reads an old revision and newer-version notice only.
+**Evidence.** Acceptance 1: `tests/e2e/review/verification-flow.test.ts` — "Verifying offers 7, 30 or 90 days, a date or none, only on the opened revision, and an edit makes it not current" (current grants, revocation, expiry, anonymous refusal and published-only revision admission). Acceptance 2 and 3: `tests/qualification/ui-convergence/two-people-history.mjs` — historyJourney, loaded by `tests/qualification/ui-convergence/journeys.test.mjs` — "two people edit at once, lose access mid-edit and restore history at 1440px" (native generated citation, exact snapshot and newer-revision notice, confirmed permanent erasure, content-free kind and time tombstone, and replay).
+**Gap.** None.
 
 #### REV-006 — Deleting a version
 
