@@ -43,7 +43,7 @@ export async function draftRecoveryJourney(state, people) {
   await alice.page.route('**/api/**', request => request.abort('connectionrefused'));
   try {
     await title.click();
-    await title.press('ControlOrMeta+End');
+    await title.evaluate(input => input.setSelectionRange(input.value.length, input.value.length));
     await alice.page.keyboard.type(' unsent-title');
     await title.press('Tab');
     await expect(alice.page.getByRole('status').filter({ hasText: /^Not saved/ })).toBeVisible();
@@ -110,7 +110,7 @@ export async function draftRecoveryJourney(state, people) {
   await noWorkspaceDraft();
   // Correcting recovered text, including Enter, still waits for explicit retry.
   await title.focus();
-  await title.press('ControlOrMeta+End');
+  await title.evaluate(input => input.setSelectionRange(input.value.length, input.value.length));
   await alice.page.keyboard.type(' revised');
   unsentTitle += ' revised';
   await title.press('Enter');
