@@ -2,7 +2,8 @@ import {beforeEach,expect,it,vi} from 'vitest';
 import {env} from 'cloudflare:test';
 import {createApi} from '../../../src/core/app/hono';
 import {parseImport,type ImportFormat} from '../../../src/core/features/imports';
-import {seedWorkspace,seedMember,sessionFor} from '../setup/fixtures';
+import {seedWorkspace,seedMember,seedContainer,seedContainerGrant,sessionFor} from '../setup/fixtures';
+import {compareTreePages} from '../../../src/core/features/pages/tree-position';
 import {resetDatabase} from '../setup/reset-database';
 import {completeReport,importDoor,persistedOutcomes,supplementalConfluenceArchive} from './persisted-outcomes';
 
@@ -126,6 +127,26 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  const attachment=outcomes.creations.find(item=>item.kind==='file')!;
  expect((await readerDoor.request(`/media/${attachment.targetId}`)).status).toBe(404);
  expect(await env.DB.prepare('SELECT count(*) n FROM public_exposures').first('n')).toBe(0);
+ // Child-mode imports land after the native siblings already there, and a repeat import keeps import order.
+ await resetCase();
+ {
+  const {workspaceId}=await seedWorkspace();
+  const owner=await seedMember(workspaceId,{email:'order@import.test',displayName:'Order owner',role:'owner',isSetupOwner:true});
+  const {containerId}=await seedContainer(workspaceId,{visibility:'private',ownerMemberId:owner.memberId});
+  await seedContainerGrant(containerId,{principalKind:'member',principalId:owner.memberId,level:'full'});
+  const door=importDoor(createApi(),await sessionFor(owner.memberId));
+  const parent=(await door.json('/pages',{operationKey:crypto.randomUUID(),containerId,title:'Import destination'})).value.pageId;
+  await door.json('/pages',{operationKey:crypto.randomUUID(),containerId,parentPageId:parent,title:'Native child'});
+  for(const title of ['First import','Second import']){
+   const form=new FormData();form.set('file',new File([`# ${title}\n\nBody of ${title}.`],`${title}.md`));form.set('format','markdown');form.set('operationKey',crypto.randomUUID());
+   form.set('destinationPageId',parent);form.set('expectedRevisionId',(await door.json(`/pages/${parent}`)).page.revisionId);form.set('mode','children');
+   const upload=await door.json('/imports',form);let imported=await door.json(`/imports/${upload.id}/run`,{});
+   for(let attempt=0;imported.state!=='completed'&&attempt<100;attempt++)imported=await door.json(`/imports/${imported.id}/resume`,{});
+   expect(imported.state).toBe('completed');
+  }
+  const siblings=(await door.json('/pages')).items.filter((page:any)=>page.parentPageId===parent).sort(compareTreePages);
+  expect(siblings.map((page:any)=>page.title)).toEqual(['Native child','First import','Second import']);
+ }
 },120_000);
 
 it('erases historical and shared imported people through confirmed native removal, atomically retires custody and keeps unrelated Undo',async()=>{
