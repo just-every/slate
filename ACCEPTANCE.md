@@ -8,12 +8,12 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 53 | 244 | 35 | 332 |
+| Core | 54 | 243 | 35 | 332 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 53 | 244 | 41 | 338 |
+| Full target | 54 | 243 | 41 | 338 |
 
-Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
+Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-009 native structure-lock proof reviewed at `d601e88e627d08c800e8ca3819f8590fc7a019cd` (30 October 2026). DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
 ## Core
 
@@ -1635,7 +1635,7 @@ Core · published · **partial**
 
 #### DB-009 — Lock structure
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A database's structure can be locked, which rejects field, view, filter, sort and layout changes while allowing record edits, names who locked it, and is unlocked by anyone with `full` access.
 
@@ -1643,8 +1643,8 @@ Core · published · **partial**
 1. A database's structure can be locked, which rejects field, view, filter, sort and layout changes while allowing record edits, names who locked it, and is unlocked by anyone with `full` access.
 2. Locked structure rejects field and view changes while records stay editable.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "A database's structure can be locked, which rejects field, view, filter, sort and layout changes while allowing record edits, names who locked it, and is unlocked by anyone with `full` access."
+**Evidence.** `tests/flagship/structured/http.test.ts` — "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input": acceptance 1 and 2 through native sessions, populated structure, all field and view mutations, filter, sort and layout refusal with unchanged snapshots, durable record edits, edit-only unlock refusal and another full-access member unlocking. `tests/qualification/ui-convergence/database-lock-journey.mjs` — "databaseStructureLockJourney", through "databaseJourney" in `tests/qualification/ui-convergence/database-journey.mjs` and the existing desktop database and phone core registrations in `tests/qualification/ui-convergence/journeys.test.mjs`: Fields lock, named locking member after reload, disabled structure controls, editable records with read-back and cross-member Fields unlock. `tests/flagship/structured/structured.test.ts` — "structured records, computation, readers, templates, automation, policies and views retain durable semantics": retained CAS, replay and lock regressions.
+**Gap.** None.
 
 #### DB-010 — A record is a page
 
