@@ -6392,7 +6392,7 @@
       "executable": false
     },
     "src/core/features/databases/ui/workspace/DatabaseWorkspace.tsx": {
-      "sha256": "92406cf71c895acb8a4dc7bfe4c81f5c7032a01b07083847b391c0108ee44280",
+      "sha256": "40c85f3773229f2593abcc6c1e51a182523793d1d7569a363a431553eed393de",
       "executable": false
     },
     "src/core/features/databases/ui/workspace/ExportViewCsv.tsx": {
@@ -11796,7 +11796,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/database-calculations-journey.mjs": {
-      "sha256": "1cfb652690ca91e0c1e492fb4ca4b1f8997e6d907e4ab5aa1fa8b5b8a03275d9",
+      "sha256": "a45e9d5c3cb27524c07a5a1dcd9980a1146c5559211572c312c4e4c4d3f238c3",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-journey.mjs": {
