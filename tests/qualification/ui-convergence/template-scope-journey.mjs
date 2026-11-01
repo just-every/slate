@@ -57,7 +57,9 @@ export async function templateScopeJourney(state) {
     if (containerId) {
       await page.getByRole('navigation', { name: 'Space navigation', exact: true }).getByRole('button', { name: 'Templates', exact: true }).click();
     }
+    await page.getByRole('button', { name: 'Filter templates', exact: true }).click();
     await expect(page.getByRole('combobox', { name: 'Collection', exact: true })).toHaveValue(containerId ?? '');
+    await page.keyboard.press('Escape');
     await expect(page.locator('.template-choice h3')).toHaveText(wanted.map(item => item.title));
     for (const item of definitions.filter(item => item.containerId && item.containerId !== containerId)) {
       await expect(choice(item.title)).toHaveCount(0);
