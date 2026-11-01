@@ -35,8 +35,10 @@ export async function operatorDocumentGate(
       try {
         const revision = url.searchParams.get('revision')!;
         const published = await publicPage(bindings.DB, exposure.host, exposure.slug, revision);
-        if (published.anonymous_access !== 'forbidden' && published.workspace_anonymous !== 'forbidden')
-          return new Response(null, {status:302,headers:{location:`/p/${encodeURIComponent(exposure.slug)}?${new URLSearchParams({revision})}`}});
+        if (published.anonymous_access !== 'forbidden' && published.workspace_anonymous !== 'forbidden') {
+          const path=`/p/${encodeURIComponent(exposure.slug)}?${new URLSearchParams({revision})}`;
+          return new Response(null, {status:302,headers:{location:exposure.host===url.host?path:`https://${exposure.host}${path}`}});
+        }
       } catch (cause) { if (!(cause instanceof ApiProblem && cause.status === 404)) throw cause; }
     }
   }

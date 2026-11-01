@@ -1,8 +1,9 @@
-import { env } from 'cloudflare:test';
+import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { test, expect, vi } from 'vitest';
 import { reviewFixture } from './fixture';
 import { sessionFor } from '../setup/fixtures';
 import { createApi } from '../../../src/core/app/hono';
+import { handleApplicationRequest } from '../../../src/core/app/request-handler';
 import { scheduledDiscovery } from '../../../src/core/features/notifications/jobs';
 import type { AppBindings } from '../../../src/core/app/types';
 
@@ -133,12 +134,15 @@ test('Verifying offers 7, 30 or 90 days, a date or none, only on the opened revi
 
 /** Exact citations use native writes and current authority, with substitution only at the clock. */
 async function citationJourney(f: Awaited<ReturnType<typeof reviewFixture>>) {
-  const api=createApi(),origin=new URL(String(env.APP_URL)).origin;
+  const api=createApi(),origin=new URL(String(env.APP_URL)).origin,publicHost='citations.slate.test';
+  const bindings={...env,PUBLIC_PAGE_HOST:publicHost};
   const request=async(actor:string,method:string,path:string,body?:unknown)=>{
-    if(path.startsWith('/p/'))return f.request(actor,method,path,body);
-    const response=await api.request(origin+path,{method,headers:{origin,...(actor==='anonymous'?{}:{cookie:f.cookies[actor]}),'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)},env);
+    const target=path.startsWith('/p/')?`https://${publicHost}`:origin;
+    const response=await api.request(target+path,{method,headers:{origin,...(actor==='anonymous'?{}:{cookie:f.cookies[actor]}),'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)},bindings);
     const text=await response.text();
-    return {status:response.status,data:JSON.parse(text),text};
+    let data:any=text;
+    try {data=JSON.parse(text);} catch { /* Published documents remain HTML. */ }
+    return {status:response.status,data,text};
   };
   let sequence=0;
   const op=()=>`synthetic-slate-citation-${++sequence}`;
@@ -189,7 +193,12 @@ async function citationJourney(f: Awaited<ReturnType<typeof reviewFixture>>) {
   expect((await request('anonymous','GET',`/api/revisions/${id}/${snapshot}`)).status).toBe(401);
   expect((await request('anonymous','GET',`/p/cited-handbook?revision=${snapshot}`)).status).toBe(404);
   const current=await success('owner','GET',`/api/pages/${id}`);
-  await success('owner','POST',`/api/publishing/${id}`,{operationKey:op(),expectedRevisionId:current.page.revisionId,host:'localhost:8787',slug:'cited-handbook',indexable:false});
+  await success('owner','POST',`/api/publishing/${id}`,{operationKey:op(),expectedRevisionId:current.page.revisionId,host:publicHost,slug:'cited-handbook',indexable:false});
+  const execution=createExecutionContext();
+  const redirected=await handleApplicationRequest(new Request(origin+card.href),bindings,execution);
+  await waitOnExecutionContext(execution);
+  expect(redirected.status).toBe(302);
+  expect(redirected.headers.get('location')).toBe(`https://${publicHost}/p/cited-handbook?revision=${snapshot}`);
   const publicRevision=await request('anonymous','GET',`/p/cited-handbook?revision=${snapshot}`);
   expect(publicRevision.status,publicRevision.text).toBe(200);
   expect(publicRevision.text).toContain('Committed citation body.');
