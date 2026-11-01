@@ -8,10 +8,10 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 50 | 247 | 34 | 331 |
+| Core | 51 | 246 | 34 | 331 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 50 | 247 | 40 | 337 |
+| Full target | 51 | 246 | 40 | 337 |
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
@@ -1026,7 +1026,7 @@ Core · published · **partial** · Cites BASE-PUBLIC-001, BASE-ROLE-001
 
 #### WEB-007 — Public-link profile
 
-Core · published · **partial** · Cites BASE-PUBLIC-001, BASE-ROLE-001
+Core · published · **done** · Cites BASE-PUBLIC-001, BASE-ROLE-001
 
 **Requirement.** *Policy: `page.public-access.v1`; default: `site`, following Notion.
 
@@ -1036,8 +1036,8 @@ Core · published · **partial** · Cites BASE-PUBLIC-001, BASE-ROLE-001
 3. Both values store the whole record in `WEB-002`, so a workspace switched to `link` keeps the slug and theme an imported or previously published page already had.*
 4. Profile journeys for `site` and `link` show and hide exactly the listed controls and keep the stored record.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "`site` shows the host and slug fields, the theme, the header controls, the duplicate-as-template switch, social preview settings and the live-site banner over the page."<br>No validated CI-run proof for this acceptance point: "`link` hides all of those and shows a single toggle, the resulting URL, the indexing switch and unpublish."<br>No validated CI-run proof for this acceptance point: "Both values store the whole record in `WEB-002`, so a workspace switched to `link` keeps the slug and theme an imported or previously published page already had."
+**Evidence.** `tests/qualification/ui-convergence/journeys.test.mjs` — "page creation destinations and editor locks preserve readable content at 1440px", step "WEB-007 — public profiles retain exposure and current publication authority", via `tests/qualification/ui-convergence/public-profile-journey.mjs` — publicProfileJourney: site controls and banner; link toggle, URL, indexing and unpublish; complete exposure retained across profile switches, native saves and reload, including imported metadata; full-access refusal and anonymous reads.
+**Gap.** None.
 
 ### Versions
 
