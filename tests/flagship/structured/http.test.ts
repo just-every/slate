@@ -8,6 +8,7 @@ import {
   seedContainerGrant,
 } from "../../e2e/setup/fixtures";
 import type { FeatureContext } from "../../../src/core/app/feature-context";
+import type { DatabaseDto, RecordDto } from "../../../src/core/client/records";
 
 // Keep SELF module loading isolated from direct-service request contexts.
 beforeEach(resetDeployment);
@@ -187,6 +188,87 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
     expect(retained.presentation.body).toBe(parity === "record-is-page");
     expect(retained.page.blocks).toEqual(edited.page.blocks);
     expect(retained.values).toEqual(edited.values);
+  }
+
+  // DB-009: structure lock on its own database, through the same native sessions.
+  {
+  const created = await SELF.fetch("http://localhost/api/databases", {method: "POST", headers: {"content-type": "application/json", origin: "http://localhost", cookie},
+    body: JSON.stringify({operationKey: "case:db-009-lock", containerId, title: "Locked HTTP database"})});
+  expect(created.status).toBe(201);
+  const lockDatabaseId = ((await created.json()) as {value: {id: string}}).value.id;
+  const base = `/databases/${lockDatabaseId}`;
+  let sequence = 0;
+  const request = (method: string, path: string, session = cookie, input?: object) =>
+    SELF.fetch(`http://localhost/api${path}`, {
+      method,
+      headers: { cookie: session, origin: "http://localhost", "content-type": "application/json" },
+      ...(input ? { body: JSON.stringify({ operationKey: `case:lock-http-${++sequence}`, ...input }) } : {}),
+    });
+  const snapshot = async () => {
+    const response = await request("GET", base);
+    expect(response.status).toBe(200);
+    return await response.json() as DatabaseDto;
+  };
+  const write = async (path: string, input: object, session = cookie, method = "POST") => {
+    const response = await request(method, path, session, input);
+    expect(response.status, await response.clone().text()).toBeLessThan(300);
+    return await response.json() as { value: { pageId: string; revisionId: string } };
+  };
+  const field = { id: "progress", name: "Progress", type: "text", config: {}, position: 0 };
+  const spare = { id: "unused", name: "Unused", type: "text", config: {}, position: 1 };
+  for (const item of [field, spare]) {
+    await write(base + "/fields", { expectedRevisionId: (await snapshot()).database.revision_id, field: item });
+  }
+  const view = {
+    id: "lock-view", name: "Operations", layout: "table", filters: [{ field: field.id, op: "contains", value: "Ready" }],
+    sorts: [{ field: "$title", direction: "asc" }], groups: [], calculations: {}, display: {}, position: 0,
+  };
+  await write(base + "/views", { expectedRevisionId: (await snapshot()).database.revision_id, view });
+  const record = (await write(base + "/records", { title: "Release", values: { [field.id]: "Ready for review" } })).value;
+  await write("/sharing", { targetKind: "page", targetId: (await snapshot()).database.page_id, principalKind: "member", principalId: reader.actor.id, level: "edit" });
+  await write("/sharing", { targetKind: "page", targetId: record.pageId, principalKind: "member", principalId: reader.actor.id, level: "edit" });
+  const editor = await sessionFor(reader.actor.id);
+  await write(base + "/lock", { expectedRevisionId: (await snapshot()).database.revision_id, locked: true });
+  const locked = await snapshot();
+  expect(locked.database.structure_locked_by_member_id).toBe(ctx.actor.id);
+  expect(locked.database.structure_locked_by_name).toBe(ctx.actor.displayName);
+  expect(locked.database.structure_locked_at).toBeTruthy();
+  const changes: [string, object][] = [
+    ["/fields", { field: { ...spare, id: "new-field", name: "New field", position: 2 } }],
+    ["/fields", { field: { ...field, name: "Changed progress" } }],
+    ["/fields", { field: spare, delete: true }],
+    ["/views", { view: { ...view, id: "another-view", name: "Another view", position: 1 } }],
+    ["/views", { view: { ...view, name: "Changed operations" } }],
+    ["/views", { view: { ...view, filters: [] } }],
+    ["/views", { view: { ...view, sorts: [{ field: "$title", direction: "desc" }] } }],
+    ["/views", { view: { ...view, layout: "list" } }],
+    ["/views", { view, delete: true }],
+  ];
+  for (const [suffix, input] of changes) {
+    const refused = await request("POST", base + suffix, cookie, { expectedRevisionId: locked.database.revision_id, ...input });
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toMatchObject({ code: "STRUCTURE_LOCKED" });
+    expect(await snapshot()).toEqual(locked);
+  }
+  const refused = await request("POST", base + "/lock", editor, { expectedRevisionId: locked.database.revision_id, locked: false });
+  expect(refused.status).toBe(404);
+  expect(await snapshot()).toEqual(locked);
+  await write(base + "/records/" + record.pageId, { expectedRevisionId: record.revisionId, values: { [field.id]: "Ready to ship" } }, editor, "PATCH");
+  const saved = await request("GET", base + "/records/" + record.pageId, editor);
+  expect(saved.status).toBe(200);
+  expect((await saved.json() as RecordDto).values[field.id]).toBe("Ready to ship");
+  expect(await snapshot()).toEqual(locked);
+  await write("/sharing", { targetKind: "page", targetId: locked.database.page_id, principalKind: "member", principalId: reader.actor.id, level: "full" });
+  await write(base + "/lock", { expectedRevisionId: locked.database.revision_id, locked: false }, editor);
+  const unlocked = await snapshot();
+  expect(unlocked.database.structure_locked_at).toBeNull();
+  expect(unlocked.database.structure_locked_by_member_id).toBeNull();
+  expect(unlocked.fields).toEqual(locked.fields);
+  expect(unlocked.views).toEqual(locked.views);
+  for (const [suffix, input] of changes) {
+    await write(base + suffix, { expectedRevisionId: (await snapshot()).database.revision_id, ...input }, editor);
+  }
+  expect((await (await request("GET", base + "/records/" + record.pageId, editor)).json() as RecordDto).values[field.id]).toBe("Ready to ship");
   }
 });
 
