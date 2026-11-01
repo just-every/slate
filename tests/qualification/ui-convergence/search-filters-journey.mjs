@@ -39,7 +39,7 @@ export async function searchFiltersJourney(state) {
   await expect(page.locator('.search-filter-summary')).toBeVisible();
  };
  await titles(['Release handover checklist','Support rotation']);
- await expect(page.locator('.search-filter-summary')).toContainText('Space: Release operations');
+ await expect(page.locator('.search-filter-summary')).toContainText('In: Release operations');
  await page.getByRole('button',{name:'Filter results',exact:true}).click();
  const kind=page.getByRole('combobox',{name:'Look in',exact:true});
  await kind.selectOption('record');await titles([]);await kind.selectOption('page');await titles(['Release handover checklist','Support rotation']);
@@ -62,7 +62,7 @@ export async function searchFiltersJourney(state) {
  for(const name of ['Include archive','Include trash'])await expect(page.getByRole('checkbox',{name,exact:true})).toBeChecked();
  await contributor.selectOption('browser-owner');await titles(['Archived checklist','Removed checklist','Release handover checklist']);
  await status.selectOption('search-ready');await titles(['Release handover checklist']);
- const retained=['Pages','Space: Release operations','Contributor: Alex Owner','Status: Ready for release','Updated from 2000-01-01','Updated until 2099-01-01','Including archive','Including trash'];
+ const retained=['Pages','In: Release operations','By: Alex Owner','Status: Ready for release','Updated from 01 Jan 2000','Updated until 01 Jan 2099','Including archive','Including trash'];
  for(const visible of retained)await expect(page.locator('.search-filter-summary')).toContainText(visible);
  // The controls display every filter in force alongside real results, and reload retains them.
  await page.reload({waitUntil:'networkidle'});await titles(['Release handover checklist']);
