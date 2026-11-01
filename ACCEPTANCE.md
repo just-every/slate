@@ -8,10 +8,10 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 51 | 246 | 34 | 331 |
+| Core | 51 | 246 | 35 | 332 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 51 | 246 | 40 | 337 |
+| Full target | 51 | 246 | 41 | 338 |
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
@@ -359,6 +359,22 @@ Core · published · **partial**
 
 **Evidence.** `tests/qualification/interface/content.mjs`
 **Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/interface/content.mjs`.
+
+#### PAGE-017 — Page creation is keyboard-complete on a phone and templates honour a locked destination
+
+Core · published · **missing** · From PAGE-002
+
+**Requirement.** Page creation (`PAGE-002`) remains keyboard-complete on phone and desktop layouts, and template use (`TMPL-003`) respects the chosen destination's page lock (`PAGE-015`) without blocking a writable space root because an unrelated page is locked.
+
+**Acceptance.**
+1. At a 390px phone width, after Tab then Shift+Tab through the page tree, focus returns to each row's create-child control in order and never skips it; row actions that appear on hover or focus-within stay reachable and visible while focused.
+2. The same keyboard journey passes at 1440px.
+3. With an unrelated page locked, a member's template listing, preview and apply at the writable space root return 200, 200 and 201 respectively.
+4. Applying a template to a locked destination is refused with `PAGE_LOCKED` (409) and leaves that destination unchanged.
+5. One journey loaded by the exact-SHA Verify performs both the phone keyboard sequence and the locked-page template scenario.
+
+**Evidence.** None.
+**Gap.** Supplied gate findings at d6ddfbb3: the 390px journey fails at line 66 after Tab then Shift+Tab because the create-child control is skipped; `src/core/app/styles/shell.css` lines 80–81 remove row actions from layout outside hover or focus-within. The member template fix at `src/core/features/templates/permissions.ts` line 14 works, but no Verify-loaded journey locks a page and lists, previews and applies a template. Missing the passing keyboard journeys at both widths and one Verify-loaded journey combining the phone sequence with writable-root success, locked-destination refusal and unchanged locked content.
 
 #### PAGE-003 — Identity survives everything
 
