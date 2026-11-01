@@ -6,7 +6,7 @@ import { accessible } from './browser-evidence.mjs';
 import { ok } from './two-people-support.mjs';
 
 const labels = { light: 'Light', dark: 'Dark', system: 'Match device' };
-const appearance = '/app/settings?section=appearance';
+const appearance = '/app/settings/appearance';
 const luminance = rgb => rgb.slice(0, 3).map(value => {
   const channel = value / 255;
   return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
@@ -85,7 +85,7 @@ async function choose(view, origin, theme) {
 }
 
 async function operatorDestination(view, origin, route, inNavigation) {
-  if (route.startsWith('/app/settings?') && new URL(view.url()).pathname === '/app/settings') {
+  if (route.startsWith('/app/settings/') && new URL(view.url()).pathname.startsWith('/app/settings/')) {
     // Exercise the same native section links a member uses, retaining the
     // document-door check without rebuilding the whole browser document.
     const response = await view.context().request.get(origin + route);
