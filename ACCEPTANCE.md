@@ -8,10 +8,10 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 52 | 245 | 35 | 332 |
+| Core | 53 | 244 | 35 | 332 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 52 | 245 | 41 | 338 |
+| Full target | 53 | 244 | 41 | 338 |
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
@@ -1157,7 +1157,7 @@ Core · published · **partial**
 
 #### STAT-001 — The status vocabulary
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** The workspace holds a list of status entries, each with a key, a label, a color and an optional verification requirement.
 
@@ -1166,8 +1166,8 @@ Core · published · **partial**
 2. Retiring an entry keeps it on the pages that carry it and offers a bulk change (`CONT-006`).
 3. Seeded vocabulary present; owner adds, renames, recolors and retires entries without stripping pages.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "The workspace holds a list of status entries, each with a key, a label, a color and an optional verification requirement."<br>No validated CI-run proof for this acceptance point: "It ships seeded with Rough draft, In progress, Ready for review and Verified under every value of `STAT-005`, and a workspace owner can add, rename, recolor and retire entries."<br>No validated CI-run proof for this acceptance point: "Retiring an entry keeps it on the pages that carry it and offers a bulk change (`CONT-006`)."
+**Evidence.** `tests/qualification/ui-convergence/status-vocabulary-journey.mjs` — statusVocabularyJourney through the existing 1440px settings caller in `tests/qualification/ui-convergence/journeys.test.mjs` (all vocabulary fields, both profiles, owner controls, retained page chips and history, explicit bulk changes and reload); `tests/flagship/content/http.test.ts` — "publication, human verification and media enforce current reader authority" via statusVocabularyCase (native bootstrap, unchanged non-owner refusals, revoked-session refusal and duplicate-safe bulk receipts).
+**Gap.** None.
 
 #### STAT-002 — A page's status
 
