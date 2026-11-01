@@ -1,6 +1,6 @@
 import {ReadOnlyBlocks} from '../../../editor/ui/ReadOnlyBlocks';
 import { useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useResource } from "../../../../client/useResource";
 import { mutate, operationKey } from "../../../../client/transport";
 import type { DocumentView } from "../../../../client/content";
@@ -52,6 +52,11 @@ export function PageHistory({
     deleted?: boolean;
     newerRevisionExists?: boolean;
   }>(selected ? `/api/revisions/${document.page.id}/${selected}` : null);
+  const preview=useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    if(requestedRevision && selected===requestedRevision && snapshot.data?.id===requestedRevision)
+      preview.current?.scrollIntoView({block:'start'});
+  },[requestedRevision,selected,snapshot.data?.id]);
   const labelled = document.policyProfile["page.version.v1"] === "labelled";
   return (
     <section>
@@ -96,7 +101,7 @@ export function PageHistory({
             This exact revision has been deleted. Its content is unavailable.
           </p>
         ) : snapshot.data?.blocks ? (
-          <div className="revision-preview">
+          <div className="revision-preview" ref={preview}>
             {snapshot.data.properties?.title ? <h3>{snapshot.data.properties.title}</h3> : null}
             {snapshot.data.newerRevisionExists ? (
               <p className="muted">

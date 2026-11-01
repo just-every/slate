@@ -755,7 +755,7 @@
       "id": "REV-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Native Workers citation authority and erasure are supporting evidence; exact generated-link browser proof and exact-candidate Verify are recorded in the CONTRACT.md status evidence and guarded landing receipts.",
+      "unmetReason": "Native Workers citation authority and erasure are supporting evidence; the complete generated-link browser journey is named in CONTRACT.md. Exact-candidate Verify and guarded landing remain separate gates.",
       "supportingTests": [
         {
           "file": "tests/e2e/review/verification-flow.test.ts",

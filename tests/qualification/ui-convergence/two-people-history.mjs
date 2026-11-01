@@ -151,9 +151,17 @@ export async function historyJourney(state, people) {
   await bob.page.goto(`${origin}/app/pages/${reference.pageId}`,{waitUntil:'networkidle'});
   const link=bob.page.getByRole('link',{name:'Open cited revision',exact:true});
   await expect(link).toHaveAttribute('href',card.href);
+  const opened=bob.page.waitForEvent('popup');
   await link.click();
-  await expect(bob.page).toHaveURL(citation);
+  const cited=await opened;
+  await expect(cited).toHaveURL(citation);
+  await expect(cited.locator('.revision-preview')).toContainText('Write the review within a day.');
+  await expect(cited.locator('.revision-preview')).toContainText('A newer revision exists.');
+  await expect(cited.locator('.revision-preview').getByText('A newer revision exists. This is the exact selected version.',{exact:true})).toBeInViewport();
+  await cited.screenshot({path:`${people.evidence}/generated-citation-opened.png`,fullPage:true});
+  await cited.close();
   // Bob could read it; after his access is removed his copied citation gives nothing.
+  await bob.page.goto(citation,{waitUntil:'networkidle'});
   await expect(bob.page.locator('.revision-preview')).toContainText('Write the review within a day.');
   const grants = await ok(alice.context, origin, 'GET', `/api/sharing/pages/${pageId}`);
   const bobGrant = grants.items.find(item => item.principalId === bob.id);
