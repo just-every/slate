@@ -16,6 +16,7 @@ async function containerRows(ctx:FeatureContext, subject:MemberSubject, filter:{
         FROM containers c WHERE c.workspace_id=? AND ${condition} AND ${publishedImportContainerSql('c.id')} ORDER BY c.name,c.id`)
         .bind(ctx.actor.id, ctx.actor.id, ctx.actor.workspaceId, ...bindings).all<ContainerMetadata & {memberCount:number;owned:number;workspaceOwner:number}>()).results;
     const accesses = await containerListAccess(ctx, rows.map(row => row.id), subject);
+    const owners = subject.isGuest ? [] : (await ctx.db.prepare("SELECT o.container_id AS containerId,o.member_id AS memberId,m.display_name AS displayName FROM container_owners o JOIN members m ON m.id=o.member_id AND m.workspace_id=? AND m.status='active' ORDER BY m.display_name,m.id").bind(ctx.actor.workspaceId).all<{containerId:string;memberId:string;displayName:string}>()).results;
     return rows.flatMap(({owned,workspaceOwner,...row}) => {
         // Workspace administration never reveals another member's personal container.
         if (row.visibility === 'personal' && !owned) return [];
@@ -23,7 +24,7 @@ async function containerRows(ctx:FeatureContext, subject:MemberSubject, filter:{
         const canEdit = level === 'full' || level === 'edit';
         const canManage = level === 'full' || (row.visibility !== 'personal' && !!workspaceOwner);
         if (!canManage && !canEdit && !level) return [];
-        return [{...row,permissions:{canManage,canCreatePages:canEdit && !row.archivedAt && !row.trashedAt}}];
+        return [{...row,owners:owners.filter(owner => owner.containerId === row.id).map(({memberId,displayName}) => ({memberId,displayName})),permissions:{canManage,canCreatePages:canEdit && !row.archivedAt && !row.trashedAt}}];
     });
 }
 export async function readContainer(ctx:FeatureContext,id:string) {

@@ -951,7 +951,7 @@
       "id": "CONT-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for CONT-001 — What a container is. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "This legacy inventory classifies Workers supporting tests only; CONTRACT.md owns native clause status. The existing responsive core-wiki settings registrations now load tests/qualification/ui-convergence/container-identity-journey.mjs: identifier, key, icon, name, description, owners, all five visibility values, page-shaped grants and three external-access switches read back natively, and one container-scoped tree with a database reconciled against canonical identifiers and parentage after reload. Exact candidate execution is recorded by Verify.",
       "supportingTests": []
     },
     {

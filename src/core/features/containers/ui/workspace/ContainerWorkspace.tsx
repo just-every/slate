@@ -17,6 +17,7 @@ import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import { PageTree, type TreePage } from "../../../../app/ui/PageTree";
 import { AnalyticsPanel } from "../../../analytics/ui/workspace/AnalyticsPanel";
 import { ContainerSettings } from "./ContainerSettings";
+import { ContainerIdentity } from "./ContainerIdentity";
 import { TopBar } from "../../../../app/ui/header/TopBar";
 import { PageTitle } from "../../../../app/ui/header/PageTitle";
 export type Container = {
@@ -30,6 +31,7 @@ export type Container = {
   guestAccess: string;
   publicLinkAccess: string;
   anonymousAccess: string;
+  owners: { memberId: string; displayName: string }[];
   archivedAt: string | null;
   memberCount: number;
   permissions: { canManage: boolean; canCreatePages: boolean };
@@ -215,13 +217,13 @@ function ContainerDetail({ id, updated }: { id: string; updated: () => void }) {
           {query||label?<button className="secondary-button" onClick={()=>{setQuery("");setLabel('');}}>Clear page filter</button>:null}<PageTree pages={available.filter((page) => matched.has(page.id))} />
           {resource.data.permissions.canCreatePages ? <TreeCreatePage containerId={id} name={resource.data.name} /> : null}
           </>:null}
-          {tab==='settings'?<ContainerSettings
+          {tab==='settings'?<><ContainerIdentity container={resource.data}/><ContainerSettings
             container={resource.data}
             onSaved={async () => {
               await resource.reload();
               updated();
             }}
-          />:null}
+          /></>:null}
           <details>
             <summary>Readership</summary>
             <AnalyticsPanel containerId={id} />

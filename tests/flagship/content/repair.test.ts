@@ -22,7 +22,7 @@ try {
 try {
 
  const f=await fixture();await env.DB.prepare("UPDATE containers SET guest_access='forbidden',anonymous_access='forbidden' WHERE id=?").bind(f.containerId).run();
- const metadata=await f.request('GET',`/api/containers/${f.containerId}`);expect(metadata.status).toBe(200);expect(metadata.data).toMatchObject({id:f.containerId,guestAccess:'forbidden',publicLinkAccess:'allowed',anonymousAccess:'forbidden',permissions:{canManage:true},archivedAt:null});
+ const metadata=await f.request('GET',`/api/containers/${f.containerId}`);expect(metadata.status).toBe(200);expect(metadata.data).toMatchObject({id:f.containerId,key:null,icon:null,name:'Team',description:'',visibility:'default',owners:[{memberId:f.a,displayName:f.a}],guestAccess:'forbidden',publicLinkAccess:'allowed',anonymousAccess:'forbidden',permissions:{canManage:true},archivedAt:null});
  const archive=await f.request('POST',`/api/containers/${f.containerId}/archive`,{operationKey:createUlid(),expectedRevisionId:metadata.data.revisionId});expect(archive.status).toBe(200);
  expect((await f.request('GET','/api/containers')).data.items).toHaveLength(0);const archived=await f.request('GET','/api/containers?archived=true');expect(archived.data.items[0]).toMatchObject({id:f.containerId,revisionId:archive.data.value.revisionId});
  const restore=await f.request('POST',`/api/containers/${f.containerId}/archive`,{operationKey:createUlid(),expectedRevisionId:archived.data.items[0].revisionId,restore:true});expect(restore.status).toBe(200);expect((await f.request('GET','/api/containers')).data.items).toHaveLength(1);

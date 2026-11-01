@@ -8,6 +8,7 @@ import { accessible } from './browser-support.mjs';
 import { compactPage } from './browser-evidence.mjs';
 import {searchFiltersJourney} from './search-filters-journey.mjs';
 import {mixedSearchJourney} from './mixed-search-journey.mjs';
+import {containerIdentityJourney} from './container-identity-journey.mjs';
 
 export async function searchJourney(state, pageId) {
   const {page,origin,journeyTitle,searchTerm}=state;
@@ -96,4 +97,6 @@ export async function settingsJourney(state, width) {
   await guestConsoleJourney(state);
   await themeJourney(state, width);
   if(width===1440)await activityContextJourney(state);
+  // Last: the operator's per-minute request budget is spent by the many screens above, not by this reconciliation.
+  await containerIdentityJourney(state,width);
 }
