@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "00b41be6a1e1afce36ae9565b6f123a3bce3ef93a8e0bcd8f50a3d99812e72a6",
+      "sha256": "05f1ee590efe33b2a66cb1762d13ac502ac6c449586ac30dd1afaebca872608d",
       "executable": false
     },
     "DEMO.md": {
@@ -7384,7 +7384,7 @@
       "executable": false
     },
     "src/core/features/imports/persist.ts": {
-      "sha256": "2970eadd094c71a97b66d47adf86ecc85e37fb9ceae8c25a1f7f744a93ed1d99",
+      "sha256": "b747de473a31c0944e22fca5d4f7a880e77cae2033d53c5f1d37314fe2fa47f7",
       "executable": false
     },
     "src/core/features/imports/portable-blocks.ts": {
@@ -10460,7 +10460,7 @@
       "executable": false
     },
     "tests/e2e/imports/preview-undo.test.ts": {
-      "sha256": "1f1330caaae6c2ddf1be0d48c9c69bf61f081942975fff7b2f9dbdd9303121c5",
+      "sha256": "d175dd307fa50faff3a0ee2f587e0ec6ee9fd19753b495e267c7c43375328cbe",
       "executable": false
     },
     "tests/e2e/imports/provider-folder-journey.ts": {
