@@ -149,7 +149,9 @@ export async function savedAfterCommit(page, blockId, edit, { whileSaving } = {}
   let intercepted;
   const matches = url => url.pathname === routePath;
   const hold = route => {
-    if (route.request().method() !== 'PATCH') return route.continue();
+    // Recovery may reconcile its journal with a follow-up write. Hold only the
+    // measured operation; later writes retain their normal transport.
+    if (route.request().method() !== 'PATCH' || intercepted) return route.continue();
     intercepted = route;
   };
   await page.route(matches, hold);
