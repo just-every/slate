@@ -8,10 +8,10 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 53 | 244 | 35 | 332 |
+| Core | 54 | 243 | 35 | 332 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 53 | 244 | 41 | 338 |
+| Full target | 54 | 243 | 41 | 338 |
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
@@ -1401,7 +1401,7 @@ Core · published · **partial** · Cites BASE-DATA-002, BASE-DATA-003, BASE-DAT
 
 #### CONT-001 — What a container is
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** A container has an identifier, an optional key, an icon, a name, a description, owners, a visibility of `default`, `open`, `closed`, `private` or `personal`, a grant list shaped like a page's, and external-access switches (`CONT-007`).
 
@@ -1409,8 +1409,8 @@ Core · published · **partial**
 1. It holds one page tree (`TREE-001`) and the databases in that tree.
 2. A container carries every listed attribute and holds one tree.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "A container has an identifier, an optional key, an icon, a name, a description, owners, a visibility of `default`, `open`, `closed`, `private` or `personal`, a grant list shaped like a page's, and external-access switches (`CONT-007`)."<br>No validated CI-run proof for this acceptance point: "It holds one page tree (`TREE-001`) and the databases in that tree."
+**Evidence.** `tests/qualification/ui-convergence/container-identity-journey.mjs` — "containerIdentityJourney", called last by "settingsJourney" in `tests/qualification/ui-convergence/reading-journeys.mjs`, which "space tree title filtering preserves ancestors, access and expansion at 390px" and "page outline follows headings and navigates long pages at 1440px" in `tests/qualification/ui-convergence/journeys.test.mjs` run at the two widths: acceptance 1 and 2 — a created space reads back its identifier, key, icon, name, description and owners, equal in the index and the single read; all four settable visibility values and the native personal value (owned, key-bound, private, never listed to another person or a workspace owner) read back with each of the three external-access switches changed in turn and identity untouched; a container grant row has a page grant row's shape and revocation reads back; one container lists exactly its own pages and database with canonical identifiers and parents, rendered the same in the Content tab before and after reload, and a neighbouring space's nodes never appear; the Space identity card shows every attribute. `tests/flagship/content/repair.test.ts` — "content structure, task attribution, privacy and activity retain exact revisions": the container read carries key, icon, name, description, visibility and owners.
+**Gap.** None.
 
 #### CONT-002 — Creating a container
 

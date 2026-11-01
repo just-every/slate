@@ -960,7 +960,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "e0ec4e1ad0d1f48f810fc3f802d54f0cbd6b52edadc2263ed04f1783a5cd9d2b",
+      "sha256": "476414fdedb6a45005b29dd18f924b67faf6056019648427656969fdfef920f4",
       "executable": false
     },
     "AGENTS.consumer.md": {
@@ -1036,7 +1036,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "3d1252d8125f24f89d65329d8c292abe6062427d8b83024d2d8034aa78d0f8b6",
+      "sha256": "91122f596f72fc0d6bb0e18ce16901c857410613a2bddc3e2bef272e6e307d84",
       "executable": false
     },
     "docs/CLOUDFLARE.md": {

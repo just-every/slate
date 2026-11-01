@@ -45,7 +45,7 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 37 | Templates: Start from a page you've saved. | `TMPL-005` partial | partial |
 | 38 | Verification: Mark pages verified, with an expiry. | `STAT-003` done; `STAT-004` partial | partial |
 | 39 | Inbox: Mentions, replies and watched pages. | `NOTIF-001` partial; `NOTIF-002` done | partial |
-| 40 | Containers: Separate trees with their own access. | `CONT-001` partial; `CONT-009` partial | partial |
+| 40 | Containers: Separate trees with their own access. | `CONT-001` done; `CONT-009` partial | partial |
 | 41 | Backup and restore: Export the whole wiki and restore it. | `PORT-001` partial; `PORT-002` partial | partial |
 | 42 | A team wiki you run yourself. | `AGENT-002` partial; `HOME-002` partial | partial |
 
