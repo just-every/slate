@@ -80,6 +80,7 @@ export async function searchFiltersJourney(state) {
  await accessible(page,'quoted phrase excludes reordered words');
  // The empty state retains the exact query and every applied filter, then creates one real page.
  const missing='Unwritten release review brief';
+ await page.getByRole('button',{name:'Filter results',exact:true}).click();
  await contributor.selectOption('browser-owner');await status.selectOption('search-ready');
  await input.fill(missing);await page.getByRole('button',{name:'Search',exact:true}).click();
  const empty=page.locator('.search-empty');
@@ -93,8 +94,10 @@ export async function searchFiltersJourney(state) {
  await accessible(page,'no results restates the query and every applied filter');
  await page.getByRole('button',{name:'Clear all filters',exact:true}).click();
  await expect(empty).toContainText('Filters: None');await expect(input).toHaveValue(missing);
+ await page.getByRole('button',{name:'Filter results',exact:true}).click();
  for(const control of [source,kind,contributor,status,from,until])await expect(control).toHaveValue('');
  for(const name of ['Include archive','Include trash'])await expect(page.getByRole('checkbox',{name,exact:true})).not.toBeChecked();
+ await page.keyboard.press('Escape');
  await expect(page.locator('.search-results a')).toHaveCount(0);
  await expect(page.getByRole('region',{name:'Retained answer',exact:true})).toHaveCount(0);
  const before=new Set((await api('/api/pages')).items.map(item=>item.id));
