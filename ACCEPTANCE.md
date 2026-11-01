@@ -8,12 +8,12 @@ The primary journey: Import the team's existing knowledge, invite its members, w
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 49 | 248 | 34 | 331 |
+| Core | 50 | 247 | 34 | 331 |
 | Agent surface | 0 | 0 | 6 | 6 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 49 | 248 | 40 | 337 |
+| Full target | 50 | 247 | 40 | 337 |
 
-Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
+Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff. Field proof register: 16 rows; 0 passed, 0 failed, 16 not run.
 
 ## Core
 
@@ -1661,7 +1661,7 @@ Core · published · **partial**
 
 #### DB-012 — Record detail
 
-Core · published · **partial**
+Core · published · **done**
 
 **Requirement.** Opening a record shows its fields in a defined order with inline editing, its comments and its history (`REV-002`), and, where `DB-010` exposes it, its body.
 
@@ -1669,8 +1669,8 @@ Core · published · **partial**
 1. A field a member may not edit is shown and not editable rather than hidden.
 2. Record detail shows ordered fields, comments, history and body; uneditable fields are shown read-only.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "Opening a record shows its fields in a defined order with inline editing, its comments and its history (`REV-002`), and, where `DB-010` exposes it, its body."<br>No validated CI-run proof for this acceptance point: "A field a member may not edit is shown and not editable rather than hidden."
+**Evidence.** `tests/qualification/ui-convergence/record-detail-journey.mjs` — "recordDetailJourney", through "spreadsheet tables merge, sort and round-trip through edited database records at 1440px" and "real core-wiki and touch-member journeys at 390px" in `tests/qualification/ui-convergence/journeys.test.mjs`: acceptance 1 and 2, populated defined field order, inline numeric edit with native reload, visible read-only computed and metadata fields, viewer refusal without state changes, retained comments and exact earlier revision, and lossless body visibility under both parity values. `tests/flagship/structured/http.test.ts` — "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input": native editor success, computed and metadata refusal, downgraded viewer refusal including replay, exact retained history and both parity projections.
+**Gap.** None.
 
 ### Automation
 

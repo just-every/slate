@@ -45,6 +45,7 @@ import { concurrentEditingJourney } from './two-people-editing.mjs';
 import { accessChangeJourney } from './two-people-access.mjs';
 import { historyJourney } from './two-people-history.mjs';
 import { databaseJourney } from './database-journey.mjs';
+import { recordDetailJourney } from './record-detail-journey.mjs';
 import { reviewRequestJourney } from './review-request-journey.mjs';
 import { hubJourney } from './hub-journey.mjs';
 import { blogJourney } from './blog-journey.mjs';
@@ -69,7 +70,7 @@ import { todayOutcomesJourney } from './today-outcomes-journey.mjs';
 // Retain both responsive branches: desktop sidebar visibility and horizontal
 // column geometry are unique assertions, while the phone case checks stacking.
 for (const width of [390, 1440]) {
-  test(`real core-wiki and touch-member journeys at ${width}px`, { timeout: 300000 }, async () => {
+  test(`real core-wiki and touch-member journeys at ${width}px`, { timeout: 420000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       const refused = await state.context.request.get(state.origin + '/api/ai/availability');
@@ -93,6 +94,7 @@ for (const width of [390, 1440]) {
         await state.runScheduled();
         await chatJourney(state, width);
         if (width === 390) {
+          await step('DB-012 populated record fields, comments, history and parity', () => recordDetailJourney(state, width));
           await templateCaptureJourney(state);
           await withSecondPerson(state, width, people => step('DB-015 — template handover and revoked-saver pause on a phone', () => recordTemplatesJourney(state, people)));
           // One phone smoke visits the main screens; functional journeys use desktop

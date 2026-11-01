@@ -1140,8 +1140,13 @@
       "id": "DB-012",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for DB-012 — Record detail. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "This Workers registry records supporting native record authority, ordered fields, comments, exact revisions and parity retention. Complete browser acceptance is recorded by recordDetailJourney through the existing responsive Verify registrations and CONTRACT.md; this registry does not classify browser runs as Workers acceptance.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
+        }
+      ]
     },
     {
       "id": "AUTO-001",

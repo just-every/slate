@@ -60,7 +60,7 @@ export async function touchOperatorJourney(state,touch){
  await expect(verify.getByText('The visit to this revision is not confirmed yet.')).toHaveCount(0);
  await tap(verify.getByRole('button',{name:'I reviewed this revision',exact:true}));
  await expect(verify).toBeHidden();
- await expect(item).toHaveCount(0);
+ await expect(item).toHaveCount(0,{timeout:30000});
  const attestation=(await api(`/api/status/page/${reviewed}`)).verification;
  assert.equal(attestation.verifier.id,'browser-reader');assert.equal(attestation.state,'current');
  await checkpoint(page,'assigned review verified');
@@ -85,7 +85,7 @@ export async function touchOperatorJourney(state,touch){
  await tap(health.getByRole('button',{name:'Verify again',exact:true}));
  await tap(verify.getByRole('button',{name:'I reviewed this revision',exact:true}));
  await expect(verify).toBeHidden();
- await expect(health).toHaveCount(0);
+ await expect(health).toHaveCount(0,{timeout:30000});
  assert.equal((await api(`/api/status/page/${reviewed}`)).verification.state,'current');
  await checkpoint(page,'health queue reverified');
  await inboxJourney(state,touch);

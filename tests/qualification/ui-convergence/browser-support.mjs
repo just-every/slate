@@ -100,12 +100,12 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
       }
       const pending = response.text().then(body => { if(new URL(response.url()).pathname.match(/^\/api\/(developer\/(tokens|webhooks|scim(?:\/[^/]+\/rotate)?)|activity\/streams)$/) && request.method() === 'POST' && response.ok()){const value=JSON.parse(body);delete value.secret;body=JSON.stringify(value);} network.push({ url: response.url(), method: request.method(), requestBody, status: response.status(), responseBody: body }); })
         .catch(cause => {
-          // First run commits, then navigates to the new page. Chromium may
-          // discard that document's body buffer before this diagnostic read;
-          // keep the genuine response status instead of calling it a rejection.
-          if (new URL(response.url()).pathname === '/api/workspace/first-run'
-              && String(cause).includes('Response body is not available for a response that was navigated away from.')) {
-            network.push({ url: response.url(), method: request.method(), requestBody, status: response.status(), responseBodyUnavailable: 'The first-run document navigated after the response.' });
+          // A committing action (first run, page creation) navigates to its new
+          // page. Chromium may discard that document's body buffer before this
+          // diagnostic read; keep the genuine response status instead of calling
+          // it a rejection. Every other read failure stays an error entry.
+          if (String(cause).includes('Response body is not available for a response that was navigated away from.')) {
+            network.push({ url: response.url(), method: request.method(), requestBody, status: response.status(), responseBodyUnavailable: 'The page navigated after the response.' });
           } else network.push({ url: response.url(), error: String(cause) });
         });
       captures.add(pending); pending.finally(() => captures.delete(pending));

@@ -19,11 +19,11 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 11 | Markdown shortcuts | `BLOCK-003` partial; `BLOCK-004` partial; `BLOCK-005` partial; `TREE-001` partial | partial |
 | 12 | Nested page trees | `BLOCK-003` partial; `BLOCK-004` partial; `BLOCK-005` partial; `TREE-001` partial | partial |
 | 13 | @mentions | `BLOCK-003` partial; `BLOCK-004` partial; `BLOCK-005` partial; `TREE-001` partial | partial |
-| 14 | Every record is a page. | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
-| 15 | Give a collection its own fields, then view it as a table, a board or a chart. Filter, sort and group as you go, and open any row as a full page with comments and history. | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
-| 16 | Table, board and chart | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
-| 17 | Every record is a page | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
-| 18 | Filter, sort and group | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` partial | partial |
+| 14 | Every record is a page. | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` done | partial |
+| 15 | Give a collection its own fields, then view it as a table, a board or a chart. Filter, sort and group as you go, and open any row as a full page with comments and history. | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` done | partial |
+| 16 | Table, board and chart | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` done | partial |
+| 17 | Every record is a page | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` done | partial |
+| 18 | Filter, sort and group | `DB-001` partial; `DB-004` partial; `DB-005` partial; `DB-006` partial; `DB-008` partial; `DB-010` partial; `DB-012` done | partial |
 | 19 | Search that respects who's asking. | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
 | 20 | One search covers pages and records, and each person only sees what they're allowed to open. No AI required. | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
 | 21 | Results each person may open | `SEARCH-001` done; `SEARCH-005` done; `SEARCH-006` partial; `SEARCH-008` partial | partial |
