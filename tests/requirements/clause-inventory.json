@@ -1121,11 +1121,15 @@
       "id": "DB-009",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of DB-009 — Lock structure. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Native Worker HTTP coverage now exercises all structure refusals on populated data, unchanged snapshots, durable record editing, edit-only unlock refusal and cross-member full-access unlock. The existing responsive browser registrations invoke databaseStructureLockJourney through native controls with reload and read-back. Independent release acceptance is separate from this supporting registry.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/structured.test.ts",
           "testName": "structured records, computation, readers, templates, automation, policies and views retain durable semantics"
+        },
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
         }
       ]
     },

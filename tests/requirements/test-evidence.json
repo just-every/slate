@@ -314,9 +314,10 @@
       "kind": "supporting-regression",
       "clauses": [
         "BASE-ACCESS-002",
+        "DB-009",
         "DB-012"
       ],
-      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys."
+      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys. DB-009: Native Worker sessions create and populate a database, retain the locking member, refuse field and view creation, change and deletion plus filter, sort and layout changes without changing the structure, keep record edits durable, deny edit-only unlock and allow another full-access member to unlock and perform the same writes. Retains every original missing, expired, revoked and denied session assertion. Supporting registry status remains separate from the contract judgment."
     },
     {
       "file": "tests/flagship/structured/template-permissions.test.ts",
