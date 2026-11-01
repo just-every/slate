@@ -216,7 +216,7 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE
 4. The same native session and owner authorization guard the route and completion API.
 5. Claimed owner gets name, General space and Welcome page atomically; local wizard runs once at the documented public door and later members go to the documented public door.
 
-**Evidence.** `tests/qualification/backend/emitted.mjs`
+**Evidence.** `tests/qualification/backend/emitted.mjs`  Supporting candidate regressions: `tests/qualification/ui-convergence/browser-support.mjs` — "setupWorkspace" via the existing responsive core journeys (wizard, native session refusals, later invited members and replay); `tests/flagship/core/owner-bootstrap.case.ts` — "ownerBootstrapCase" via `tests/flagship/core/preview-owner-signin.test.ts` (both owner claim doors, configured name, editable defaults and atomic rollback); `tests/e2e/managed-first-open.mjs` — "managedFirstOpen" via the emitted admission registration (ready workspace and persisted edits).
 **Gap.** evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/backend/emitted.mjs`.
 
 #### WORK-014 — Shortcut reference
