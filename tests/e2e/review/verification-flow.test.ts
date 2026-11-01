@@ -204,6 +204,21 @@ async function citationJourney(f: Awaited<ReturnType<typeof reviewFixture>>) {
   expect(publicRevision.text).toContain('Committed citation body.');
   expect(publicRevision.text).toContain('A newer revision exists.');
   expect(publicRevision.text).not.toContain('Working-only private title');
+  // Both rich links and link cards keep the revision when published onto a public exposure.
+  const source=await success('owner','POST','/api/pages',{operationKey:op(),containerId:'c',title:'Citation source',blocks:[
+    {id:'synthetic-slate-citation-text',blockType:'paragraph',treePosition:'0',content:{text:[{text:'Open the committed handbook',link:{href:card.href}}]}},
+    {id:'synthetic-slate-citation-card',blockType:'link-card',treePosition:'1',content:{url:card.href,display:'plain',previewState:'ready'}}
+  ]});
+  const sourcePublished=await success('owner','POST',`/api/pages/${source.value.pageId}/publish`,{operationKey:op(),expectedRevisionId:source.receipt.revisionId});
+  await success('owner','POST',`/api/publishing/${source.value.pageId}`,{operationKey:op(),expectedRevisionId:sourcePublished.receipt.revisionId,host:publicHost,slug:'citation-source',indexable:false});
+  const sourceDocument=await request('anonymous','GET','/p/citation-source');
+  expect(sourceDocument.status,sourceDocument.text).toBe(200);
+  const citationHrefs=[...sourceDocument.text.matchAll(/href="([^"]+)"/g)].map(match=>match[1]).filter(href=>href.includes('?revision='));
+  expect(citationHrefs).toEqual([`/p/cited-handbook?revision=${snapshot}`,`/p/cited-handbook?revision=${snapshot}`]);
+  const followed=await request('anonymous','GET',citationHrefs[0]);
+  expect(followed.status).toBe(200);
+  expect(followed.text).toContain('Cited handbook');
+  expect(followed.text).not.toContain('Working-only private title');
   const privateRevision=await request('anonymous','GET',`/p/cited-handbook?revision=${working}`);
   expect(privateRevision.status).toBe(404);
   expect(privateRevision.text).not.toContain('Working-only private title');
