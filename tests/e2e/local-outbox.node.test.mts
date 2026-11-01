@@ -15,15 +15,16 @@ import { listMembers } from '../../src/core/features/workspace/members';
 import { containerIndex } from '../../src/core/features/containers/queries';
 import { currentSubject, requirePageLevel, requireContainerLevel } from '../../src/core/features/sharing/current-access';
 import { search } from '../../src/core/features/search/service';
+import { namedSender } from '../../src/core/platform/mail/sender';
 const settings = {LOCAL_DEVELOPMENT:'true', APP_URL:'http://127.0.0.1:4312',SETUP_OWNER_EMAIL:'owner\x40example.com',SESSION_SECRET:'test-only-local-secret',MAIL_PROVIDER:'resend',MAIL_API_KEY:'test-only-mail-key',MAIL_FROM:'auth\x40localhost.test',RER_DEV_KEY:'test-only-local-dev-key'.padEnd(43,'k')};
-let captured: {to:string[];text:string}[] = [];
+let captured: {from:string;to:string[];text:string}[] = [];
 const realFetch = globalThis.fetch;
 function installMailCapture() {
   captured = [];
   globalThis.fetch = async (input, init) => {
     const request = new Request(input, init);
     assert.equal(request.url, 'https://api.resend.com/emails');
-    captured.push(await request.json() as {to:string[];text:string});
+    captured.push(await request.json() as {from:string;to:string[];text:string});
     return Response.json({id:crypto.randomUUID()});
   };
 }
@@ -179,6 +180,10 @@ test("native local mail sign-in and invitations preserve identity, delivery and 
     const unknown=await admit(expiredEmail);
     assert.deepEqual(unknown,known);
     assert.equal(captured.length,mailBefore+1);
+    // Sign-in and both invitation kinds go out from the one configured sender (mail.sender.v1).
+    const sender=namedSender(config())!.replaceAll('"','');
+    assert.ok(captured.length>=4);
+    for(const message of captured)assert.equal(message.from.replaceAll('"',''),sender);
     const expiring=fixture.sql.prepare('SELECT * FROM invitations WHERE email=?').get(expiredEmail)!;
     assert.equal(expiring.accepted_by_member_id,null);
     assert.equal(Date.parse(expiring.expires_at as string)-Date.parse(expiring.created_at as string),7*86400000);
