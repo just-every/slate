@@ -140,7 +140,8 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
   for (const field of definitions) structure = (await mutate("POST", base + "/fields", {expectedRevisionId: structure, field})).revisionId;
   const record = await mutate("POST", base + "/records", {title: "Populated record", values: {notes: "Retained notes", quantity: 7}});
   const recordPath = base + "/records/" + record.pageId;
-  await mutate("PUT", `/pages/${record.pageId}/blocks`, {expectedRevisionId: record.revisionId,
+  const decorated = await mutate("PATCH", `/pages/${record.pageId}`, {expectedRevisionId: record.revisionId, properties: {icon: "📚"}});
+  await mutate("PUT", `/pages/${record.pageId}/blocks`, {expectedRevisionId: decorated.revisionId,
     blocks: [{id: "record-body", blockType: "paragraph", treePosition: "a", content: {text: [{text: "Original retained record body"}]}}]});
   const earlier = (await call("GET", recordPath)).body;
   await mutate("POST", `/comments/page/${record.pageId}`, {body: [{text: "Retained record discussion"}]});
@@ -176,6 +177,9 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
   expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(404);
   expect((await call("GET", recordPath, memberCookie)).body).toEqual(viewer);
   expect((await call("GET", `/revisions/${record.pageId}`)).body).toEqual(history);
+  const placement = (await call("GET", "/pages")).body.items.find((item: any) => item.id === record.pageId);
+  expect(placement).toMatchObject({parentPageId: dbPage, pageKind: "record", icon: "📚"});
+  expect(placement.treePosition).toBeTruthy();
   const workspace = (await call("GET", "/workspace")).body;
   for (const parity of ["record-is-row", "record-is-page"]) {
     const current = (await call("GET", "/workspace")).body;
@@ -187,6 +191,13 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
     expect(retained.presentation.body).toBe(parity === "record-is-page");
     expect(retained.page.blocks).toEqual(edited.page.blocks);
     expect(retained.values).toEqual(edited.values);
+    expect(retained.page.page).toEqual(edited.page.page);
+    expect(retained.page.properties).toEqual(edited.page.properties);
+    expect((await call("GET", `/revisions/${record.pageId}`, memberCookie)).body).toEqual(history);
+    const tree = (await call("GET", "/pages", memberCookie)).body.items.filter((item: any) => item.id === record.pageId);
+    expect(tree).toEqual(parity === "record-is-page" ? [expect.objectContaining({id:record.pageId,parentPageId:dbPage,pageKind:"record",icon:"📚",treePosition:placement.treePosition})] : []);
+    const search = (await call("GET", "/search?kind=page&query=Populated%20record", memberCookie)).body;
+    expect(search.items.map((item: any) => item.id)).toEqual(parity === "record-is-page" ? [record.pageId] : []);
   }
 });
 

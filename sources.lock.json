@@ -8864,7 +8864,7 @@
       "executable": false
     },
     "src/core/features/search/query.ts": {
-      "sha256": "eb258945d5c05e50648094bffa6f3df0c281eb54e3a9695c75ebf5bc7b7574af",
+      "sha256": "6b9b46acd55424387b089efd6462798e1c72997f1a888b044b34b5761c1fbeb8",
       "executable": false
     },
     "src/core/features/search/rebuild.ts": {
@@ -11232,7 +11232,7 @@
       "executable": false
     },
     "tests/flagship/structured/http.test.ts": {
-      "sha256": "022c948a3285c8043af2bfd1978aee0fb4e26b446b79c50b6c43401683f5feac",
+      "sha256": "70ca329fcc3d2f6776680e94118ea564a532113226fb2fd1039f063b053182df",
       "executable": false
     },
     "tests/flagship/structured/migration.py": {
@@ -11380,7 +11380,7 @@
       "executable": false
     },
     "tests/portability/roundtrip.test.mjs": {
-      "sha256": "a794f32b6de95e0e247204b9a0f27adac420116ff2d7208a44247611b7087dc0",
+      "sha256": "5097a3321cb6ea904b3941350c5777465ed5f85399de2ab07247fb45e5087ebe",
       "executable": false
     },
     "tests/portability/runtime.mjs": {
@@ -12096,7 +12096,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/record-detail-journey.mjs": {
-      "sha256": "83bbd05121fa3cbb18046d2e630cfa86966dadda0912f6b4121b535de7689e69",
+      "sha256": "5f1290ec1c4a38ae016d996047b0cc473c50cd77cfdd32a3fe215837a4cffa33",
       "executable": false
     },
     "tests/qualification/ui-convergence/record-templates-journey.mjs": {

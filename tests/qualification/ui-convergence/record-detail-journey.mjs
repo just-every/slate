@@ -10,10 +10,15 @@ export async function recordDetailJourney(state, width) {
   const mutate = (method, route, data, actor = context) => ok(actor, origin, method, route, {operationKey: randomUUID(), ...data});
   const workspace = await api('/api/workspace');
   const policies = async parity => {
-    const current = await api('/api/workspace');
-    const {name, mark, description, guestAccess, publicLinkAccess, anonymousAccess} = current;
-    await mutate('PUT', '/api/workspace', {expectedRevisionId: current.revisionId, name, mark, description, guestAccess, publicLinkAccess, anonymousAccess,
-      policies: {...workspace.policies, 'record.page-parity.v1': parity}});
+    const before = await api('/api/workspace');
+    await state.page.goto(origin + '/app/settings', {waitUntil: 'networkidle'});
+    await state.page.getByRole('button', {name: 'Edit workspace & policies', exact: true}).click();
+    const dialog = state.page.getByRole('dialog', {name: 'Workspace settings', exact: true});
+    await dialog.getByRole('combobox', {name: 'Records', exact: true}).selectOption(parity);
+    await dialog.getByRole('button', {name: 'Save settings', exact: true}).click();
+    await expect(dialog).toBeHidden();
+    await state.page.reload({waitUntil: 'networkidle'});
+    assert.deepEqual((await api('/api/workspace')).policies, {...before.policies, 'record.page-parity.v1': parity});
   };
   const container = (await api('/api/containers')).items.find(item => item.name === 'Handbook');
   const database = (await mutate('POST', '/api/databases', {containerId: container.id, title: 'Record detail proof'})).value;
@@ -31,9 +36,11 @@ export async function recordDetailJourney(state, width) {
     config: {expression: {op: 'multiply', args: [{field: quantity.id}, {literal: 2}]}}};
   let revision = database.revisionId;
   for (const field of [...fields, computed]) revision = (await mutate('POST', base + '/fields', {expectedRevisionId: revision, field})).value.revisionId;
+  await mutate('POST', base + '/views', {expectedRevisionId: revision, view: {id: randomUUID(), name: 'All records', layout: 'table', filters: [], sorts: [], groups: [], calculations: {}, display: {}, position: 0}});
   const record = (await mutate('POST', base + '/records', {title: 'Populated record', values: {[notes.id]: 'Retained notes', [quantity.id]: 7}})).value;
   const recordPath = base + '/records/' + record.pageId;
   const pagePath = `/api/pages/${record.pageId}`;
+  await mutate('PATCH', pagePath, {expectedRevisionId: record.revisionId, properties: {icon: '📚'}});
   const blockId = randomUUID();
   const beforeBody = await api(pagePath);
   await mutate('PUT', pagePath + '/blocks', {expectedRevisionId: beforeBody.page.revisionId,
@@ -61,10 +68,46 @@ export async function recordDetailJourney(state, width) {
     for (const field of [computed, created, updated, identifier]) await expect(row(page, field.name).getByRole('button')).toHaveCount(0);
     await expect(page.locator('.record-fields-list').getByRole('button', {name: 'Edit', exact: true})).toHaveCount(canEdit ? 2 : 0);
   };
+  const projections = async parity => {
+    const pages = (await api('/api/pages?containerId=' + container.id)).items.filter(item => item.id === record.pageId);
+    const search = await api('/api/search?kind=page&query=' + encodeURIComponent('Populated record'));
+    if (parity === 'record-is-page') {
+      assert.equal(pages.length, 1);
+      assert.equal(pages[0].parentPageId, database.pageId);
+      assert.equal(pages[0].pageKind, 'record');
+      assert.equal(pages[0].icon, '📚');
+      assert.ok(pages[0].treePosition);
+      assert.deepEqual(search.items.map(item => item.id), [record.pageId]);
+    } else {
+      assert.deepEqual(pages, []);
+      assert.deepEqual(search.items, []);
+      assert.equal(search.total, 0);
+    }
+  };
   try {
     await withSecondPerson(state, width, async ({bob}) => {
       await policies('record-is-page');
-      await bob.page.goto(recordUrl, {waitUntil: 'networkidle'});
+      assert.equal((await api(recordPath)).page.page.id, record.pageId);
+      await bob.page.goto(`${origin}/app/databases/${database.id}`, {waitUntil: 'networkidle'});
+      const title = bob.page.getByRole('button', {name: 'Populated record', exact: true});
+      await expect(title).toContainText('📚');
+      await title.click();
+      const peek = bob.page.getByRole('dialog', {name: 'Record preview', exact: true});
+      await expect(peek).toHaveClass(/record-peek-side/);
+      for (const mode of ['side', 'center']) {
+        if (mode === 'center') await peek.getByRole('button', {name: 'Centre peek', exact: true}).click();
+        await expect(peek).toHaveClass(new RegExp('record-peek-' + mode));
+        await checkFields(bob.page, true, 7);
+        await expect(peek.locator('.stored-page-icon')).toHaveText('📚');
+        await expect(peek.locator(`[data-block-id="${blockId}"]`).first()).toContainText('Current retained record body');
+        await accessible(bob.page, 'record ' + mode + ' peek');
+      }
+      await peek.getByRole('link', {name: 'Open full page', exact: true}).click();
+      await expect(bob.page).toHaveURL(recordUrl);
+      await expect(peek).toHaveCount(0);
+      await expect(bob.page.locator('.stored-page-icon')).toHaveText('📚');
+      await projections('record-is-page');
+      console.log('PROBE DB-010 1–2: native record and page identifiers agree; populated icon, fields and body open in side peek, centre peek and full page; exact tree placement and page-search ID retained');
       await checkFields(bob.page, true, 7);
       await row(bob.page, quantity.name).getByRole('button', {name: 'Edit', exact: true}).click();
       const dialog = bob.page.getByRole('dialog', {name: 'Edit Quantity', exact: true});
@@ -82,6 +125,7 @@ export async function recordDetailJourney(state, width) {
       await grant(context, origin, database.pageId, bob.id, 'view', {id: memberGrant.id});
       const retained = await api(recordPath);
       const historyBefore = await api(`/api/revisions/${record.pageId}`);
+      const stored = {page: retained.page.page, properties: retained.page.properties, blocks: retained.page.blocks, values: retained.values};
       const denied = await call(bob.context, origin, 'PATCH', recordPath, {operationKey: randomUUID(), expectedRevisionId: retained.revisionId, values: {[quantity.id]: 99}});
       assert.equal(denied.status, 404);
       assert.deepEqual(await api(recordPath), retained, 'A viewer write changes neither fields nor body nor revision.');
@@ -90,6 +134,10 @@ export async function recordDetailJourney(state, width) {
         await policies(parity);
         await bob.page.goto(recordUrl, {waitUntil: 'networkidle'});
         await checkFields(bob.page, false, 11);
+        await projections(parity);
+        const current = await api(recordPath);
+        assert.deepEqual({page: current.page.page, properties: current.page.properties, blocks: current.page.blocks, values: current.values}, stored);
+        assert.deepEqual(await api(`/api/revisions/${record.pageId}`), historyBefore);
         const body = bob.page.locator(`[data-block-id="${blockId}"]`);
         if (parity === 'record-is-page') {
           await expect(body.first()).toContainText('Current retained record body');
@@ -97,6 +145,13 @@ export async function recordDetailJourney(state, width) {
           await bob.page.getByRole('button', {name: 'Comments', exact: true}).click();
         } else {
           await expect(body).toHaveCount(0);
+          await expect(bob.page.locator('.stored-page-icon')).toHaveCount(0);
+          await expect(bob.page.locator('[data-page-editor]')).toHaveCount(0);
+          await bob.page.evaluate(() => { window.slatePrintEvents = 0; window.addEventListener('beforeprint', () => window.slatePrintEvents++); });
+          await bob.page.getByRole('button', {name: 'More', exact: true}).click();
+          await bob.page.getByRole('menuitem', {name: 'Print record', exact: true}).click();
+          await expect.poll(() => bob.page.evaluate(() => window.slatePrintEvents)).toBe(1);
+          console.log('PROBE DB-010 3: Settings selects record-is-row; native field list remains, beforeprint fires once; icon, body, tree and page-search projection absent with stored page, fields, body and history unchanged');
           await bob.page.getByText('Record comments', {exact: true}).click();
         }
         await expect(bob.page.locator('.comment-thread')).toContainText('Retained record discussion');
@@ -125,6 +180,7 @@ export async function recordDetailJourney(state, width) {
         console.log(`PROBE DB-012 ${parity}: viewer fields, retained comments, exact historical body and unchanged stored current body passed`);
         await accessible(bob.page, `record detail ${parity}`);
       }
+      console.log('PROBE DB-010 4–5: native Settings switches back to record-is-page with identical icon, field map, block IDs, current body, page ID, revision history and tree placement');
       console.log('PROBE DB-012 read-only: all six fields readable; native viewer PATCH -> 404 and unchanged record and history');
     });
   } finally { await policies(workspace.policies['record.page-parity.v1'] ?? 'record-is-page'); }

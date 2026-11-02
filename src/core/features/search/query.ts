@@ -4,6 +4,7 @@ import type { FeatureContext } from '../../app/feature-context';
 import type { MemberSubject } from '../../shared/knowledge/model';
 import type { SearchInput } from './service';
 import { recordScope } from './record-index';
+import { contentPolicy } from '../pages/policy';
 import { accessSql, pageAccessLevelSql } from './access-sql';
 import { searchHighlights, type AdvancedSearch } from './language';
 import { advancedSearchSql, searchCandidateExpression, searchCandidateSql } from './language-sql';
@@ -15,9 +16,12 @@ export async function searchQuery(ctx: FeatureContext, subject: MemberSubject, i
  const bind = (value: string | number | null) => { parameters.push(value); return `json_extract(?1,'$[${parameters.length - 1}]')`; };
  const termList = bind(JSON.stringify(searchHighlights(language)));
  const expression = searchCandidateExpression(language), fts = expression ? bind(expression) : null;
- const workspace = bind(ctx.actor.workspaceId), kind = input.kind ? `AND t.kind=${bind(input.kind)}` : '';
+ // Page searches include record pages only while the workspace presents them as pages.
+ // Keep the record kind and the same live permission checks for every candidate.
+ const pageRecords = input.kind === 'page' && (await contentPolicy(ctx))['record.page-parity.v1'] === 'record-is-page';
+ const workspace = bind(ctx.actor.workspaceId), kind = pageRecords ? "AND t.kind IN ('page','record')" : input.kind ? `AND t.kind=${bind(input.kind)}` : '';
  const possible = searchCandidateSql(language, 't', bind);
- const generation = !input.kind || input.kind === 'record' ? await recordScope(ctx, !!input.includeTrashed) : null;
+ const generation = !input.kind || input.kind === 'record' || pageRecords ? await recordScope(ctx, !!input.includeTrashed) : null;
  const recordProjection = bind(JSON.stringify([ctx.actor.workspaceId, ctx.actor.id, !!input.includeTrashed]));
  const recordGeneration = bind(generation), nowParameter = bind(ctx.now);
  const acl = accessSql(subject, ctx.now, !!input.includeTrashed); let aclIndex = 0;
