@@ -58,6 +58,11 @@ export async function memberRemovalJourney(state,width) {
     }
     console.log('PROBE CONT-005 personal privacy: repeated native member reads and personal grant mutations -> one container, ten refusals, unchanged grants, owner and member denied');
     const space=(await ok(context,origin,'POST','/api/containers',{operationKey:key(),name:'Departure handover',visibility:'private'})).value.id;
+    const beforeMove=await ok(colleague,origin,'GET',`/api/pages/${personal}`);
+    assert.equal((await call(colleague,origin,'POST',`/api/pages/${personal}/move-preview`,{containerId:space,parentPageId:null})).status,404);
+    assert.equal((await call(colleague,origin,'POST',`/api/pages/${personal}/move`,{operationKey:key(),expectedRevisionId:beforeMove.page.revisionId,containerId:space,parentPageId:null,treePosition:'0',accessPreviewHash:'synthetic-slate-0'})).status,404);
+    assert.deepEqual(await ok(colleague,origin,'GET',`/api/pages/${personal}`),beforeMove,'An unauthorized destination leaves personal content and its location unchanged.');
+    assert.deepEqual(await privateGrants(),beforeGrants,'A refused move cannot change personal grants.');
     await ok(context,origin,'POST','/api/sharing',{operationKey:key(),targetKind:'container',targetId:space,principalKind:'member',principalId:person.id,level:'full'});
     const destinationGrant=(await ok(context,origin,'POST','/api/sharing',{operationKey:key(),targetKind:'container',targetId:space,principalKind:'member',principalId:'browser-reader',level:'view'})).value.id;
     const moved=(await ok(colleague,origin,'POST','/api/pages',{operationKey:key(),containerId:privateSpace.id,title:'Casey shared handover',blocks:[{id:key(),blockType:'paragraph',content:{text:[{text:'Reviewed handover can leave the personal space.'}]},treePosition:'0'}]})).value.pageId;

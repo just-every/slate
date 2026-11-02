@@ -12032,7 +12032,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/member-removal-journey.mjs": {
-      "sha256": "d2434eeb5f4ded8a0a0ce7e1cef029f49ee96e88b8672ac7c7b9961ead4018be",
+      "sha256": "9b4bea205e6ad6bc15e6d1903e938e859d541336dd5091f6406542bf660ba6e0",
       "executable": false
     },
     "tests/qualification/ui-convergence/mixed-search-journey.mjs": {
