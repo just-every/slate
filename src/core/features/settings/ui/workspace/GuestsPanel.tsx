@@ -54,7 +54,7 @@ export function GuestsPanel({onInvited}:{onInvited:()=>Promise<boolean>}) {
       await mutate('/api/guests/revoke',{operationKey:operationKey(),memberIds:selected});setSelected([]);guests.reload();setNotice('Selected guests revoked. Their sessions have ended.');
     }}><p>Remove {selected.length} guests and end their open sessions. Their authored content and history remain.</p></ActionDialog>:null}
     {dialog==='invite'?<ActionDialog title="Invite a guest" action="Send invitation" onClose={()=>setDialog(undefined)} onSubmit={async form=>{
-      await mutate('/api/invitations',{operationKey:operationKey(),kind:'guest',email:String(form.get('email')),pageId:String(form.get('pageId'))});setNotice(`Invitation sent to ${String(form.get('email'))}`);await onInvited();
+      await mutate('/api/invitations',{operationKey:operationKey(),kind:'guest',email:String(form.get('email')),pageId:String(form.get('pageId'))});setNotice(`Invitation requested for ${String(form.get('email'))}. Check delivery below.`);await onInvited();
     }}>
 
       <label>Guest email<input type="email" name="email" required/></label>

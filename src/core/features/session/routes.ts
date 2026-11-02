@@ -27,8 +27,9 @@ export { BASE_AUTH_PATHS, SESSION_AUTH_PATHS } from './paths';
 const invitationToken = z.string().min(20).max(512);
 const requestDigest = (secret: string, email: string, key: string) => sessionDigest(secret, `mail-request:${email.toLowerCase()}:${key}`);
 
-function authProblem(cause: unknown, failure?: string): never {
+function authProblem(cause: unknown, failure?: string, uncertain = false): never {
   if (!(cause instanceof AuthError)) throw cause;
+  if (cause.code === "mail_unavailable" && uncertain) throw new ApiProblem(502, "MAIL_UNCERTAIN", failure ?? "Provider acceptance is uncertain. Provider receipt review is required before any new dispatch.");
   if (cause.code === "mail_unavailable") throw new ApiProblem(502, "MAIL_NOT_SENT", failure ? `The sign-in email was not sent: ${failure}.` : "The sign-in email could not be sent.");
   if (cause.code === "rate_limited") throw new ApiProblem(429, "RATE_LIMITED", "Too many sign-in requests. Try again later.");
   if (cause.code === "invalid_email") throw new ApiProblem(400, "INVALID_REQUEST", "Enter a valid email address.");
@@ -57,10 +58,16 @@ export function createSessionRoutes() {
       await bootstrapOwner(c.env.DB, config, input.email);
       // A no-script form has no status key of its own; a server key still records its delivery for Settings.
       const requestKey = input.requestKey ?? (form ? crypto.randomUUID() : undefined);
-      const delivery = { requestDigest: requestKey ? await requestDigest(config.sessionSecret, input.email, requestKey) : undefined, failure: undefined as string | undefined };
+      const digest = requestKey ? await requestDigest(config.sessionSecret, input.email, requestKey) : undefined;
+      // Reloads and repeated submissions inspect the admitted command, never send it again.
+      if (digest && await c.env.DB.prepare('SELECT 1 FROM mail_deliveries WHERE request_digest=?').bind(digest).first()) {
+        if (form) return c.redirect("/signin?requested=1", 303);
+        return c.json({ accepted: true });
+      }
+      const delivery = { requestDigest: digest, failure: undefined as string | undefined, uncertain: false };
       const { auth } = await createSlateAuth(c.env.DB, config, { delivery });
       try { await auth.requestMagicLink(c.req.raw, { email: input.email, returnTo: "/app" }); }
-      catch (cause) { authProblem(cause, delivery.failure); }
+      catch (cause) { authProblem(cause, delivery.failure, delivery.uncertain); }
       // Every request gets the same acknowledgement; no member lookup is exposed.
       if (form) return c.redirect("/signin?requested=1", 303);
       return c.json({ accepted: true });

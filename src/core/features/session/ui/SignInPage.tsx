@@ -17,6 +17,21 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
     "queued" | "sent" | "failed" | "uncertain" | "unconfirmed" | null
   >(requested ? "unconfirmed" : null);
   const requestKey = useRef<string | null>(null);
+  const storageKey = 'slate.sign-in-status';
+  const forgetRequest = () => {
+    requestKey.current = null;
+    try { sessionStorage.removeItem(storageKey); } catch { /* Storage can be disabled. */ }
+  };
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null');
+      if (saved && typeof saved.email === 'string' && typeof saved.requestKey === 'string' && (!loginHint || normalizeEmail(loginHint) === saved.email)) {
+        setEmail(saved.email);
+        requestKey.current = saved.requestKey;
+        setDelivery('queued');
+      }
+    } catch { /* A missing status capability leaves the ordinary sign-in form. */ }
+  }, [loginHint]);
   const providerNotice = providerRefused
     ? `Sign-in with ${capabilities.identityProviders.find(provider => provider.start === '/auth/oidc/identity/start')?.name ?? 'the OIDC identity provider'} is unavailable for this attempt. You can request an email sign-in link.`
     : capabilities.identityProviders.length === 0
@@ -25,7 +40,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
   useEffect(() => {
     if (delivery !== "queued" || !requestKey.current) return;
     let alive = true;
-    const timer = setInterval(() => {
+    const check = () => {
       requestJson<{
         state: "queued" | "sent" | "failed" | "uncertain" | "unconfirmed";
         errorDetail?: string;
@@ -36,21 +51,18 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         .then((result) => {
           if (alive) {
             setDelivery(result.state);
-            if (result.state === "failed")
-              setFailure(result.errorDetail ?? "Delivery failed.");
+            setFailure(result.state === "failed" ? result.errorDetail ?? "Delivery failed." : null);
           }
         })
         .catch((cause) => {
           if (alive) {
-            setFailure(
-              cause instanceof Error
-                ? cause.message
-                : "Delivery status could not be checked.",
-            );
+            setFailure(cause instanceof Error ? cause.message : "Delivery status could not be checked.");
             setDelivery("unconfirmed");
           }
         });
-    }, 3000);
+    };
+    check();
+    const timer = setInterval(check, 3000);
     return () => {
       alive = false;
       clearInterval(timer);
@@ -63,17 +75,20 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         email={email}
         onEmailChange={(value) => {
           setEmail(value);
-          requestKey.current = null;
+          forgetRequest();
+          setFailure(null);
           setDelivery(null);
         }}
         state={
           delivery === "sent"
             ? "sent"
+            : delivery === "uncertain"
+              ? "review-required"
             : failure
               ? "delivery-failed"
               : delivery === "queued"
                 ? "pending"
-                : delivery === "unconfirmed" || delivery === "uncertain"
+                : delivery === "unconfirmed"
                   ? "unconfirmed"
                   : "request"
         }
@@ -82,7 +97,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         submitting={submitting}
         onUseAnotherAddress={() => {
           setDelivery(null);
-          requestKey.current = null;
+          forgetRequest();
           setFailure(null);
         }}
         identityProviders={capabilities.identityProviders}
@@ -90,19 +105,25 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         onSubmit={() => {
           setSubmitting(true);
           setFailure(null);
+          if (delivery === 'failed') forgetRequest();
           requestKey.current ??= crypto.randomUUID();
+          try { sessionStorage.setItem(storageKey, JSON.stringify({email,requestKey:requestKey.current})); } catch { /* Status still works until navigation. */ }
           requestJson("/api/auth/magic", {
             method: "POST",
             body: { email, requestKey: requestKey.current },
           })
             .then(() => setDelivery(capabilities.identityProviders.some(provider => provider.start === "/auth/saml/start") ? "unconfirmed" : "queued"))
-            .catch((cause: unknown) =>
-              setFailure(
-                cause instanceof Error
-                  ? cause.message
-                  : "The sign-in request failed.",
-              ),
-            )
+            .catch(async (cause: unknown) => {
+              // A rejected request can still carry a durable uncertain outcome.
+              try {
+                const status = await requestJson<{state: typeof delivery; errorDetail?: string}>("/api/auth/magic/status", {method:"POST",body:{email,requestKey:requestKey.current}});
+                setDelivery(status.state);
+                setFailure(status.state === 'uncertain' ? null : status.errorDetail ?? (cause instanceof Error ? cause.message : "The sign-in request failed."));
+              } catch {
+                setDelivery('unconfirmed');
+                setFailure(cause instanceof Error ? cause.message : "The sign-in request failed.");
+              }
+            })
             .finally(() => setSubmitting(false));
         }}
       />

@@ -29,7 +29,7 @@ export function MembersPanel() {
       <button onClick={() => setInvite(true)}>Invite a member</button>
       {sent ? (
         <p role="status">
-          {`Invitation sent to ${sent}`}
+          {`Invitation requested for ${sent}. Check delivery below.`}
         </p>
       ) : null}
       <RequestState
@@ -54,7 +54,7 @@ export function MembersPanel() {
         </ul>
       </RequestState>
       {owner ? <><PendingInvitations resource={invitations}/><GuestsPanel onInvited={invitations.reload}/></> : null}
-      {localDevelopment||!owner ? null : <MailDeliveryPanel/>}
+      {localDevelopment||!owner ? null : <MailDeliveryPanel key={sent}/>}
       <h3>Groups</h3>
       {owner ? (
         <button onClick={() => setGroup("new")}>Create group</button>

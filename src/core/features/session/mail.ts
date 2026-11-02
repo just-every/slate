@@ -52,7 +52,7 @@ export async function deliverIdentityMail(db:D1Database,config:RuntimeConfig,id:
   const transient=!(cause instanceof ApiProblem)&&(!(cause instanceof MailDeliveryError)||cause.retryable)&&(status===null||status===409||status===429||status>=500||status<300);
   const retry=transient&&cycle<3;
   const provider=row.provider==='rer'?'RER mail relay':'Resend';
-  const detail=cause instanceof ApiProblem?`${cause.code}: delivery configuration/custody unavailable`:status?`${provider} HTTP ${status}: ${transient?'delivery not confirmed':'request rejected'}`:`${provider} transport or receipt persistence failure: delivery not confirmed`;
+  const detail=(row.provider==='rer'?'Managed mail could not send this email. Check mail in your Run Edit Run hosting settings. ':'')+(cause instanceof ApiProblem?`${cause.code}: delivery configuration/custody unavailable`:status?`${provider} HTTP ${status}: ${transient?'delivery not confirmed':'request rejected'}`:`${provider} transport or receipt persistence failure: delivery not confirmed`);
   const retryAfter=cause instanceof MailDeliveryError?cause.retryAfterSeconds??0:0;
   const next=retry?new Date(Math.max(Date.parse(row.cycle_started_at??now)+cycle*150000,Date.parse(now)+retryAfter*1000)).toISOString():null;
   await db.prepare("UPDATE mail_deliveries SET state=?,delivery_phase=?,error_detail=?,next_attempt_at=?,lease_until=NULL,failed_at=?,updated_at=? WHERE id=? AND attempt_count=? AND delivery_phase='sending'").bind(retry?'queued':'failed',retry?'retry':'failed',detail,next,now,now,id,attempt).run();

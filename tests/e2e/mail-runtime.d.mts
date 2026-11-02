@@ -7,5 +7,5 @@ interface ManagedMailRuntime {
 export function managedMailRuntime(
   bindings: Record<string, string>,
   outboundService: (request: Request) => Promise<Response>,
-  options?: { port?: number },
+  options?: { port?: number; tls?: {key:string;cert:string} },
 ): Promise<ManagedMailRuntime>;

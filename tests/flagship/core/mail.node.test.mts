@@ -96,7 +96,7 @@ test("native mail and invitations retain migration, first-run and provider custo
 
 
 
-test('MAIL-002 emitted Worker sends Managed sign-in and safely handles relay redirect, rate limit and credential refusal', {timeout:60000}, async () => {
+test('MAIL-002 emitted Worker sends Managed sign-in and safely handles relay redirect, rate limit and credential refusal', {timeout:240000}, async () => {
  const {managedMailRuntime} = await import('../../e2e/mail-runtime.mjs');
  const server=createServer();await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
  const port=(server.address() as {port:number}).port;await new Promise<void>(resolve=>server.close(()=>resolve()));
@@ -154,4 +154,6 @@ test('MAIL-002 emitted Worker sends Managed sign-in and safely handles relay red
   assert.equal(requests.length,before+1);assert.equal(requests.at(-1)!.wire,wire);assert.equal((await read()).delivery_phase,'sent');
   console.log('Emitted Worker: relay 429 queues with Retry-After, no early retry; scheduled retry sends identical payload and records acceptance.');
  } finally {await runtime.dispose();}
+ const {mailFailureJourney}=await import('../../e2e/mail-failure-journey.mjs');
+ await mailFailureJourney();
 });

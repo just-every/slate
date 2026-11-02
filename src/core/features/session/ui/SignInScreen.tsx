@@ -4,14 +4,14 @@ import { PaperPage, PaperScene } from "./PaperPage";
 import type { SignInIdentityProvider } from "../capabilities";
 
 /**
- * The four states the magic-link sign-in screen has.
+ * The delivery states of native email sign-in.
  *
  * `delivery-failed` is the one that matters most: `MAIL-002` requires the
- * provider's error to be shown to the person and forbids reporting the message
+ * safe provider error to be shown to the person and forbids reporting the message
  * as sent. It is a separate state from `sent` for exactly that reason.
  */
 export type SignInScreenState =
-  "request" | "pending" | "unconfirmed" | "sent" | "link-expired" | "delivery-failed";
+  "request" | "pending" | "unconfirmed" | "review-required" | "sent" | "link-expired" | "delivery-failed";
 
 export function SignInScreen({
   state,
@@ -32,7 +32,7 @@ export function SignInScreen({
   onSubmit: () => void;
   onUseAnotherAddress: () => void;
   submitting?: boolean;
-  /** `MAIL-002` — the provider's own error, shown verbatim. */
+  /** `MAIL-002` — the safe provider error. */
   deliveryError?: string | null;
   /** The request state's one sentence; a refused preview owner link says why the person is here. */
   lede?: string;
@@ -83,6 +83,13 @@ export function SignInScreen({
             </div>
           ) : null}
 
+          {state === "review-required" ? (
+            <div className="paper-alert" role="alert">
+              <strong className="paper-alert-title">Provider review required</strong>
+              <span>The mail provider’s acceptance is uncertain. Review the provider receipt with your workspace owner before requesting another link. Slate will not resend this attempt automatically.</span>
+            </div>
+          ) : null}
+
           {state === "sent" ? (
             <div className="paper-body">
               <p className="paper-sent">
@@ -101,11 +108,11 @@ export function SignInScreen({
             <div className="paper-alert" role="alert">
               <strong className="paper-alert-title">
                 <AlertTriangle aria-hidden="true" className="size-5" />
-                The email was not sent
+                Delivery was not confirmed
               </strong>
               <span>
-                The mail provider did not confirm delivery. You can request
-                another link when the problem is resolved.
+                The mail provider did not confirm delivery. You can explicitly request
+                a new link when the problem is resolved.
               </span>
               {deliveryError ? <code>{deliveryError}</code> : null}
             </div>

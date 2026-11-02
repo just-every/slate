@@ -54,7 +54,7 @@ export function MailDeliveryPanel() {
     }
   }
   return (
-    <section>
+    <section aria-label="Invitation delivery">
       <h3>Invitation delivery</h3>
       <RequestState
         loading={resource.loading}
@@ -67,7 +67,7 @@ export function MailDeliveryPanel() {
               <div>
                 <strong>{item.targetEmail ?? "Workspace email"}</strong>
                 <p>
-                  {item.kind} · {item.state}
+                  {item.kind} · {item.state === 'uncertain' ? 'Review required' : item.state === 'sent' ? 'Accepted by mail provider' : item.state}
                   {item.sentAt
                     ? ` · ${new Date(item.sentAt).toLocaleString()}`
                     : ""}

@@ -2,8 +2,12 @@ import type { MailSender } from '../../../../modules/operator-auth/index.mjs';
 import { createMailSender } from '../../../../modules/mail/src/sender.mjs';
 import type { RuntimeConfig } from '../../platform/config/runtime';
 import { TENANT } from './native/store';
+import { encryptSecret } from '../../platform/secrets/custody';
+import { mailKey, mailScope } from './mail-admission';
+import { sessionDigest } from '../../platform/auth/token';
+import { deliverIdentityMail, readMail } from './mail';
 
-export interface SignInDelivery { requestDigest?: string; failure?: string }
+export interface SignInDelivery { requestDigest?: string; failure?: string; uncertain?: boolean }
 
 /**
  * Base Mail for Base's email links. A requested sign-in also records its
@@ -31,6 +35,21 @@ export function identityMailSender(db: D1Database, config: RuntimeConfig, delive
   }
   return {
     async send(message) {
+      if (delivery.requestDigest && config.mailProvider !== 'development') {
+        const now = new Date().toISOString();
+        const proof = await db.prepare(`SELECT r.member_id,m.workspace_id FROM auth_proofs r JOIN members m ON m.id=r.member_id WHERE r.id=? AND m.workspace_id=${TENANT}`).bind(message.deliveryId).first<{member_id:string;workspace_id:string}>();
+        if (!proof) throw new Error('Sign-in proof is unavailable.');
+        const payload = await encryptSecret(await mailKey(config), JSON.stringify({from:message.from,to:message.to[0],subject:message.subject,text:message.text,...(message.html?{html:message.html}:{})}), mailScope(proof.workspace_id,message.deliveryId));
+        await db.prepare(`INSERT INTO mail_deliveries (id,workspace_id,kind,target_email,member_id,state,created_at,updated_at,payload_ciphertext,request_digest,next_attempt_at,provider_key_digest,provider,delivery_phase)
+          VALUES (?,?,'sign-in-link',?,?,'queued',?,?,?,?,?,?,?,'pending')`).bind(message.deliveryId,proof.workspace_id,message.to[0]!,proof.member_id,now,now,payload,delivery.requestDigest,now,await sessionDigest(config.sessionSecret,`mail-provider:${config.mailApiKey}`),config.mailProvider!).run();
+        await deliverIdentityMail(db,config,message.deliveryId,undefined,now);
+        const row = (await readMail(db,message.deliveryId))!;
+        delivery.failure = row.error_detail ?? undefined;
+        delivery.uncertain = row.delivery_phase === 'uncertain';
+        // Base retains the proof while Slate owns a durable queued command.
+        // Only the public delivery status reports provider acceptance to a person.
+        return {provider:config.mailProvider!,status:row.delivery_phase==='sent'||row.state==='queued'?'accepted':delivery.uncertain?'uncertain':'rejected',providerMessageId:row.delivery_phase==='sent'?await db.prepare('SELECT provider_message_id FROM mail_deliveries WHERE id=?').bind(row.id).first<string>('provider_message_id'):null};
+      }
       let result;
       try { result = await sender.send(message); }
       catch (cause) { await record(message.deliveryId, message.to[0]!, null); throw cause; }

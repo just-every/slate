@@ -9028,11 +9028,11 @@
       "executable": false
     },
     "src/core/features/session/mail-authority.ts": {
-      "sha256": "109316cd1b3371b1f26c607dbde8a47d76381e34806b0bcb6df865b23a853359",
+      "sha256": "f301dcf761ed27ebc08b8a78d8105c10a056e92e063263185ae85f1b5c81afdc",
       "executable": false
     },
     "src/core/features/session/mail-sender.ts": {
-      "sha256": "7d738e816bbdda8be22c5d4e31f22c01c6216e5f7375710d561e36a8554200ee",
+      "sha256": "30b4eb35689ed834485562f0c879801c0cfe7d022df889a18998c2dedcfefb28",
       "executable": false
     },
     "src/core/features/session/mail-sendgrid.ts": {
@@ -9040,7 +9040,7 @@
       "executable": false
     },
     "src/core/features/session/mail-status.ts": {
-      "sha256": "921369bc1223ddac7347b1e8eadd73810e3741a8389fb9ae329241dddb6e39f0",
+      "sha256": "d18e08d03bfdd4cd017822ff2b67c321fc975b892456aac6b0ee0938d56dd78b",
       "executable": false
     },
     "src/core/features/session/mail-uncertain.ts": {
@@ -9048,7 +9048,7 @@
       "executable": false
     },
     "src/core/features/session/mail.ts": {
-      "sha256": "6c694261c97904055d8f2375359840200443869e916a2cb459bf07c540f3a6b9",
+      "sha256": "420f48d1fc27d69d8f284ec7ade877a5285c9168dc07dd54eaea9a52e25629c4",
       "executable": false
     },
     "src/core/features/session/native/accounts.ts": {
@@ -9084,7 +9084,7 @@
       "executable": false
     },
     "src/core/features/session/routes.ts": {
-      "sha256": "e399b42277f1a7e28c3ac9241a66bf4401ec8173cd5c1164152397f6dee1ae25",
+      "sha256": "ea4f86e3a475d438884f529c2afdc29a9561ba8cf6119219c44443f5a659698a",
       "executable": false
     },
     "src/core/features/session/saml/admission.ts": {
@@ -9160,11 +9160,11 @@
       "executable": false
     },
     "src/core/features/session/ui/SignInPage.tsx": {
-      "sha256": "237e3cdee35c96153d12bf112d02abc0e071d5cf318d478b98a49b409386c55b",
+      "sha256": "d7d411e1c5a70d7fe06b2ee206f602841c8c1bbaff75c644bb3196ada8d5b7c3",
       "executable": false
     },
     "src/core/features/session/ui/SignInScreen.tsx": {
-      "sha256": "659e9d926f035c2a4f92aa8e0b701f49a8df0b97a1165e2638bccec81f6f5da8",
+      "sha256": "e960edae701530266bb28a66eca91237955557347d7a716180df9a6a77153a0a",
       "executable": false
     },
     "src/core/features/settings/ui/workspace/AppearancePanel.tsx": {
@@ -9216,7 +9216,7 @@
       "executable": false
     },
     "src/core/features/settings/ui/workspace/GuestsPanel.tsx": {
-      "sha256": "425b4d2d006021cac4ceed5b9c619e322d110212e3498f844b82c7d7f69dc161",
+      "sha256": "f9a1cad3e0f48334504c21e7430492ca3d2ca3b226e97b2de71b51b522dad5b8",
       "executable": false
     },
     "src/core/features/settings/ui/workspace/HeldChatDelivery.tsx": {
@@ -9232,11 +9232,11 @@
       "executable": false
     },
     "src/core/features/settings/ui/workspace/MailDeliveryPanel.tsx": {
-      "sha256": "ddb6a507bd0d76c258f52b3395eddacbbcde3de7c648b2a17138573870d0ee33",
+      "sha256": "fb913c42cf73134d26c2576bc6231ddbeda2ef539fd50aca65f1b13315f361e3",
       "executable": false
     },
     "src/core/features/settings/ui/workspace/MembersPanel.tsx": {
-      "sha256": "6a31eeafc5490d4e8b27950433c6d77670c775889a90d0d08a8fb0075642b32f",
+      "sha256": "a160441fde0bc24305abe590fae24f3d19f6de002cdca4d4031a0c6a11e43dd4",
       "executable": false
     },
     "src/core/features/settings/ui/workspace/NavigationSettings.tsx": {
@@ -10551,12 +10551,20 @@
       "sha256": "b849d8e9b42968b9ff4eaf7802e6119a16e22df9ec961324b78cf94f534dbc38",
       "executable": false
     },
+    "tests/e2e/mail-failure-journey.d.mts": {
+      "sha256": "d742b298353854ccc9a356a8bcc3f4d621528fb37f3a7c3623b14850ce79c717",
+      "executable": false
+    },
+    "tests/e2e/mail-failure-journey.mjs": {
+      "sha256": "e9ab7bdb2aad9f21b85c245dcf31c74538471f9beaaa5ff50b565dae7944b541",
+      "executable": false
+    },
     "tests/e2e/mail-runtime.d.mts": {
-      "sha256": "edb739068844e23d490f53313bbba9cfc5c495c99b68bfd1ac9640323747ab01",
+      "sha256": "b1a56637611c2578e296f7e105e7aaaa4f0e6db5c671fa4cdb685b5c84e1653d",
       "executable": false
     },
     "tests/e2e/mail-runtime.mjs": {
-      "sha256": "3569617e5b4674a678ddec4bf8427b4dc698a6e927864821b2169540fa645e47",
+      "sha256": "45fce5e2a3e69ba15014680366c7e78f1a716a7441e2b2bb79458761aeb0010c",
       "executable": false
     },
     "tests/e2e/managed-first-open.mjs": {
@@ -10860,7 +10868,7 @@
       "executable": false
     },
     "tests/flagship/core/mail.node.test.mts": {
-      "sha256": "8539f97e8f53bc31ff907c9acd1f247deb1adfc1d7492bf45e670fdc4f1b3e3c",
+      "sha256": "0f2e6422cf4876f9dc384870a7e0ee06491e605dc542106adbd366bc43a045f3",
       "executable": false
     },
     "tests/flagship/core/mail.test.ts": {

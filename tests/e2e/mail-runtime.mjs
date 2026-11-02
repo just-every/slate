@@ -11,7 +11,7 @@ export async function launchMailRuntime({root,configPath,persist,port,variables=
 }
 
 /** Emitted production Worker with a real D1 and only the relay network edge replaced. */
-export async function managedMailRuntime(bindings, outboundService, {port = 0} = {}) {
+export async function managedMailRuntime(bindings, outboundService, {port = 0, tls} = {}) {
   const {createRequire} = await import('node:module');
   const {realpath} = await import('node:fs/promises');
   const {productionModules} = await import('@runeditrun/rer/production-modules');
@@ -41,7 +41,7 @@ export async function managedMailRuntime(bindings, outboundService, {port = 0} =
       const response = await outboundService(request);
       return new miniflare.Response(response.body, response);
     }};
-  const options = miniflare.convertV4MiniflareOptions({host:'127.0.0.1',port,
+  const options = miniflare.convertV4MiniflareOptions({host:'127.0.0.1',port,...(tls?{https:true,httpsKey:tls.key,httpsCert:tls.cert}:{}),
     unsafeTriggerHandlers:false,unsafeLocalExplorer:false,workers:[worker,...selected.externalWorkers]});
   const runtime = new miniflare.Miniflare(options);
   try { await runtime.ready; return runtime; }
