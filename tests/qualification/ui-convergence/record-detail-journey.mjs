@@ -84,7 +84,12 @@ export async function recordDetailJourney(state, width) {
       assert.deepEqual(search.items, []);
       assert.equal(search.total, 0);
     }
+    const searchRead = browser.waitForResponse(response => {
+      const url = new URL(response.url());
+      return url.pathname === '/api/search' && url.searchParams.get('kind') === 'page' && url.searchParams.get('q') === 'Populated record';
+    });
     await browser.goto(origin + '/app/search?q=Populated%20record&kind=page', {waitUntil: 'networkidle'});
+    assert.deepEqual((await (await searchRead).json()).items.map(item => item.id), parity === 'record-is-page' ? [record.pageId] : []);
     await expect(browser.locator('.search-results h2')).toHaveText(parity === 'record-is-page' ? ['Populated record'] : []);
     await accessible(browser, 'record page search ' + parity);
     await openNavigation(browser);

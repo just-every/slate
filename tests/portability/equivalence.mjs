@@ -6,7 +6,7 @@ export function unpack(bytes){const entries=unzipSync(bytes);return {manifest:JS
 const stable=row=>JSON.stringify(Object.fromEntries(Object.entries(row).sort(([a],[b])=>a.localeCompare(b))));
 
 /** Every table and retained field is compared; recovery changes are checked explicitly. */
-export function equivalent(before,after,ownerEmail,newExportId,bootstrapAuditRows){
+export function equivalent(before,after,ownerEmail,newExportId,bootstrapAuditRows,restoredAt){
   assert.equal(bootstrapAuditRows.length,1,'Fresh owner sign-in adds exactly one bootstrap audit row.');
   const a=before.manifest,b=after.manifest;
   assert.equal(a.version,1);assert.equal(b.version,a.version);
@@ -36,6 +36,12 @@ export function equivalent(before,after,ownerEmail,newExportId,bootstrapAuditRow
         expected.status=owner?'active':'historical';expected.is_setup_owner=owner?1:0;if(owner)expected.role='owner';
       }
       if(table==='files')expected.storage_key=blobKeys.get(expected.storage_key);
+      if(table==='notification_outbox'){
+        // Restored delivery candidates are inert at the exact restore receipt time.
+        // Every recipient, source reference, event and retained detail still matches.
+        assert.match(restoredAt,/^\d{4}-\d{2}-\d{2}T/);
+        expected.processed_at=restoredAt;
+      }
       if(table==='public_exposures'){
         const restored=actual.find(row=>row.id===expected.id);assert.ok(restored);
         assert.match(restored.revoked_at,/^\d{4}-\d{2}-\d{2}T/,'Restored public link is explicitly revoked.');

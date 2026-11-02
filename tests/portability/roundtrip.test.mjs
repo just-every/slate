@@ -60,6 +60,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const exportReceipt=await source.cli('export',first,sourceCookie);const before=unpack(await readFile(first));
     assert.equal(exportReceipt.counts.pages,5);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.filter(row=>pageIds.includes(row.page_id)).length,6);assert.equal(before.manifest.tables.comments.length,2);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
     assert.deepEqual(before.manifest.tables.database_records.map(row=>({pageId:row.page_id,values:JSON.parse(row.field_values_json)})),[{pageId:record.pageId,values:{'portable-quantity':17}}]);
+    assert.ok(before.manifest.tables.notification_outbox.length > 0,'Native record mutations produce retained delivery candidates.');
     assert.ok(before.manifest.tables.page_blocks.some(row=>row.page_id===record.pageId&&row.id==='portable-record-body'));
     await source.close();
     target=await runtime(path.join(scratch,'target'));
@@ -127,7 +128,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const [bootstrapAudit]=await target.sql(`SELECT a.* FROM activity_entries a WHERE ${bootstrapAuditPredicate};
       CREATE TABLE portability_unregistered_record(id TEXT PRIMARY KEY,body TEXT);
       INSERT INTO portability_unregistered_record VALUES ('unregistered','must not silently disappear')`);
-    t.diagnostic(JSON.stringify(equivalent(before,after,ownerEmail,reexport.id,bootstrapAudit.results)));
+    t.diagnostic(JSON.stringify(equivalent(before,after,ownerEmail,reexport.id,bootstrapAudit.results,imported.completedAt)));
     await target.start();
     for(const parity of ['record-is-row','record-is-page','record-is-row','record-is-page']){
       await switchParity(target,targetCookie,parity);
