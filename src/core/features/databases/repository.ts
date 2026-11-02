@@ -1,6 +1,7 @@
 import type { FeatureContext } from "../../app/feature-context";
 import { ApiProblem } from "../../app/problems";
 import { requirePageLevel } from "../sharing/current-access";
+import { pageRow, writable } from "../pages/repository";
 import type { Field } from "./values";
 export interface DatabaseRow {
   id: string;
@@ -23,6 +24,8 @@ export async function database(
     .first<DatabaseRow>();
   if (!row) throw new ApiProblem(404, "NOT_FOUND", "Not found.");
   await requirePageLevel(ctx, row.page_id, level);
+  // Structure, templates and records follow the backing page's read-only lifecycle.
+  if (level !== "view") writable(await pageRow(ctx, row.page_id));
   return row;
 }
 export async function fields(

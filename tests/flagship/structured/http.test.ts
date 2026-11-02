@@ -188,6 +188,87 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
     expect(retained.page.blocks).toEqual(edited.page.blocks);
     expect(retained.values).toEqual(edited.values);
   }
+
+  // DB-001 reuses this populated database and independent native member session.
+  // The old direct grant is revoked, so only destination inheritance can admit it.
+  await mutate("POST", "/sharing", {id: memberGrant.id, targetKind: "page", targetId: dbPage, principalKind: "member", principalId: reader.actor.id, level: "view", revoke: true});
+  await mutate("POST", "/sharing", {targetKind: "container", targetId: containerId, principalKind: "member", principalId: reader.actor.id, level: "edit"});
+  const destination = await mutate("POST", "/containers", {name: "Database destination", visibility: "closed"});
+  const parent = await mutate("POST", "/pages", {containerId: destination.id, title: "Database parent"});
+  const nativePage = (await call("GET", `/pages/${dbPage}`)).body;
+  await mutate("PATCH", `/pages/${dbPage}`, {expectedRevisionId: nativePage.page.revisionId, properties: {icon: "🧭"}});
+  expect((await call("GET", recordPath, memberCookie)).status).toBe(200);
+  const structureBefore = (await call("GET", base)).body;
+  const valuesBefore = (await call("GET", recordPath)).body.values;
+  const placement = {containerId: destination.id, parentPageId: parent.pageId, atEnd: true};
+  const preview = (await call("POST", `/pages/${dbPage}/move-preview`, cookie, placement)).body;
+  expect(preview.changes).toEqual(expect.arrayContaining([
+    expect.objectContaining({pageId: dbPage, memberId: reader.actor.id, before: "edit", after: null}),
+    expect.objectContaining({pageId: record.pageId, memberId: reader.actor.id, before: "edit", after: null}),
+  ]));
+  await mutate("POST", `/pages/${dbPage}/move`, {expectedRevisionId: (await call("GET", `/pages/${dbPage}`)).body.page.revisionId, ...placement,
+    accessPreviewHash: preview.accessPreviewHash, orderPreviewHash: preview.orderPreviewHash});
+  for (const path of [base, recordPath, `/pages/${dbPage}`, `/pages/${record.pageId}`])
+    expect((await call("GET", path, memberCookie)).status).toBe(404);
+  expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(404);
+  expect((await call("GET", "/databases", memberCookie)).body.items.some((item: any) => item.id === body.value.id)).toBe(false);
+  await mutate("POST", "/sharing", {targetKind: "container", targetId: destination.id, principalKind: "member", principalId: reader.actor.id, level: "view"});
+  expect((await call("GET", `/pages/${dbPage}`, memberCookie)).body.permissions.level).toBe("view");
+  const {updated: previousUpdate, ...retainedValues} = valuesBefore;
+  const {updated: movedUpdate, ...movedValues} = (await call("GET", recordPath, memberCookie)).body.values;
+  expect(movedValues).toEqual(retainedValues);
+  expect(Date.parse(movedUpdate)).toBeGreaterThanOrEqual(Date.parse(previousUpdate));
+  const retained = async () => ({database: (await call("GET", base)).body, record: (await call("GET", recordPath)).body,
+    pages: (await call("GET", "/pages")).body, archive: (await call("GET", "/archive")).body,
+    revisions: (await call("GET", `/revisions/${record.pageId}`)).body, activity: (await call("GET", "/activity?limit=100")).body});
+  const beforeRefusal = await retained();
+  for (const action of ["archive", "trash"]) {
+    expect((await call("POST", `/archive/${dbPage}`, memberCookie, {operationKey: `case:reader-${action}`, expectedRevisionId: (await call("GET", `/pages/${dbPage}`)).body.page.revisionId, action})).status).toBe(404);
+    expect(await retained()).toEqual(beforeRefusal);
+  }
+  expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(404);
+  expect(await retained()).toEqual(beforeRefusal);
+  const grant = (await call("GET", `/sharing/containers/${destination.id}`)).body.items.find((item: any) => item.principalId === reader.actor.id);
+  expect(grant).toBeTruthy();
+  await mutate("POST", "/sharing", {id: grant.id, targetKind: "container", targetId: destination.id, principalKind: "member", principalId: reader.actor.id, level: "edit"});
+  const allowed = (await call("GET", recordPath, memberCookie)).body;
+  await mutate("PATCH", recordPath, {expectedRevisionId: allowed.revisionId, values: {quantity: 19}}, memberCookie);
+  expect((await call("GET", recordPath, memberCookie)).body.values).toMatchObject({quantity: 19, double: 38, notes: "Retained notes"});
+  for (const action of ["archive", "trash"]) {
+    await mutate("POST", `/archive/${dbPage}`, {expectedRevisionId: (await call("GET", `/pages/${dbPage}`)).body.page.revisionId, action, reason: "Retain the database"});
+    const archived = (await call("GET", "/archive")).body.items.filter((item: any) => [dbPage, record.pageId].includes(item.id));
+    expect(archived.map((item: any) => item.id).sort()).toEqual([dbPage, record.pageId].sort());
+    expect(archived.every((item: any) => item.reason === "Retain the database" && (action === "archive" ? item.archivedAt : item.trashedAt))).toBe(true);
+    expect((await call("GET", "/databases")).body.items.some((item: any) => item.id === body.value.id)).toBe(false);
+    expect((await call("GET", "/pages")).body.items.some((item: any) => [dbPage, record.pageId].includes(item.id))).toBe(false);
+    if (action === "archive") {
+      const frozen = (await call("GET", base)).body;
+      for (const [path, data] of [
+        [base + "/fields", {expectedRevisionId: frozen.database.revision_id, field: {...definitions[0], name: "Changed while archived"}}],
+        [base + "/views", {expectedRevisionId: frozen.database.revision_id, view: {id: "archived-view", name: "Archived view", layout: "table", filters: [], sorts: [], groups: [], calculations: {}, display: {}, position: 0}}],
+        [base + "/lock", {expectedRevisionId: frozen.database.revision_id, locked: true}],
+        [base + "/records", {title: "Archived record", values: {quantity: 5}}],
+        [base + "/templates", {name: "Archived template", title: "Archived record", values: {}, blocks: [], recurrence: null}],
+      ] as const) {
+        const blocked = await call("POST", path, cookie, {operationKey: `case:archived-${++operation}`, ...data});
+        expect(blocked.status).toBe(409);
+        expect(blocked.body.code).toBe("PAGE_READ_ONLY");
+        expect((await call("GET", base)).body).toEqual(frozen);
+      }
+    }
+    await mutate("POST", `/archive/${dbPage}`, {expectedRevisionId: archived.find((item: any) => item.id === dbPage).revisionId, action: "restore"});
+    expect((await call("GET", "/archive")).body.items.some((item: any) => [dbPage, record.pageId].includes(item.id))).toBe(false);
+    const index = (await call("GET", "/databases")).body.items.filter((item: any) => item.id === body.value.id);
+    expect(index).toHaveLength(1);
+    expect(index[0]).toMatchObject({pageId: dbPage, containerId: destination.id, title: input.title, icon: "🧭"});
+    const nodes = (await call("GET", `/pages?containerId=${destination.id}`)).body.items.filter((item: any) => [dbPage, record.pageId].includes(item.id));
+    expect(nodes).toHaveLength(2);
+    expect(nodes.find((item: any) => item.id === dbPage)).toMatchObject({pageKind: "database", parentPageId: parent.pageId});
+    expect(nodes.find((item: any) => item.id === record.pageId)).toMatchObject({pageKind: "record", parentPageId: dbPage});
+    expect((await call("GET", base)).body).toEqual(structureBefore);
+    expect((await call("GET", recordPath, memberCookie)).body.values).toMatchObject({quantity: 19, double: 38, notes: "Retained notes"});
+  }
+
 });
 
 test("database file references list only attachments the reader could open", async () => {
