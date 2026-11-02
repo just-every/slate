@@ -4,7 +4,7 @@ import {themeJourney} from './theme-journey.mjs';
 import {activityContextJourney} from './activity-context-journey.mjs';
 import {guestConsoleJourney} from './guest-console-journey.mjs';
 import { expect } from '@playwright/test';
-import { accessible } from './browser-support.mjs';
+import { accessible, setupWorkspace, withWorkspace } from './browser-support.mjs';
 import { compactPage } from './browser-evidence.mjs';
 import {searchFiltersJourney} from './search-filters-journey.mjs';
 import {mixedSearchJourney} from './mixed-search-journey.mjs';
@@ -100,5 +100,9 @@ export async function settingsJourney(state, width) {
   if(width===1440)await activityContextJourney(state);
   // Finish with native container and navigation reconciliation after the settings screens.
   await containerIdentityJourney(state,width);
-  await navigationJourney(state,width);
+  // Keep the navigation corpus independent of the preceding settings journey's request budget.
+  await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async navigationState => {
+    await setupWorkspace(navigationState);
+    await navigationJourney(navigationState, width);
+  });
 }

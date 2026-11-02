@@ -12100,7 +12100,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/reading-journeys.mjs": {
-      "sha256": "5873d46b9dfc024938d4c3e194792643f637d7742a46c53766d8eaeda680aa8b",
+      "sha256": "b49087d9353510fee9411c54707935cf572dfa8cbea099a18ebfa2f5a29978f8",
       "executable": false
     },
     "tests/qualification/ui-convergence/record-detail-journey.mjs": {
