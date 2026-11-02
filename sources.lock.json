@@ -6828,7 +6828,7 @@
       "executable": false
     },
     "src/core/features/editor/ui/blocks/InlineText.tsx": {
-      "sha256": "5293abbb5d35cc30ba90220d526fe3e65c24ea59281c289506f846a4f19ef0f0",
+      "sha256": "8f39a018712a052bea096a79a4f6d67d979ed57f35d223e2fadb35aa647d5e4b",
       "executable": false
     },
     "src/core/features/editor/ui/blocks/insertEditableLineBreak.ts": {
@@ -6920,7 +6920,7 @@
       "executable": false
     },
     "src/core/features/editor/ui/InlineToolbar.tsx": {
-      "sha256": "d62ddfef84b3f37163019aab38a4238423734b5f48449bec663d561e4370f971",
+      "sha256": "e69fa7418cd26b06ead73683bf224c98e215e9ec0b6445e524e7b37292d73e8c",
       "executable": false
     },
     "src/core/features/editor/ui/InsertMenu.tsx": {
@@ -6960,7 +6960,7 @@
       "executable": false
     },
     "src/core/features/editor/validation.ts": {
-      "sha256": "9c4179f01dfbbc2784e6d83a017db8768a7fc944daf1b7842881cc460b661f95",
+      "sha256": "e534802a66a481d6105f50fc928c186dce4939936de84ce111bd063da2ac2cdc",
       "executable": false
     },
     "src/core/features/effects/authority.ts": {
@@ -7156,7 +7156,7 @@
       "executable": false
     },
     "src/core/features/imports/canonical-block.ts": {
-      "sha256": "b544ab21e81b5c85ad4880fad3c9808f9add983ab7e5aa839bb8a18937638f22",
+      "sha256": "d4aaabcbb95523166aadadcf8fe74637219d3b07f9366480e6530286277a2ee3",
       "executable": false
     },
     "src/core/features/imports/comment-plan.ts": {
@@ -9736,7 +9736,7 @@
       "executable": false
     },
     "src/core/features/workspace-export/rich-text.ts": {
-      "sha256": "d693c347599074e8317e6daf11ef10a87b855d86d5358f60db81f60cca8707c5",
+      "sha256": "49c4f51075e385a87a737de5fae98e2703ebab5416d625083cd5fe707af56ee8",
       "executable": false
     },
     "src/core/features/workspace-export/routes.ts": {
@@ -11368,7 +11368,7 @@
       "executable": false
     },
     "tests/portability/fixture.mjs": {
-      "sha256": "62a7c267d58992696ab3d6249eb6d191868643c4e0784d8cf4e4c05a551b4a48",
+      "sha256": "12d16a1edbc49f6bdf1f5648380a8b9872abe2f7a973b0ab43c2f6b5956204ec",
       "executable": false
     },
     "tests/portability/restore-database.mjs": {
@@ -11380,7 +11380,7 @@
       "executable": false
     },
     "tests/portability/roundtrip.test.mjs": {
-      "sha256": "a794f32b6de95e0e247204b9a0f27adac420116ff2d7208a44247611b7087dc0",
+      "sha256": "047a0d8002b29ff181111b5d8c65c5b912dae40f7067233f0414f50493f64db7",
       "executable": false
     },
     "tests/portability/runtime.mjs": {
@@ -11968,7 +11968,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/export-comments-journey.mjs": {
-      "sha256": "e3f2599e26e84596b02bca17ce7dcdbdd84aadc3b15752eb1986beed379c0f42",
+      "sha256": "51168fb33658c0dde58b51710d38ec512b9a14a1f6ba43d99eb88d09dbb1f9e1",
       "executable": false
     },
     "tests/qualification/ui-convergence/failed-save-journey.mjs": {
@@ -12017,6 +12017,10 @@
     },
     "tests/qualification/ui-convergence/inbox-journey.mjs": {
       "sha256": "2528f20e975d57e9177c693bfea760732a702b1ef102bd710bb047af486c0509",
+      "executable": false
+    },
+    "tests/qualification/ui-convergence/inline-text-journey.mjs": {
+      "sha256": "04110161cc12841e15a6d86e97168554de623e690bba284ec7ee7acd305f67e3",
       "executable": false
     },
     "tests/qualification/ui-convergence/journey-shard.mjs": {
@@ -12248,7 +12252,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/write-journey.mjs": {
-      "sha256": "1c08c1d7c19b8d5410ba254b64d762d75a1938fc7fc71cc659f0b78d0d74e935",
+      "sha256": "83aeba65ee2c94bf5265d9b0acfe27e18a58de35c7774a5a0b484d0d0e3ec704",
       "executable": false
     },
     "tests/release/delivery-runtime.mjs": {
@@ -12276,7 +12280,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "269573ea3379c02e451ed70fb3d92af9e6c7ac38cb8f80a7c936d4313b533330",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {

@@ -64,7 +64,7 @@ export function InlineToolbar({
       {marks.map(({ mark, label, icon: Icon }) => (
         <Toggle
           aria-label={label}
-          data-tooltip={label}
+          data-tooltip={label === "Bold" ? "Bold text" : label === "Italic" ? "Italic text" : label === "Underline" ? "Underline text" : label === "Strikethrough" ? "Strike text" : label}
           disabled={!canEdit}
           key={mark}
           onPressedChange={() => onToggleMark(mark)}

@@ -1,3 +1,4 @@
+import {unzipSync} from 'fflate';
 import {devKeyHeaders} from '../e2e/dev-key.mjs';
 import {inbox} from '../e2e/outbox-auth.mjs';
 import assert from 'node:assert/strict';
@@ -12,7 +13,7 @@ import {bootstrapAuditPredicate} from '../../src/core/features/portability/boots
 
 test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment',{timeout:240000},async t=>{
   const scratch=await mkdtemp(path.join(path.dirname(root),'portability-'));
-  let source,target;
+  let source,target,readableTarget;
   try{
     await mkdir(path.join(scratch,'source'));await mkdir(path.join(scratch,'target'));
     source=await runtime(path.join(scratch,'source'));await source.start();
@@ -28,10 +29,49 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     }
     await api(source,sourceCookie,'/api/publishing/archive-root',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),expectedRevisionId:'archive-root-current',host:new URL(source.origin).host,slug:'research/portable',theme:'dark',indexable:false,socialPreview:{title:'Portable knowledge',description:'Retain publication settings'}})});
     const published=await fetch(source.origin+'/p/research/portable');assert.equal(published.status,200);assert.match(await published.text(),/Restorable research/);
+    const readableArchives=[];
+    for(const format of ['html','markdown']) {
+      const response=await api(source,sourceCookie,'/api/exports/readable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:'workspace',id:owner.workspaceId,format})});
+      const bytes=new Uint8Array(await response.arrayBuffer()),entries=unzipSync(bytes),manifest=JSON.parse(new TextDecoder().decode(entries['slate-readable.json']));
+      for(const pageId of pageIds) {
+        const document=await(await api(source,sourceCookie,`/api/pages/${pageId}`)).json();
+        assert.deepEqual(manifest.pages.find(page=>page.id===pageId).blocks.map(block=>block.content),document.blocks.map(block=>block.content));
+      }
+      readableArchives.push({format,bytes,manifest});
+    }
     const first=path.join(scratch,'source.zip'),second=path.join(scratch,'restored.zip');
     const exportReceipt=await source.cli('export',first,sourceCookie);const before=unpack(await readFile(first));
     assert.equal(exportReceipt.counts.pages,3);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.length,6);assert.equal(before.manifest.tables.comments.length,2);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
     await source.close();
+    for(const archive of readableArchives) {
+      const directory=path.join(scratch,`readable-${archive.format}`);await mkdir(directory);
+      readableTarget=await runtime(directory);assert.notEqual(readableTarget.persist,source.persist);
+      await readableTarget.start();const cookie=await signIn(readableTarget);
+      const form=new FormData();form.set('operationKey',randomUUID());form.set('format','slate-readable');form.set('file',new Blob([archive.bytes],{type:'application/zip'}),'readable.zip');
+      const job=await(await api(readableTarget,cookie,'/api/imports',{method:'POST',body:form})).json();
+      const run=await(await api(readableTarget,cookie,`/api/imports/${job.id}/run`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
+      assert.equal(run.state,'completed');assert.equal(run.counts.pages,3);
+      const reexport=await api(readableTarget,cookie,'/api/exports/readable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:'workspace',id:'workspace',format:archive.format})});
+      const copiedManifest=JSON.parse(new TextDecoder().decode(unzipSync(new Uint8Array(await reexport.arrayBuffer()))['slate-readable.json']));
+      await readableTarget.close();
+      const [mappings]=await readableTarget.sql(`SELECT source_kind,source_id,target_id FROM federation_import_mappings WHERE import_job_id='${job.id}'`);
+      const idFor=(kind,id)=>{const row=mappings.results.find(row=>row.source_kind===kind&&row.source_id===id);assert.ok(row,`Explicit ${kind} mapping exists for ${id}.`);return row.target_id;};
+      const remap=value=>{
+        if(Array.isArray(value))return value.map(remap);
+        if(!value||typeof value!=='object')return value;
+        return Object.fromEntries(Object.entries(value).map(([key,item])=>{
+          if(key==='mention'&&item.id&&['person','page'].includes(item.kind))return [key,{...item,id:idFor(item.kind==='person'?'member':'page',item.id)}];
+          if(key==='link'&&item.href.startsWith('/app/pages/'))return [key,{href:'/app/pages/'+idFor('page',item.href.slice(11))}];
+          return [key,remap(item)];
+        }));
+      };
+      for(const original of archive.manifest.pages) {
+        const copy=copiedManifest.pages.find(page=>page.id===idFor('page',original.id));assert.ok(copy);
+        assert.deepEqual(copy.blocks.map(block=>block.content),original.blocks.map(block=>remap(block.content)),'Readable import into separate storage preserves all spans with explicit identity mapping.');
+      }
+      console.log(`PROBE BLOCK-002 readable ${archive.format}: export and import into separate D1 and R2 -> exact marks, colours, references and status labels after explicit identity mapping`);
+      readableTarget=undefined;
+    }
     target=await runtime(path.join(scratch,'target'));
     assert.notEqual(target.persist,source.persist);
     const [empty]=await target.sql('SELECT (SELECT COUNT(*) FROM workspaces) AS workspaces,(SELECT COUNT(*) FROM members) AS members,(SELECT COUNT(*) FROM containers) AS containers,(SELECT COUNT(*) FROM pages) AS pages,(SELECT COUNT(*) FROM files) AS files');
@@ -82,7 +122,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
       assert.equal(inactive.status,200);assert.equal((await inactive.json()).accepted,true);
     }
     assert.deepEqual(await inbox(target.origin),outboxBefore,'Imported member and guest cannot obtain fresh sign-in mail before an invitation.');
-    for(const pageId of pageIds){const page=await(await api(target,targetCookie,`/api/pages/${pageId}`)).json();assert.equal(page.page.id,pageId);assert.equal(page.workingRevisionId,`${pageId}-current`);assert.equal(page.blocks[0].id,`${pageId}-block`);assert.deepEqual(page.properties.labels,['portable','research']);}
+    for(const pageId of pageIds){const page=await(await api(target,targetCookie,`/api/pages/${pageId}`)).json();assert.equal(page.page.id,pageId);assert.equal(page.workingRevisionId,`${pageId}-current`);assert.equal(page.blocks[0].id,`${pageId}-block`);assert.deepEqual(page.properties.labels,['portable','research']);assert.deepEqual(page.blocks.map(block=>block.content),before.manifest.tables.page_blocks.filter(block=>block.page_id===pageId).map(block=>JSON.parse(block.content_json)),'Native ZIP retains exact canonical inline spans without remapping.');}
     for(const original of originals){const restored=await api(target,targetCookie,`/api/media/${original.id}`);assert.deepEqual(Buffer.from(await restored.arrayBuffer()),original.bytes);}
     // Use the source publication Host: a different target Host alone cannot prove unpublication.
     const {requestWithHost}=await import('../e2e/runtime-harness.mjs');
@@ -97,7 +137,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const refused=await fetch(target.origin+'/api/exports/workspace',{method:'POST',headers:{Cookie:targetCookie,Origin:target.origin,'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID()})});
     assert.equal(refused.status,409);assert.equal((await refused.json()).code,'UNREGISTERED_PORTABLE_TABLE','Populated unknown tables still fail closed.');
   }finally{
-    const cleanup=await Promise.allSettled([source?.close(),target?.close()]);
+    const cleanup=await Promise.allSettled([source?.close(),target?.close(),readableTarget?.close()]);
     await rm(scratch,{recursive:true,force:true});
     const failures=cleanup.filter(result=>result.status==='rejected');
     if(failures.length)throw new AggregateError(failures.map(result=>result.reason),'Portability Worker cleanup failed.');

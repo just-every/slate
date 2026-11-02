@@ -10,7 +10,13 @@ export function canonicalContent(block: ImportedBlock, idFor: (kind: string, id:
       return value;
     }
     if (Array.isArray(value)) return value.map(rewrite);
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'commentAnchorId' && typeof item === 'string' ? idFor('comment-anchor', item) : key === 'fileId' && typeof item === 'string' ? idFor('file', item) : rewrite(item)]));
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+      if (key === 'mention' && item && typeof item === 'object' && !Array.isArray(item) && typeof item.id === 'string') {
+        const kind = item.kind === 'person' ? 'member' : item.kind === 'page' ? 'page' : item.kind === 'group' ? 'group' : undefined;
+        return [key, kind ? {...item, id: idFor(kind, item.id)} : item];
+      }
+      return [key, key === 'commentAnchorId' && typeof item === 'string' ? idFor('comment-anchor', item) : key === 'fileId' && typeof item === 'string' ? idFor('file', item) : rewrite(item)];
+    }));
     return value;
   };
   const content = rewrite(block.canonicalBlock!.content);

@@ -427,7 +427,7 @@
       "id": "BLOCK-002",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for BLOCK-002 — Inline text. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
+      "unmetReason": "Inline text outcomes are covered by inlineTextJourney in the existing responsive writing registrations, exportCommentsJourney, and the populated native portability round trip. These Node journeys run in Verify; this Workers inventory retains supporting scope.",
       "supportingTests": []
     },
     {

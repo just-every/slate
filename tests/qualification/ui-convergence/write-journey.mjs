@@ -1,3 +1,4 @@
+import { inlineTextJourney } from './inline-text-journey.mjs';
 import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 import { accessible, openNavigation } from './browser-support.mjs';
@@ -138,6 +139,7 @@ export async function writeJourney(state, width) {
   await expect(paragraphs.nth(0)).toContainText('Keep this unsent detail.');
   await expect(paragraphs.nth(1)).toContainText('Second block: record the next action.');
   await accessible(page, 'two blocks saved in order');
+  await inlineTextJourney(state, pageId, width);
   await firstWordsJourney(state);
   await page.goto(`${origin}/app/pages/${pageId}`, { waitUntil: 'networkidle' });
   return pageId;

@@ -2,6 +2,20 @@ import {createHash} from 'node:crypto';
 
 const quote=value=>value===null?'NULL':typeof value==='number'?String(value):`'${String(value).replaceAll("'","''")}'`;
 const insert=(table,row)=>`INSERT INTO ${table} (${Object.keys(row).join(',')}) VALUES (${Object.values(row).map(quote).join(',')});`;
+export function inlineSpans(personId, pageId) {
+  return [
+    ...['bold','italic','underline','strikethrough','code'].map(mark => ({text:`${mark} words`,marks:[mark]})),
+    {text:'combined marks',marks:['bold','italic','underline','strikethrough','code'],colour:'blue'},
+    ...['yellow','blue','green','red','purple'].map(colour=>({text:`${colour} highlight`,colour})),
+    {text:'External reference',link:{href:'https://example.invalid/document?part=1&next=2'}},
+    {text:'Child link',link:{href:`/app/pages/${pageId}`}},
+    {text:'Research member',mention:{kind:'person',id:personId,label:'Research member'}},
+    {text:'Linked child',mention:{kind:'page',id:pageId,label:'Linked child'}},
+    {text:'2030-06-15',mention:{kind:'date',id:'2030-06-15',label:'2030-06-15'}},
+    {text:'Ready for review',status:{colour:'green'}},
+    {text:'Literal <img src=x onerror=alert(1)> & <script>unsafe()</script>'},
+  ];
+}
 export const pageIds=['archive-root','archive-child','archive-sibling'];
 
 /** Labelled test-only records. Native bootstrap/sign-in and R2 upload stay real. */
@@ -21,7 +35,7 @@ export function populatedFixture(owner){
   add('container_grants',{id:'group-container-grant',container_id:'archive-container',principal_kind:'group',principal_id:'archive-group',level:'edit',created_at:now,updated_at:now});
   for(const [index,id]of pageIds.entries()){
     const title=['Restorable research Ω','Linked child','Private sibling'][index];
-    const block={id:`${id}-block`,pageId:id,parentBlockId:null,blockType:'paragraph',content:{text:[{text:`${title}: durable body`},{text:'Child link',link:{href:'/app/pages/archive-child'}},{text:'Research member',mention:{kind:'person',id:'archive-member',label:'Research member'}},{text:'Linked child',mention:{kind:'page',id:'archive-child',label:'Linked child'}}]},treePosition:'0010',revisionId:`${id}-block-revision`};
+    const block={id:`${id}-block`,pageId:id,parentBlockId:null,blockType:'paragraph',content:{text:[{text:`${title}: durable body`},...inlineSpans('archive-member','archive-child')]},treePosition:'0010',revisionId:`${id}-block-revision`};
     const props={title,icon:'📚',coverFileId:null,ownerMemberId:owner.id,statusKey:null,labels:['portable','research'],typeface:'serif',smallText:true,fullWidth:true};
     add('pages',{id,workspace_id:workspace,container_id:index===2?'archive-private':'archive-container',parent_page_id:index===1?'archive-root':null,title,icon:'📚',author_member_id:owner.id,owner_member_id:owner.id,lifecycle:'live',working_revision_id:`${id}-current`,published_revision_id:`${id}-current`,tree_position:index===1?'0005':'0020',typeface:'serif',small_text:1,full_width:1,created_at:now,updated_at:now,revision_id:`${id}-current`});
     add('page_blocks',{id:block.id,page_id:id,parent_block_id:null,block_type:block.blockType,content_json:JSON.stringify(block.content),tree_position:block.treePosition,revision_id:block.revisionId,created_at:now,updated_at:now});

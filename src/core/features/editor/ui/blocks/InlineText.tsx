@@ -1,3 +1,4 @@
+import { safeUrl } from "../../validation";
 import type { ReactNode } from "react";
 import { cn } from "../../../../ui";
 import type { InlineColour, InlineSpan, RichText } from "../types";
@@ -67,7 +68,7 @@ function Span({ span }: { span: InlineSpan }) {
 
   let node: ReactNode = withMarks(span,span.status?<span className={cn("inline-block rounded-full border border-line px-2 py-0.5 text-[0.85em] font-medium leading-tight",span.status.colour==='grey'?'bg-sidebar-hover text-ink':colourClass[span.status.colour])}>{span.text}</span>:span.text);
 
-  if (span.link) {
+  if (span.link && safeUrl(span.link.href)) {
     node = (
       <a className="text-accent underline underline-offset-2" href={span.link.href} rel="noreferrer" target="_blank">
         {node}
