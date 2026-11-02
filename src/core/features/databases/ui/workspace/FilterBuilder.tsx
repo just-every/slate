@@ -62,9 +62,12 @@ export function FilterBuilder({ filters, fields, databaseId, onChange, depth = 0
                       change(index, { field: filter.field, op });
                       return;
                     }
-                    const wasMultiple = type === "array" && operator !== "contains";
                     const isMultiple = type === "array" && op !== "contains";
-                    const value = wasMultiple === isMultiple ? filter.value : isMultiple ? filter.value === "" ? [] : [filter.value] : Array.isArray(filter.value) ? filter.value[0] ?? "" : filter.value;
+                    const operand = filter.value ?? initialCondition(field, fields).value;
+                    const value = type === "array"
+                      ? isMultiple ? Array.isArray(operand) ? operand : operand === "" ? [] : [operand]
+                        : Array.isArray(operand) ? operand[0] ?? "" : operand
+                      : operand;
                     change(index, { ...filter, op, value });
                   }}>
                     {available.map(([value, label]) => <option key={value} value={value}>{label}</option>)}

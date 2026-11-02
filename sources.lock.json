@@ -6432,7 +6432,7 @@
       "executable": false
     },
     "src/core/features/databases/ui/workspace/FilterBuilder.tsx": {
-      "sha256": "c96db0c152c24c2c4f06b291437b2f043af1d4f8791c66a9315863f144d68495",
+      "sha256": "6a580e6b57636f616470d6925ccd895748e9c7b173f08c90be4ee4b0e0f9a704",
       "executable": false
     },
     "src/core/features/databases/ui/workspace/FilterInput.tsx": {
@@ -11872,11 +11872,11 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/database-criteria-fixture.mjs": {
-      "sha256": "22b7417b379658dd9bf33809c8a3ca5a9c6591a78c516402be1085316c8426ff",
+      "sha256": "5b87df34a27d38dbc0b22c4b24c5996f675529ebb1be86b66cc57e90cae44a59",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-criteria-journey.mjs": {
-      "sha256": "35649ee4f76c3b6a1a5c4886dcced6f3fbfa1eb43055ec9fa92dac9246362e06",
+      "sha256": "071d6d47b43c6cc190bc504658521c9e8b99c9fca895f2bfb207678d35c500ac",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-journey.mjs": {

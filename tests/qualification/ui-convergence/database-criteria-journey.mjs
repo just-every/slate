@@ -62,7 +62,7 @@ async function readControls(dialog, expected) {
   assert.deepEqual(values, expected.sorts);
 }
 function visibleRecords(page) {
-  return page.locator('main ul > li button').filter({hasText: /^(Alpha|Bravo|Charlie|Delta|Private priority|Excluded status|Excluded quantity)$/});
+  return page.locator('main ul > li button').filter({hasText: /^(Alpha|Bravo|Charlie|Delta|Private priority|Excluded status|Excluded quantity|Unchecked response)$/});
 }
 async function shown(page, names) {
   await expect(visibleRecords(page)).toHaveText(names);
@@ -165,13 +165,13 @@ export async function databaseCriteriaJourney(state, width) {
   await page.reload({waitUntil: 'networkidle'});
   const unchecked = await api(base + '/views/' + expected.id);
   assert.deepEqual(unchecked.view.filters, [{field: 'checked', op: 'eq', value: false}]);
-  assert.deepEqual(unchecked.records.map(record => record.title), ['Excluded status']);
-  await shown(page, ['Excluded status']);
+  assert.deepEqual(unchecked.records.map(record => record.title), ['Unchecked response']);
+  await shown(page, ['Unchecked response']);
   await accessible(page, 'database criteria unchecked results');
   await page.getByRole('button', {name: 'Clear filters and sorts', exact: true}).click();
   await expect(page.getByRole('region', {name: 'Applied view criteria'})).toHaveCount(0);
   assert.deepEqual(await snapshot(), before, 'Checkbox condition transitions and clearing leave all records unchanged.');
   console.log(`PROBE DB-005 checkbox at ${width}: empty to equality stores displayed false and returns the one unchecked record`);
   console.log(`PROBE DB-005 1 at ${width}: native View settings writes 19 field kinds, nested AND and OR and ordered sorts; reload and second member exact configuration and authorized order passed`);
-  console.log(`PROBE DB-005 2 at ${width}: all criteria above records; one native Clear filters and sorts request removes both arrays; reopened configuration empty and all seven record snapshots unchanged`);
+  console.log(`PROBE DB-005 2 at ${width}: all criteria above records; one native Clear filters and sorts request removes both arrays; reopened configuration empty and all eight record snapshots unchanged`);
 }

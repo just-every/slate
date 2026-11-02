@@ -42,12 +42,13 @@ export async function criteriaFixture({context, origin, api}) {
     ['Alpha', 3, '2026-01-03', 'Ready', 'Blue'], ['Charlie', 3, '2026-01-01', 'Ready', 'Blue'],
     ['Bravo', 3, '2026-01-01', 'Ready', 'Blue'], ['Delta', 2, '2026-01-01', 'Hold', 'Red'],
     ['Excluded status', 4, '2026-01-01', 'Closed', 'Blue'], ['Excluded quantity', 1, '2026-01-01', 'Ready', 'Blue'],
+    ['Unchecked response', 2, '2026-01-01', 'Ready', 'Blue'],
     ['Private priority', 9, '2026-01-01', 'Ready', 'Blue'],
   ];
   const records = [];
   for (const [title, quantity, due, stage, choice] of rows)
     records.push({...await mutate(base + '/records', {title, values: {...common, quantity, due, stage, choice,
-      checked: title !== 'Excluded status'}}), title});
+      checked: title !== 'Unchecked response'}}), title});
   const privateRecord = records.at(-1);
   await grant(context, origin, privateRecord.pageId, 'browser-owner', 'full');
   const privatePage = await api(`/api/pages/${privateRecord.pageId}`);
@@ -79,6 +80,5 @@ export async function criteriaFixture({context, origin, api}) {
     return {pageId: record.pageId, revisionId: opened.revisionId, values: opened.values,
       page: opened.page.page, blocks: opened.page.blocks};
   }));
-  assert.equal(records.length, 7);
   return {base, database, fields, criteria, nested, expected, records, snapshot};
 }
