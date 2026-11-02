@@ -8,6 +8,7 @@ import {
   seedContainerGrant,
 } from "../../e2e/setup/fixtures";
 import type { FeatureContext } from "../../../src/core/app/feature-context";
+import { savedCriteriaCase } from "./criteria-case";
 
 // Keep SELF module loading isolated from direct-service request contexts.
 beforeEach(resetDeployment);
@@ -188,6 +189,8 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
     expect(retained.page.blocks).toEqual(edited.page.blocks);
     expect(retained.values).toEqual(edited.values);
   }
+  await savedCriteriaCase({ call, ownerCookie: cookie, memberCookie,
+    ownerId: ctx.actor.id, memberId: reader.actor.id, ownerEmail: ctx.actor.email, containerId });
 });
 
 test("database file references list only attachments the reader could open", async () => {

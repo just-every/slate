@@ -1,41 +1,37 @@
 import { FilterBuilder, type FilterValue } from "./FilterBuilder";
+import { SortBuilder } from "./SortBuilder";
 import { useState } from "react";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import type { ViewDto, FieldDto } from "../../../../client/records";
 export function ViewDialog({
   view,
   fields,
+  databaseId,
   onSave,
   onClose,
 }: {
   view: ViewDto;
   fields: FieldDto[];
+  databaseId: string;
   onSave: (view: ViewDto) => Promise<void>;
   onClose: () => void;
 }) {
   const [layout, setLayout] = useState(view.layout);
   const [filters, setFilters] = useState(view.filters as FilterValue[]);
+  const [sorts, setSorts] = useState(view.sorts);
   return (
     <ActionDialog
       title="View settings"
       action="Save view"
       onClose={onClose}
       onSubmit={async (form) => {
-        const sort = String(form.get("sortField") ?? "");
         const group = String(form.get("groupField") ?? "");
         await onSave({
           ...view,
           name: String(form.get("name")),
           layout,
           filters,
-          sorts: sort
-            ? [
-                {
-                  field: sort,
-                  direction: String(form.get("direction")) as "asc" | "desc",
-                },
-              ]
-            : [],
+          sorts,
           groups: group
             ? [{ field: group, hideEmpty: form.get("hideEmpty") === "on" }]
             : [],
@@ -106,29 +102,11 @@ export function ViewDialog({
         />
         Hide empty groups
       </label>
-      <label>
-        Sort by
-        <select name="sortField" defaultValue={view.sorts[0]?.field ?? ""}>
-          <option value="">No sort</option>
-          <option value="$title">Name</option>
-          {fields.map((field) => (
-            <option key={field.id} value={field.id}>
-              {field.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Direction
-        <select
-          name="direction"
-          defaultValue={view.sorts[0]?.direction ?? "asc"}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-      </label>
-      <FilterBuilder filters={filters} fields={fields} onChange={setFilters} />
+      <SortBuilder sorts={sorts} fields={fields} onChange={setSorts} />
+      <fieldset aria-label="Filters">
+        <legend>Filters</legend>
+        <FilterBuilder filters={filters} fields={fields} databaseId={databaseId} onChange={setFilters} />
+      </fieldset>
       <fieldset>
         <legend>Visible fields</legend>
         {fields.map((field) => (

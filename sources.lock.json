@@ -6403,6 +6403,10 @@
       "sha256": "26e172442a726162b795dd78e33ca6e34cad107af8f8cf400ae2576b5ef3cb9e",
       "executable": false
     },
+    "src/core/features/databases/ui/workspace/criteriaFields.ts": {
+      "sha256": "9658a6ce5d2f05552a782c57415a1eacb567acbc48286725030697f2ae9279b5",
+      "executable": false
+    },
     "src/core/features/databases/ui/workspace/DatabaseChart.tsx": {
       "sha256": "953a397f39f780f17c906ce0e602f51365480ce0d8d430a32eae716f8b0a206d",
       "executable": false
@@ -6416,7 +6420,7 @@
       "executable": false
     },
     "src/core/features/databases/ui/workspace/DatabaseWorkspace.tsx": {
-      "sha256": "024f006b1c13a1000d39f5b44c240de7d1301dcc366ffc59c2d54c3be5704822",
+      "sha256": "e99948b1de30d0b93e3d4dcc087800a4e343c95c6522c4f4a7a9f8ba266c9b86",
       "executable": false
     },
     "src/core/features/databases/ui/workspace/ExportViewCsv.tsx": {
@@ -6428,7 +6432,15 @@
       "executable": false
     },
     "src/core/features/databases/ui/workspace/FilterBuilder.tsx": {
-      "sha256": "a13d7f0c809c7890b533553294389daeeff5f2ece223ec1b72201443b136ddb1",
+      "sha256": "c96db0c152c24c2c4f06b291437b2f043af1d4f8791c66a9315863f144d68495",
+      "executable": false
+    },
+    "src/core/features/databases/ui/workspace/FilterInput.tsx": {
+      "sha256": "ed6090d12742efe42f6e4ab544a31d1b9f98ccf1f6cca925ca5f5d8e967db804",
+      "executable": false
+    },
+    "src/core/features/databases/ui/workspace/FilterReferenceInput.tsx": {
+      "sha256": "2c532bea98e06563e2d64f97f58661516e6b742ae847a8fb7af0284864f5f457",
       "executable": false
     },
     "src/core/features/databases/ui/workspace/FormulaBuilder.tsx": {
@@ -6471,12 +6483,16 @@
       "sha256": "ba6d1650955468e793df5259b1ba751ddb5c2efff2386748734b8c4f32a16387",
       "executable": false
     },
+    "src/core/features/databases/ui/workspace/SortBuilder.tsx": {
+      "sha256": "da9c97a0b2ef9dc20fb41c9d035f94062ac2dfb380cd8a243d81221c9aa08a09",
+      "executable": false
+    },
     "src/core/features/databases/ui/workspace/ViewCriteria.tsx": {
-      "sha256": "5649bf2ef652b2c836cc704f1d5be720515e907fa6e241742c3e6653f72d47ab",
+      "sha256": "db9db0f0ddedfb5c36b7b66be927f0c2728e31929e756af726084ac8cd081821",
       "executable": false
     },
     "src/core/features/databases/ui/workspace/ViewDialog.tsx": {
-      "sha256": "d687ab9639948e32c80495b7611e4d67d521efcfd81745423f0097ee8e3698d8",
+      "sha256": "ea01ef0ce9fe5c3a47e5c90570eb6110641f7dc8306d2d830cc852c5edb6bbe3",
       "executable": false
     },
     "src/core/features/databases/validation.ts": {
@@ -11231,8 +11247,12 @@
       "sha256": "f9b369a0292369ac859963f9e13435a4c4cfe6d3e740f17fca9a76511392d818",
       "executable": false
     },
+    "tests/flagship/structured/criteria-case.ts": {
+      "sha256": "d37cd16e8bbe6ea947ba2b2f19c5fa0458a8c3c0c2250a2609adb298800934d5",
+      "executable": false
+    },
     "tests/flagship/structured/http.test.ts": {
-      "sha256": "022c948a3285c8043af2bfd1978aee0fb4e26b446b79c50b6c43401683f5feac",
+      "sha256": "5b709dd05c1a3eb80180ac9fe7fa4c7c86930cf4b17904f582b4121cef050f8b",
       "executable": false
     },
     "tests/flagship/structured/migration.py": {
@@ -11851,6 +11871,14 @@
       "sha256": "fd028b5b21a2f934ad41777f307ec4c298a0febdd1904d5e5ec049d4e686e620",
       "executable": false
     },
+    "tests/qualification/ui-convergence/database-criteria-fixture.mjs": {
+      "sha256": "961d3addaf4b71f7aaf024b21a0ed1061796f30684fd436decc25fa8bbe37261",
+      "executable": false
+    },
+    "tests/qualification/ui-convergence/database-criteria-journey.mjs": {
+      "sha256": "32325ab9880d1f94727b6c3be8b7a66d69753d783a45cd44cc99a512e986e8a0",
+      "executable": false
+    },
     "tests/qualification/ui-convergence/database-journey.mjs": {
       "sha256": "956ad2efd9ec978fc9508f15b5d3c106f7b6649ea5c0aa4ccb0de47d547f2a5c",
       "executable": false
@@ -12024,7 +12052,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "46243df2bea4af96cddd120c187781085279e0c2a51cc4901f87c6b1a8d08c05",
+      "sha256": "d9e3ea115e1334d1ba93fa7fcc8abfafd01e09227ba52c17917389575bc1e7de",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {

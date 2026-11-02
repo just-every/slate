@@ -188,7 +188,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
                 ) : null}
               </DatabaseToolbar>
               {mode === "automations" ? <AutomationWorkspace sourceId={id}/> : mode === "templates" ? <RecordTemplates databaseId={id} fields={fields} canEdit={canEdit} onCreated={query.reload}/> : <>
-              {view?<ViewCriteria view={view} fields={fields} canClear={canEdit&&!locked} onClear={()=>void saveView({...view,filters:[]}).catch(setError)}/>:null}
+              {view?<ViewCriteria view={view} fields={fields} canClear={canEdit&&!locked} onClear={()=>void saveView({...view,filters:[],sorts:[]}).catch(setError)}/>:null}
               {locked ? (
                 <p className="muted">
                   Structure locked by{" "}
@@ -312,6 +312,7 @@ export function DatabaseWorkspace({ id }: { id: string }) {
         ) : null}
         {dialog === "view" && view ? (
           <ViewDialog
+            databaseId={id}
             view={view}
             fields={fields}
             onSave={saveView}
