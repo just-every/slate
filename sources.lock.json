@@ -11872,11 +11872,11 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/database-criteria-fixture.mjs": {
-      "sha256": "961d3addaf4b71f7aaf024b21a0ed1061796f30684fd436decc25fa8bbe37261",
+      "sha256": "aad379587eaad77f014f66f0bac4bed4fba12e203616189e6c178d91f889210a",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-criteria-journey.mjs": {
-      "sha256": "32325ab9880d1f94727b6c3be8b7a66d69753d783a45cd44cc99a512e986e8a0",
+      "sha256": "0cf809b3f63bfeeae36db46cc481a2cc886003b7bc98058979ce5c8976b0fe1c",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-journey.mjs": {
@@ -12304,7 +12304,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "baef21adad9a3a7d1e3fae5c01b27c8119dbe665851c137eef64c3ae42aa890b",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12320,7 +12320,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "a9bfdb72ca0d1cfb9210d49711f0f206251866dcc78cdf94ccca5081485cf746",
+      "sha256": "18649fa413d825254c2c0f36c8bb58026f8e83e552689e1e0455b5814fc247bf",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

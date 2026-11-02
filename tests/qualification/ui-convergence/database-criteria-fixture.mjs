@@ -29,7 +29,13 @@ export async function criteriaFixture({context, origin, api}) {
   const fields = definitions.map(([id, name, type, config = {}], position) => ({id, name, type, config, position}));
   let revision = database.revisionId;
   for (const field of fields) revision = (await mutate(base + '/fields', {expectedRevisionId: revision, field})).revisionId;
-  const common = {notes: 'Response plan', checked: true, tags: ['Urgent'], person: ['browser-owner'],
+  const upload = await context.request.post(origin + '/api/media', {headers: {origin}, multipart: {
+    operationKey: randomUUID(), pageId: database.pageId,
+    file: {name: 'synthetic-slate-1.txt', mimeType: 'text/plain', buffer: Buffer.from('Response attachment')},
+  }});
+  assert.equal(upload.status(), 200, await upload.text());
+  const attachment = (await upload.json()).value.id;
+  const common = {notes: 'Response plan', checked: true, tags: ['Urgent'], person: ['browser-owner'], file: [attachment],
     url: 'https://example.test/response', email: ['synthetic-slate-1', 'test.invalid'].join('@'), phone: '555 0101',
     place: 'Brisbane', relation: [target.pageId]};
   const rows = [
@@ -51,7 +57,11 @@ export async function criteriaFixture({context, origin, api}) {
     calculations: {}, display: {visibleFieldIds: ['quantity', 'due', 'stage']}, position: 0};
   revision = (await api(base)).database.revision_id;
   await mutate(base + '/views', {expectedRevisionId: revision, view});
-  const criteria = fields.map(field => ({field: field.id, op: field.id === 'file' ? 'empty' : 'not-empty'}));
+  const criteria = fields.map(field => ({field: field.id, op: 'not-empty'}));
+  for (const [field, value] of Object.entries({notes: 'Response', tags: 'Urgent', person: 'browser-owner', file: attachment,
+    url: 'response', email: 'synthetic-slate-1', phone: '555', relation: target.pageId}))
+    Object.assign(criteria.find(rule => rule.field === field), {op: 'contains', value});
+  Object.assign(criteria.find(rule => rule.field === 'place'), {op: 'eq', value: 'Brisbane'});
   Object.assign(criteria.find(rule => rule.field === 'quantity'), {op: 'gte', value: 2});
   Object.assign(criteria.find(rule => rule.field === 'formula'), {op: 'gt', value: 2});
   Object.assign(criteria.find(rule => rule.field === 'rollup'), {op: 'eq', value: 7});

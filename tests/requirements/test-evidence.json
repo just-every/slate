@@ -314,9 +314,10 @@
       "kind": "supporting-regression",
       "clauses": [
         "BASE-ACCESS-002",
-        "DB-012"
+        "DB-012",
+        "DB-005"
       ],
-      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys."
+      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys. savedCriteriaCase additionally exercises saved filters for all nineteen field kinds, nested conditions, ordered sorts with ties, exact second-member configuration and results, one-mutation clearing, unchanged records, view-only refusal and revoked-authority replay refusal."
     },
     {
       "file": "tests/flagship/structured/template-permissions.test.ts",

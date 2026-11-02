@@ -1088,8 +1088,13 @@
       "id": "DB-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for DB-005 — Filter and sort. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "Native saved criteria acceptance runs through databaseCriteriaJourney in ./tests/qualification/ui-convergence/database-criteria-journey.mjs, loaded by the existing desktop database registration and responsive phone core registration: all field kinds, nested conditions, ordered sorts with ties, exact two-member results, durable control readback and one-action clearing without record changes. This Workers inventory records supporting proof only; CONTRACT.md carries the clause judgment and exact Verify is required.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
+        }
+      ]
     },
     {
       "id": "DB-006",

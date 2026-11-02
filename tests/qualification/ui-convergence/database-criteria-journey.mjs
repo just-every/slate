@@ -37,7 +37,7 @@ async function readControls(dialog, expected) {
     for (const row of await builder.locator(':scope > fieldset').all()) {
       const nested = row.locator(':scope > .filter-builder');
       if (await nested.count()) {
-        const op = await row.getByLabel('Match conditions', {exact: true}).inputValue();
+        const op = await row.locator(':scope > label').getByLabel('Match conditions', {exact: true}).inputValue();
         result.push({[op]: await readRules(nested)});
       } else {
         const field = await row.getByLabel('Field', {exact: true}).inputValue();
