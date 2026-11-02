@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 import { openNavigation } from './browser-support.mjs';
-import { accessible } from './browser-evidence.mjs';
+import { accessible, insideViewport } from './browser-evidence.mjs';
 import { randomUUID } from 'node:crypto';
 import { call, grant, ok } from './two-people-support.mjs';
 import { writeFile } from 'node:fs/promises';
@@ -77,6 +77,11 @@ export async function createInPlaceJourney({ page, context, origin, api, switchI
   assert.ok(rows.length >= 5, 'The keyboard corpus contains the root, its child and sibling pages.');
   await handbook.getByRole('textbox', { name: 'Filter pages in Handbook', exact: true }).click();
   await page.mouse.move(width - 1, page.viewportSize().height - 1);
+  const firstAction = rows[0].locator('.tree-action').last();
+  assert.equal(await firstAction.evaluate(element => getComputedStyle(element).opacity), '0', 'Idle row actions retain their hover presentation.');
+  await rows[0].hover();
+  assert.equal(await firstAction.evaluate(element => getComputedStyle(element).opacity), '1', 'Hover reveals the row actions.');
+  await page.mouse.move(width - 1, page.viewportSize().height - 1);
   const keyboard = [];
   for (const row of rows) {
     const controls = await row.locator(':scope > a, :scope > button:not([disabled])').all();
@@ -92,7 +97,7 @@ export async function createInPlaceJourney({ page, context, origin, api, switchI
     await expect(childControl).not.toBeFocused();
     await page.keyboard.press('Shift+Tab');
     await expect(childControl).toBeFocused();
-    await expect(childControl).toBeVisible();
+    await insideViewport(page, childControl, 'The focused create-child action');
     assert.equal(await childControl.evaluate(element => getComputedStyle(element).opacity), '1');
     assert.equal(await childControl.evaluate(element => getComputedStyle(element, '::after').opacity), '1', 'Keyboard focus shows the Add child tooltip immediately.');
     keyboard.push(await childControl.getAttribute('aria-label'));
@@ -107,7 +112,7 @@ export async function createInPlaceJourney({ page, context, origin, api, switchI
   await grant(context, origin, lockedId, 'browser-reader', 'edit');
   const unlocked = await api(`/api/pages/${lockedId}`);
   await ok(context, origin, 'POST', `/api/pages/${lockedId}/lock`, { operationKey: randomUUID(), expectedRevisionId: unlocked.page.revisionId });
-  await ok(context, origin, 'POST', '/api/sharing', { operationKey: randomUUID(), targetKind: 'container', targetId: space.id, principalKind: 'member', principalId: 'browser-reader', level: 'edit' });
+  const memberGrant = await ok(context, origin, 'POST', '/api/sharing', { operationKey: randomUUID(), targetKind: 'container', targetId: space.id, principalKind: 'member', principalId: 'browser-reader', level: 'edit' });
   await switchIdentity('reader');
   assert.equal((await api('/api/members/current')).role, 'member');
   const listed = await call(context, origin, 'GET', '/api/templates');
@@ -148,7 +153,7 @@ export async function createInPlaceJourney({ page, context, origin, api, switchI
 
   // Preserve the existing read-only creation assertions after the new member case.
   await switchIdentity('owner');
-  await ok(context, origin, 'POST', '/api/sharing', { operationKey: randomUUID(), targetKind: 'container', targetId: space.id, principalKind: 'member', principalId: 'browser-reader', level: 'view' });
+  await ok(context, origin, 'POST', '/api/sharing', { operationKey: randomUUID(), targetKind: 'container', targetId: space.id, id: memberGrant.value.id, principalKind: 'member', principalId: 'browser-reader', level: 'view' });
   await switchIdentity('reader');
   await page.goto(`${origin}/app/pages/${welcome.id}`, { waitUntil: 'networkidle' });
   await openNavigation(page);
