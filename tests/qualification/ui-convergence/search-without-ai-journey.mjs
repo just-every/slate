@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {expect} from '@playwright/test';
 import {ok,grant} from './two-people-support.mjs';
@@ -8,11 +9,20 @@ import {accessible} from './browser-evidence.mjs';
 export async function searchWithoutAiJourney(state) {
  const {page,context,origin,api,switchIdentity,setSearchAiState,readSearchAiRequests,modelRequests,readerCookie}=state;
  const width=page.viewportSize().width,query='Solsticeneedle',corpus=[],timings=[],pending=new Set(),starts=new Map();
+ // Earlier journey tabs retain presence timers. Unmount them before deliberate
+ // fixture restarts, then restore their native URLs for their remaining checks.
+ const suspended=[];
+ for(const view of context.browser().contexts().flatMap(browserContext=>browserContext.pages())){
+  if(view===page||!view.url().startsWith(origin))continue;
+  await view.waitForLoadState('networkidle');
+  const url=view.url();await view.goto('about:blank');suspended.push({view,url});
+ }
  const mutate=(method,path,data)=>ok(context,origin,method,'/api'+path,{operationKey:crypto.randomUUID(),...data});
  const spaceResult=await mutate('POST','/containers',{name:query+' space',description:'Operations plans and retained team knowledge',visibility:'default'});
  const space=spaceResult.value.id;
  const row=(id,title,kind,stamp,extra={})=>{const item={id,title,kind,updatedAt:stamp,containerId:space,contributors:[],status:null,label:null,score:title===query?20:title.includes(query)?10:1,views:0,...extra};corpus.push(item);return item;};
  row(space,query+' space','container',spaceResult.receipt.committedAt,{containerId:space});
+ row(spaceResult.value.homePageId,query+' space home','page',spaceResult.receipt.committedAt,{contributors:['browser-owner']});
  const create=async(title,text)=>{
   const result=await mutate('POST','/pages',{containerId:space,title,blocks:[{id:crypto.randomUUID(),blockType:'paragraph',treePosition:'a',content:{text:[{text}]}}]});
   return row(result.value.pageId,title,'page',result.receipt.committedAt,{contributors:['browser-owner']});
@@ -29,7 +39,7 @@ export async function searchWithoutAiJourney(state) {
   body.contributors=['browser-reader'];
   const response=await mutate('POST','/comments/page/'+exact.id,{body:[{text:query+' question about the retained escalation responsibility.'}]});
   comment=row(response.value.threadId,query,'comment-thread',response.receipt.committedAt,{contributors:['browser-owner','browser-reader'],status:'isolation-ready',label:'amber'});
-  await mutate('POST','/views',{pageId:body.id});body.views=1;
+  await mutate('POST','/analytics/views',{pageId:body.id});body.views=1;
  } finally {await switchIdentity('owner');}
  const archived=await create('Retired incident playbook',query+' historical investigation and audit procedure.');
  const trashed=await create('Abandoned migration proposal',query+' discarded storage migration planning.');
@@ -124,7 +134,8 @@ export async function searchWithoutAiJourney(state) {
  } finally {
   await Promise.allSettled([...pending]);page.off('request',started);page.off('response',received);
   await mkdir('.artifacts/ui-convergence/search-without-ai',{recursive:true});
-  await writeFile('.artifacts/ui-convergence/search-without-ai/'+width+'.json',JSON.stringify({width,query,corpus,timings,providerRequests:await readSearchAiRequests(),modelRequests},null,2));
+  await writeFile('.artifacts/ui-convergence/search-without-ai/'+width+'.json',JSON.stringify({candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),width,query,corpus,timings,providerRequests:await readSearchAiRequests(),modelRequests},null,2));
   await setSearchAiState('unconfigured');await switchIdentity('owner');
+  for(const {view,url}of suspended)await view.goto(url,{waitUntil:'networkidle'});
  }
 }

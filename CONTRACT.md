@@ -3992,13 +3992,15 @@ Judged from the code and tests at commit `30886e55608596bb44862e4c6942dc1a24ef98
 
 CONT-001 is judged from source commit `12379d17957e993f2aa09d13a8df536aad5a41d8`; owners are read by members only, and a guest's container read carries none. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
 
+SEARCH-008 is reviewed from source commit `ab21873b6c09de6ff1024bc143051c1b332307cd` with its final native search fixture corrections; exact candidate proof and timing receipts are named in the branch handoff. The default-product AI gate remains held under ADMIN-007.
+
 STAT-005 retains the current main judgment below. The native status-profile controls and responsive journeys have been reapplied as supporting implementation and assertions; this replay does not promote the clause or replace its recorded evidence gap.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 38 | 188 | 1 | 227 |
+| Published | 39 | 187 | 1 | 227 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 54 | 243 | 41 | 338 |
+| All | 55 | 242 | 41 | 338 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4134,7 +4136,7 @@ STAT-005 retains the current main judgment below. The native status-profile cont
 | `SEARCH-005` | What search never shows | published | done | `tests/e2e/search/fts-permissions.test.ts` — "Indexed search uses current native authority for literal matches, totals, facets and cursors"; `tests/e2e/search/freshness-journey.ts` — "freshnessJourney" | |
 | `SEARCH-006` | Search in one container | published | partial | `tests/qualification/core/discovery-browser.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/discovery-browser.mjs`. |
 | `SEARCH-007` | No results | published | partial | `tests/qualification/core/discovery-browser.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/discovery-browser.mjs`. |
-| `SEARCH-008` | Search without AI | published | partial | `tests/qualification/core/discovery.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/discovery.mjs`. |
+| `SEARCH-008` | Search without AI | published | done | `tests/e2e/search/fts-permissions.test.ts` — Indexed search uses current native authority for literal matches, totals, facets and cursors, through discoveryJourney and searchWithoutAI (acceptance 1–2); `tests/qualification/ui-convergence/search-without-ai-journey.mjs` — searchWithoutAiJourney, loaded by the existing real core-wiki and touch-member journeys at 1440px and 390px in `tests/qualification/ui-convergence/journeys.test.mjs` (acceptance 1–2): same authorized corpus, ranked IDs, totals, every filter, raw native HTTP timings below 500ms, absent answer box and zero inference requests in all four AI states. | |
 | `SEARCH-009` | Default visibility | published | partial | `tests/qualification/core/discovery.mjs` | evidence tests are not loaded by any Verify job or named scheduled job: `tests/qualification/core/discovery.mjs`. |
 | `NAV-001` | Home | published | done | `tests/qualification/ui-convergence/home-journey.mjs` — "homeJourney", called by "CONT-012 a watched space's create, edit sessions and comment appear once each in Home's Following at 1440px" in `tests/qualification/ui-convergence/journeys.test.mjs`: populated recents, page and container favourites, owned containers, opening every entry, personal visits and immediate removal of revoked entries. |  |
 | `NAV-002` | Recents | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Recently opened pages are listed per member, newest first and grouped by day, and a page appears there for no one but the member who opened it." |

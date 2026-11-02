@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "af47d976f9b317aa00185c48bf1710a79a60cb7a904e9f5ff0c6dde60f28947d",
       "executable": false
     },
     "DEMO.md": {
@@ -11287,6 +11287,10 @@
       "sha256": "7b45076b50ce8efabc64ea767a19a4795b36fca1d95d7d5ac86110cb0059232d",
       "executable": false
     },
+    "tests/helpers/search-ai-edge.mjs": {
+      "sha256": "48cd47c49823ee96f06a1ca2935251f23354284fd8df73ab4c6a6268936b1afd",
+      "executable": false
+    },
     "tests/helpers/slack-edge.mjs": {
       "sha256": "9c8196c062f6070fca7e84acb178694f5de81d7c44e65c13ff12ac4f03a5e227",
       "executable": false
@@ -12119,6 +12123,10 @@
       "sha256": "b51c892b973b2c8c76a90d051ca3cf12159071640cc491f8d714767542685a12",
       "executable": false
     },
+    "tests/qualification/ui-convergence/search-without-ai-journey.mjs": {
+      "sha256": "8c7ff1f88e3bd0f04c246ee7bb58519bdad1863e5d8c6d20a02e74c8c4618936",
+      "executable": false
+    },
     "tests/qualification/ui-convergence/shared-navigation-journey.mjs": {
       "sha256": "713db30db4126472246cbc11ce456f2c5cf33ab9938a0a4e3f596e250de24e59",
       "executable": false
@@ -12276,7 +12284,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "6209763103f5e36ca73af0fe7650fd30af7c30794b3f8af8b0b4b4bc8928c3ed",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12292,7 +12300,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "a9bfdb72ca0d1cfb9210d49711f0f206251866dcc78cdf94ccca5081485cf746",
+      "sha256": "152c04cbf728bedc394d0a80dce32c3f62ad15be961032aa6288a0b6ce346af8",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {
