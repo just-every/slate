@@ -31,7 +31,7 @@ interface Grant {
 function accessLabel(level: string) { return ({view:"View",comment:"Comment",edit:"Edit",full:"Manage access"} as Record<string,string>)[level] ?? level; }
 export function PageSharing({ document }: { document: DocumentView }) {
   const { workspace, localDevelopment, member } = useWorkspace();
-  const grants = useResource<{ items: Grant[]; inheritedItems?:Grant[]; effectiveItems?:Grant[];levels?:string[];container?:{id:string;name:string};restricted?:boolean }>(
+  const grants = useResource<{ items: Grant[]; inheritedItems?:Grant[]; effectiveItems?:Grant[];levels?:string[];container?:{id:string;name:string};restricted?:boolean;restriction?:{scope:string;id:string|null;name:string}|null }>(
     document.permissions.canShare
       ? `/api/sharing/pages/${document.page.id}`
       : null,
@@ -111,6 +111,7 @@ export function PageSharing({ document }: { document: DocumentView }) {
           retry={grants.reload}
         >
           <section aria-label="Who has access"><h3>Who has access</h3>
+          {grants.data?.restriction ? <p data-restriction={grants.data.restriction.scope}>{grants.data.restriction.scope==="page" ? "Restricted: this page does not inherit access from its parent page or space." : `Restricted by ${grants.data.restriction.name}: this page follows that page's access, not the pages above it or the space.`}</p> : null}
           {grants.data?.inheritedItems?.length ? (
             <section aria-label="Inherited access">
               <h3>Inherited access</h3>

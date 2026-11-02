@@ -14,3 +14,11 @@ export function setPageInheritance(ctx:FeatureContext,pageId:string,input:{opera
     ]};
   }});
 }
+/** The nearest restricted page on a page's own traversal: the page itself, else the closest ancestor. Nothing above it is inherited. */
+export async function restrictionBoundary(ctx:FeatureContext,pageId:string) {
+  return ctx.db.prepare(`WITH RECURSIVE chain(id,parent_id,restricted,depth) AS (
+    SELECT id,parent_page_id,access_inheritance='restricted',0 FROM pages WHERE id=? AND workspace_id=?
+    UNION ALL
+    SELECT p.id,p.parent_page_id,p.access_inheritance='restricted',c.depth+1 FROM pages p JOIN chain c ON p.id=c.parent_id WHERE c.restricted=0 AND p.workspace_id=?
+  ) SELECT id,depth FROM chain WHERE restricted=1 ORDER BY depth LIMIT 1`).bind(pageId,ctx.actor.workspaceId,ctx.actor.workspaceId).first<{id:string;depth:number}>();
+}

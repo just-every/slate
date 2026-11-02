@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 import { accessible, closeDetails } from './browser-support.mjs';
 import { expiryRegrantJourney } from './expiry-journey.mjs';
+import { inheritanceChainJourney } from './sharing-inheritance-journey.mjs';
 import { call, ok } from './two-people-support.mjs';
 
 export async function shareJourney(state, pageId) {
@@ -86,6 +87,7 @@ export async function shareJourney(state, pageId) {
   await expect(page.getByRole('heading', { name: 'What changed.', exact: true })).toBeVisible();
   assert.ok((await api(`/api/sharing/pages/${pageId}`)).items.find(item => item.principalId === 'browser-reader').revokedAt, 'Opening Activity leaves the removed page grant revoked.');
   await grantCorpusJourney(state);
+  await inheritanceChainJourney(state);
 }
 
 /** Native grants, rather than seeded ACL rows, drive the loaded Share panel. */

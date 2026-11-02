@@ -3,6 +3,7 @@ import type { KnowledgeGrant } from '../../shared/knowledge/model';
 import { requirePageLevel, requireContainerAdministration } from './current-access';
 import { sharingConfiguration } from './configuration';
 import { isPrivateLifecycle } from './access';
+import { restrictionBoundary } from './inheritance';
 import { currentPageTitle, permitted } from '../search/visibility';
 
 type GrantRow = KnowledgeGrant & {invitationId:string|null;invitationEmail:string|null;invitationExpiresAt:string|null;invitationRevokedAt:string|null;principalLabel:string|null};
@@ -38,5 +39,12 @@ export async function listGrants(ctx:FeatureContext,kind:'page'|'container',id:s
     const containerIds=new Set(access.context.container.grants.map(grant=>grant.id));
     inheritedItems.push(...(await rows(ctx,'container',containerId)).filter(row=>containerIds.has(row.id)).map(row=>presented(row,{kind:'container',id:containerId,name:container!.name},true,true,ctx.now)));
   }
-  return {items,inheritedItems,effectiveItems:[...items,...inheritedItems].filter(row=>row.effective),levels:configuration.levels,container:{id:containerId,name:container!.name},restricted:access?.context.page.restricted??false};
+  // A restriction is reported on the restricted page and on every descendant it cuts off from the pages above and the space; an unreadable restricted ancestor keeps its title and id out of the answer.
+  const boundary=access&&!isPrivateLifecycle(access.context.page.lifecycle)?await restrictionBoundary(ctx,id):null;
+  let restriction:{scope:'page'|'ancestor';id:string|null;name:string}|null=null;
+  if(boundary) {
+    const readable=boundary.depth===0||await permitted(()=>requirePageLevel(ctx,boundary.id,'view'));
+    restriction={scope:boundary.depth===0?'page':'ancestor',id:readable?boundary.id:null,name:readable?await currentPageTitle(ctx,boundary.id):'Restricted ancestor'};
+  }
+  return {items,inheritedItems,effectiveItems:[...items,...inheritedItems].filter(row=>row.effective),levels:configuration.levels,container:{id:containerId,name:container!.name},restricted:access?.context.page.restricted??false,restriction};
 }
