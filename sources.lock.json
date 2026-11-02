@@ -6916,7 +6916,7 @@
       "executable": false
     },
     "src/core/features/editor/ui/CommentAffordance.tsx": {
-      "sha256": "dbf8271f2d33c3a3f1076fe7f411d3a882d9073988afbf9c8e60c01c56facf91",
+      "sha256": "55286329903d1a62952e89f75a86ef0fdc47c681232d6319d03976d87a345943",
       "executable": false
     },
     "src/core/features/editor/ui/formatSelection.ts": {
