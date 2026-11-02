@@ -1,4 +1,5 @@
 import {initializeEmbedEdge,readEmbedRequests} from '../../helpers/embed-edge.mjs';
+import {initializeSearchAiEdge,readSearchAiRequests} from '../../helpers/search-ai-edge.mjs';
 import { initializeWebhookEdge, setWebhookFailure } from '../../helpers/webhook-edge.mjs';
 import { testDevKey } from '../../e2e/dev-key.mjs';
 import assert from 'node:assert/strict';
@@ -47,6 +48,7 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
     if (backups) await initializeS3Edge(state);
     if (folders) await initializeFolderEdge(state);
     await initializeEmbedEdge(state);
+    await initializeSearchAiEdge(state);
     await initializeWorkspaceDatabase(state);
     const now = new Date().toISOString();
     await executeD1(state, `INSERT INTO workspaces(id,name,mark,created_at,updated_at,revision_id) VALUES('browser-workspace','Harbor operations','','${now}','${now}','initial');
@@ -166,6 +168,27 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
       finally { runtime = await startWorker(); }
       return result;
     };
+    // Restart only this journey's Worker. Content and native sessions remain in
+    // the same D1 store, so each AI state searches precisely the same corpus.
+    const setSearchAiState = async name => {
+      assert.ok(['unconfigured','disabled','failing','over-budget'].includes(name));
+      await page.goto('about:blank');
+      await Promise.all([...captures]);
+      await stop(runtime.child);runtime=undefined;
+      Object.assign(workerVars,{AI_ENABLED:name==='unconfigured'||name==='disabled'?'false':'true',AI_PROVIDER:name==='unconfigured'?'':'openai',AI_API_KEY:name==='unconfigured'?'':'synthetic-slate-1',AI_MODEL:name==='unconfigured'?'':'synthetic-slate-2'});
+      try {
+        const stamp=new Date().toISOString();
+        const configuration=await executeD1(state,`DELETE FROM intelligence_budgets WHERE id='search-isolation-budget';
+          DELETE FROM intelligence_runs WHERE id='search-isolation-run';
+          UPDATE workspaces SET ai_enabled=${name==='disabled'?0:1},ai_monthly_budget_micros=${name==='over-budget'?1:1000000} WHERE id='browser-workspace';
+          ${name==='over-budget'?`INSERT INTO intelligence_runs(id,workspace_id,requester_id,kind,status,revision_id,input_json,provider,model,created_at,updated_at) VALUES('search-isolation-run','browser-workspace','browser-owner','question','completed','initial','{}','openai','synthetic-slate-2','${stamp}','${stamp}');
+          INSERT INTO intelligence_budgets(id,workspace_id,run_id,month,provider,reserved_micros,charged_micros,released_at,created_at) VALUES('search-isolation-budget','browser-workspace','search-isolation-run','${stamp.slice(0,7)}','openai',2,2,'${stamp}','${stamp}');`:''}
+          SELECT ai_enabled,ai_monthly_budget_micros,(SELECT COALESCE(SUM(charged_micros),0) FROM intelligence_budgets WHERE id='search-isolation-budget') AS spent FROM workspaces WHERE id='browser-workspace';`);
+        const observed=configuration.at(-1).results[0];
+        assert.equal(observed.ai_enabled,name==='disabled'?0:1);
+        if(name==='over-budget')assert.ok(observed.spent>observed.ai_monthly_budget_micros,'The retained charge exceeds the owner ceiling.');
+      } finally {runtime=await startWorker();}
+    };
     const fixtureSql = async statements => {
       assert.ok(scheduled && runtime.child.connected, 'Clock fixtures require the scheduled test process IPC channel.');
       const child=runtime.child,id=crypto.randomUUID();
@@ -184,7 +207,7 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
       assert.equal(response.status, 200, await response.text());
     };
     try {
-      await run({readEmbedRequests:()=>readEmbedRequests(state), page, context, origin: runtime.baseUrl, api, records, atRest, fixtureSql, runScheduled, switchIdentity, modelRequests, readerCookie: `slate_session=${readerToken}`,
+      await run({readEmbedRequests:()=>readEmbedRequests(state), setSearchAiState, readSearchAiRequests:()=>readSearchAiRequests(state), page, context, origin: runtime.baseUrl, api, records, atRest, fixtureSql, runScheduled, switchIdentity, modelRequests, readerCookie: `slate_session=${readerToken}`,
         assertNoConsoleErrors: () => assert.deepEqual(consoleErrors, [], 'The browser must have no console errors or uncaught page errors.'),
         ...(webhooks ? {setWebhookFailure:failure=>setWebhookFailure(state,failure)} : {}),
         ...(backups ? { setS3Failure: failure => setS3Failure(state, failure), readS3Requests: () => readS3Requests(state), readS3Objects: () => readS3Objects(state) } : {}),

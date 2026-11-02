@@ -1,5 +1,5 @@
 import {env} from 'cloudflare:test';
-import {expect} from 'vitest';
+import {expect,vi} from 'vitest';
 import {createApi} from '../../../src/core/app/hono';
 import type {searchFixture} from './route-fixture';
 import seed from '../../../seed.json';
@@ -98,4 +98,64 @@ export async function discoveryJourney(f:Awaited<ReturnType<typeof searchFixture
  expect((await find('title:Discovery','denied')).data.total).toBe(0);
  await freshnessJourney(f);
  await mixedKindsJourney(f);
+ await searchWithoutAI(f);
+}
+
+/** Four deployment states share one authorized, independently ranked corpus. */
+async function searchWithoutAI(f:Awaited<ReturnType<typeof searchFixture>>) {
+ const {sql,page,now,measuredFind}=f,query='Isolationneedle';
+ const rows=[
+  {id:'isolation-exact',title:query,body:'Incident captains retain the escalation decisions.',by:'owner',status:'review',label:'release'},
+  {id:'isolation-title',title:query+' handbook',body:'Customer specialists maintain a separate rotation.',by:'reader',status:'approved',label:'support'},
+  {id:'isolation-body',title:'Recovery guide',body:query+' restore instructions for the storage team.',by:'owner',status:null,label:'release'},
+  {id:'isolation-archive',title:'Retired procedure',body:query+' historical audit trail.',by:'owner',status:null,label:'old',archived:true},
+  {id:'isolation-trash',title:'Discarded draft',body:query+' abandoned migration proposal.',by:'owner',status:null,label:'old',trashed:true},
+ ];
+ for(const d of rows){
+  await page(d.id,d.body,{title:d.title,author:d.by,status:d.status??undefined});
+  await sql('INSERT INTO page_labels VALUES(?,?,?)',d.id,d.label,now);
+  if(d.archived)await sql("UPDATE pages SET archived_at=?,lifecycle='archived' WHERE id=?",now,d.id);
+  if(d.trashed)await sql('UPDATE pages SET trashed_at=? WHERE id=?',now,d.id);
+ }
+ await page('isolation-hidden',query+' confidential content',{title:'Hidden '+query,restricted:true});
+ const ordinary=rows.slice(0,3).map(d=>d.id);
+ const cases:[Record<string,string>,string[]][]=[
+  [{},ordinary],[{kind:'page'},ordinary],[{kind:'record'},[]],[{kind:'container'},[]],[{kind:'template'},[]],[{kind:'comment-thread'},[]],
+  [{containerId:'c'},ordinary],[{containerId:'missing'},[]],
+  [{contributorId:'reader'},['isolation-title']],[{contributorId:'owner'},['isolation-exact','isolation-body']],
+  [{status:'review'},['isolation-exact']],[{status:'approved'},['isolation-title']],
+  [{label:'release'},['isolation-exact','isolation-body']],
+  [{updatedFrom:'2000-01-01',updatedTo:'2099-01-01'},ordinary],[{updatedFrom:'2099-01-01'},[]],[{updatedTo:'2000-01-01'},[]],
+  [{includeArchived:'true'},['isolation-exact','isolation-title','isolation-body','isolation-archive']],
+  [{includeTrashed:'true'},['isolation-exact','isolation-title','isolation-body','isolation-trash']],
+  [{includeArchived:'true',includeTrashed:'true'},['isolation-exact','isolation-title','isolation-body','isolation-trash','isolation-archive']],
+  [{kind:'page',containerId:'c',contributorId:'owner',status:'review',label:'release',updatedFrom:'2000-01-01',updatedTo:'2099-01-01',includeArchived:'true',includeTrashed:'true'},['isolation-exact']],
+  [{sort:'updated'},ordinary],[{sort:'views'},ordinary],
+ ];
+ const requests:string[]=[],timings:unknown[]=[];
+ const edge=vi.spyOn(globalThis,'fetch').mockImplementation(async request=>{requests.push(String(request));return new Response('Synthetic provider unavailable',{status:503});});
+ try {
+  for(const state of ['unconfigured','disabled','failing','over-budget']){
+   await sql('UPDATE workspaces SET ai_enabled=?,ai_monthly_budget_micros=? WHERE id=\'w\'',state==='disabled'?0:1,state==='over-budget'?1:1000000);
+   if(state==='over-budget'){
+    await sql("INSERT INTO intelligence_runs(id,workspace_id,requester_id,kind,status,revision_id,input_json,provider,model,created_at,updated_at) VALUES('isolation-run','w','owner','question','completed','r','{}','openai','synthetic-slate-2',?,?)",now,now);
+    await sql("INSERT INTO intelligence_budgets(id,workspace_id,run_id,month,provider,reserved_micros,charged_micros,released_at,created_at) VALUES('isolation-budget','w','isolation-run',?,'openai',2,2,?,?)",now.slice(0,7),now,now);
+   }
+   const bindings={AI_ENABLED:state==='unconfigured'||state==='disabled'?'false':'true',AI_PROVIDER:state==='unconfigured'?'':'openai',AI_API_KEY:state==='unconfigured'?'':'synthetic-slate-1',AI_MODEL:state==='unconfigured'?'':'synthetic-slate-2'};
+   for(const [filters,ids]of cases){
+    const r=await measuredFind(query,'reader',filters,bindings),label=state+' '+JSON.stringify(filters);
+    timings.push({state,filters,status:r.status,ms:r.ms,ids:r.data.items?.map((item:any)=>item.id)});
+    expect(r.status,label).toBe(200);expect(r.ms,label+' full HTTP response').toBeLessThan(500);
+    expect(r.data.items.map((item:any)=>item.id),label).toEqual(ids);expect(r.data.total,label).toBe(ids.length);
+    const visible=rows.filter(row=>ids.includes(row.id));
+    expect(r.data.facets,label).toEqual({kind:ids.length?{page:ids.length}:{},container:ids.length?{c:ids.length}:{},status:Object.fromEntries([...new Set(visible.flatMap(d=>d.status?[d.status]:[]))].map(status=>[status,visible.filter(d=>d.status===status).length]))});
+    expect(JSON.stringify(r.data),label).not.toContain('confidential');expect(r.data,label).not.toHaveProperty('answer');
+   }
+   const denied=await measuredFind(query,'denied',{},bindings);expect(denied.status).toBe(200);expect(denied.data.total).toBe(0);expect(denied.ms).toBeLessThan(500);
+  }
+  expect(requests).toEqual([]);
+ } finally {
+  edge.mockRestore();await sql("DELETE FROM intelligence_budgets WHERE id='isolation-budget'");await sql("DELETE FROM intelligence_runs WHERE id='isolation-run'");await sql("UPDATE workspaces SET ai_enabled=0,ai_monthly_budget_micros=0 WHERE id='w'");
+  console.log('SEARCH_WITHOUT_AI_NATIVE '+JSON.stringify({timings,providerRequests:requests}));
+ }
 }

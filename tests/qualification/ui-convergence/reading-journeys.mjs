@@ -1,3 +1,4 @@
+import {searchWithoutAiJourney} from './search-without-ai-journey.mjs';
 import {statusVocabularyJourney} from './status-vocabulary-journey.mjs';
 import assert from 'node:assert/strict';
 import {themeJourney} from './theme-journey.mjs';
@@ -61,6 +62,7 @@ export async function searchJourney(state, pageId) {
   await accessible(page, 'search no match');
   await searchFiltersJourney(state);
   await mixedSearchJourney(state);
+  await searchWithoutAiJourney(state);
 }
 
 export async function settingsJourney(state, width) {

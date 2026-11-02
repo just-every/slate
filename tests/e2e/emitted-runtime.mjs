@@ -1,4 +1,5 @@
 import {embedEdge} from '../helpers/embed-edge.mjs';
+import {searchAiEdge} from '../helpers/search-ai-edge.mjs';
 import { webhookEdge } from '../helpers/webhook-edge.mjs';
 import { createRequire } from 'node:module';
 import { readFile, realpath, mkdir, writeFile, appendFile } from 'node:fs/promises';
@@ -28,6 +29,8 @@ const worker = { ...workerOptions, name: config.name,
   ...await productionModules(selected.main, modulesRules, miniflare),
   bindings: { ...workerOptions.bindings, ...vars, ...mail },
   outboundService: async request => {
+    const ai=await searchAiEdge(request,persistPath,miniflare.Response);
+    if(ai)return ai;
     const oidc = await unavailableOidcEdge(request, persistPath, miniflare.Response);
     if (oidc) return oidc;
     const webhook = await webhookEdge(request,persistPath,miniflare.Response);

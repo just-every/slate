@@ -29,10 +29,15 @@ export async function searchFixture(db:D1Database) {
   const response=await app.fetch(new Request('http://localhost:8787/api'+path,{method,headers:{cookie:cookies.owner!,'content-type':'application/json'},body:JSON.stringify(body)}),{...env,DB:db,SLATE_PROFILE:undefined} as AppBindings);
   return {status:response.status,data:await response.json() as any};
  };
- const find=async(query:string,actor='reader',extra:Record<string,string>={})=>{
+ const measuredFind=async(query:string,actor='reader',extra:Record<string,string>={},bindings:Partial<AppBindings>={})=>{
   const headers:Record<string,string>=actor==='anonymous'?{}:{cookie:cookies[actor]!};
-  const response=await app.fetch(new Request('http://localhost:8787/api/search?'+new URLSearchParams({q:query,...extra}),{headers}),{...env,DB:db,SLATE_PROFILE:undefined} as AppBindings);
-  return {status:response.status,data:await response.json() as any};
+  const started=performance.now();
+  const response=await app.fetch(new Request('http://localhost:8787/api/search?'+new URLSearchParams({q:query,...extra}),{headers}),{...env,DB:db,SLATE_PROFILE:undefined,...bindings} as AppBindings);
+  const data=await response.json() as any;
+  return {status:response.status,data,ms:performance.now()-started};
  };
- return {db,now,sql,page,find,mutate,cookies};
+ const find=async(query:string,actor='reader',extra:Record<string,string>={})=>{
+  const {status,data}=await measuredFind(query,actor,extra);return {status,data};
+ };
+ return {db,now,sql,page,find,measuredFind,mutate,cookies};
 }
