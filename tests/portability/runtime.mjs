@@ -8,7 +8,7 @@ import path from 'node:path';
 import {availablePort,waitForReady,sessionCookie} from '../e2e/runtime-harness.mjs';
 import {command,launch,stop,safeEnvironment} from '../qualification/local/process.mjs';
 
-export const ownerEmail='archive-owner@example.invalid';
+export const ownerEmail='archive-owner\x40example.invalid';
 export const root=path.resolve(import.meta.dirname,'../..');
 
 /** Separate real D1/R2 bindings; all configuration and state stay in caller scratch. */
@@ -19,7 +19,7 @@ export async function runtime(directory){
   const configPath=path.join(directory,'wrangler.json');
   const config={...emitted,main:path.resolve(root,'dist/server',emitted.main),assets:{...emitted.assets,directory:path.resolve(root,'dist/server',emitted.assets.directory)},
     d1_databases:emitted.d1_databases.map(db=>({...db,migrations_dir:path.join(root,'migrations/core')})),
-    vars:{APP_URL:origin,SETUP_OWNER_EMAIL:ownerEmail,SESSION_SECRET:randomUUID(),LOCAL_DEVELOPMENT:'true',MAIL_PROVIDER:'development',MAIL_FROM:'archive@example.invalid',AI_ENABLED:'false',SSO_ENABLED:'false',LINK_PREVIEWS_ENABLED:'false',RER_DEV_KEY:testDevKey},no_bundle:true};
+    vars:{APP_URL:origin,SETUP_OWNER_EMAIL:ownerEmail,SESSION_SECRET:randomUUID(),CONNECTOR_CREDENTIALS_KEY:randomUUID(),LOCAL_DEVELOPMENT:'true',MAIL_PROVIDER:'development',MAIL_FROM:'archive\x40example.invalid',AI_ENABLED:'false',SSO_ENABLED:'false',LINK_PREVIEWS_ENABLED:'false',RER_DEV_KEY:testDevKey},no_bundle:true};
   await writeFile(configPath,JSON.stringify(config),{mode:0o600});
   const cli=path.join(root,'node_modules/wrangler/bin/wrangler.js');
   const env={...safeEnvironment(),WRANGLER_LOG_PATH:path.join(directory,'logs')};
@@ -51,6 +51,6 @@ export async function signIn(instance){return (await signInWithOutbox(instance.o
 
 export async function api(instance,cookie,url,options={}){
   const response=await fetch(new URL(url,instance.origin),{...options,headers:{Cookie:cookie,Origin:instance.origin,...options.headers}});
-  assert.equal(response.status,200,`${options.method??'GET'} ${url} succeeds.`);
+  assert.equal(response.status,200,`${options.method??'GET'} ${url} succeeds; code=${response.status===200?'OK':(await response.clone().json()).code}.`);
   return response;
 }

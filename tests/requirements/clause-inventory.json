@@ -1669,7 +1669,7 @@
       "id": "PORT-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Supporting scope and remaining gaps: Native local authority, receipt, exact lineage and restore regression only. Controlled fixtures do not establish complete product journeys, genuine providers, sealed prior-store upgrade, deployment or full requirement acceptance. Native denied branch reason and parent-run lineage survive stop, restore and re-export. Synthetic protocol records do not establish useful inquiry quality, real providers or complete portable knowledge. Requirement-level acceptance remains unproven.",
+      "unmetReason": "This legacy inventory classifies supporting tests only; CONTRACT.md owns native clause status. The existing Verify tooling journey in tests/portability/roundtrip.test.mjs performs actual native ZIP export, separate empty-deployment restore and re-export over real D1 and R2. It proves populated session, sign-in, invitation, cached response and provider credential exclusion; sole active setup owner; historical imported actors; inert public exposure; and unsafe activation refusals with unchanged authority. Existing tests below retain their narrower supporting scope; no live provider acceptance is claimed.",
       "supportingTests": [
         {
           "file": "tests/flagship/federation/federation.test.ts",

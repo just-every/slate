@@ -11364,11 +11364,11 @@
       "executable": false
     },
     "tests/portability/equivalence.mjs": {
-      "sha256": "1c95984c1fb5241987e3f9eaaeed534542cb3f74cf4f3b71bd013e3b356d7abe",
+      "sha256": "7724885c1a4d241ebcfd657ad2a52221d4e7dde6e5ed2e5e0864cef49673b11c",
       "executable": false
     },
     "tests/portability/fixture.mjs": {
-      "sha256": "62a7c267d58992696ab3d6249eb6d191868643c4e0784d8cf4e4c05a551b4a48",
+      "sha256": "b1d69182b74d59cea8879fcf656d5370db0a74e7f29ac82783133c07629e09b2",
       "executable": false
     },
     "tests/portability/restore-database.mjs": {
@@ -11380,11 +11380,11 @@
       "executable": false
     },
     "tests/portability/roundtrip.test.mjs": {
-      "sha256": "a794f32b6de95e0e247204b9a0f27adac420116ff2d7208a44247611b7087dc0",
+      "sha256": "ac84f4d42178d6101ab04715417159564e975c55c051ed82577e515b2aa014ab",
       "executable": false
     },
     "tests/portability/runtime.mjs": {
-      "sha256": "4294ac40d079716872e6dc6438ae2bc0a3d7a3a7f4af33f61a8fab6695832052",
+      "sha256": "1a5ab8b73dc247ab66185b48526f7be24924f20a7f35fa41e850994af7c7a62c",
       "executable": false
     },
     "tests/profile/body-blocks-journey.ts": {
@@ -12276,7 +12276,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "9af40eab50fe9091bec506f1bb552cdb38ca712275fe8b852829d9c548f61566",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {

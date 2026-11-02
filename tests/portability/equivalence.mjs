@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {unzipSync} from 'fflate';
+import {excludedCredentialTables,providerCredentialTables} from './fixture.mjs';
 
 export function unpack(bytes){const entries=unzipSync(bytes);return {manifest:JSON.parse(new TextDecoder().decode(entries['manifest.json'])),entries};}
 const stable=row=>JSON.stringify(Object.fromEntries(Object.entries(row).sort(([a],[b])=>a.localeCompare(b))));
@@ -35,6 +36,16 @@ export function equivalent(before,after,ownerEmail,newExportId,bootstrapAuditRow
         const owner=String(expected.email).toLowerCase()===ownerEmail;
         expected.status=owner?'active':'historical';expected.is_setup_owner=owner?1:0;if(owner)expected.role='owner';
       }
+      if(['public_api_tokens','scim_credentials'].includes(table)){
+        const restored=actual.find(row=>row.id===expected.id);assert.ok(restored);
+        assert.match(restored.revoked_at,/^\d{4}-\d{2}-\d{2}T/,'Restored token authority is explicitly revoked.');
+        expected.revoked_at=original.revoked_at??restored.revoked_at;
+      }
+      if(table==='webhook_subscriptions'){
+        const restored=actual.find(row=>row.id===expected.id);assert.ok(restored);
+        assert.match(restored.disabled_at,/^\d{4}-\d{2}-\d{2}T/);
+        expected.state='disabled';expected.disabled_at=restored.disabled_at;expected.disabled_reason='Restored: create a fresh destination.';
+      }
       if(table==='files')expected.storage_key=blobKeys.get(expected.storage_key);
       if(table==='public_exposures'){
         const restored=actual.find(row=>row.id===expected.id);assert.ok(restored);
@@ -67,6 +78,23 @@ export function equivalent(before,after,ownerEmail,newExportId,bootstrapAuditRow
       if(table==='core_entity_revisions'){assert.equal(added.author_member_id,owner.id);assert.equal(added.entity_id,newExportId);assert.equal(added.entity_kind,'export');assert.deepEqual(JSON.parse(added.content_json),{state:'queued'});assert.equal(added.id,b.tables.federation_exports.find(row=>row.id===newExportId).revision_id);}
     }else assert.equal(actual.length,0,`No unaccounted-for changes in ${table}.`);
   }
-  for(const forbidden of ['sessions','magic_links','invitations','operation_receipts','rer_mail_development_outbox'])assert.equal(b.tables[forbidden],undefined,`${forbidden} never enters portable data.`);
+
   return {tables:Object.keys(a.tables).length,records:compared,attachments:b.blobs.length};
+}
+
+/** Inspect every decompressed ZIP member, including metadata and original files. */
+export function excludesCredentials(archive,secrets){
+  for(const table of excludedCredentialTables){
+    assert.equal(archive.manifest.tables[table],undefined,`${table} rows never enter portable data.`);
+    assert.equal(archive.manifest.columns[table],undefined,`${table} schema is not portable.`);
+  }
+  for(const table of providerCredentialTables){
+    assert.equal(archive.manifest.tables[table].length,1,`Populated ${table} definition is retained.`);
+    const column=['public_api_tokens','scim_credentials'].includes(table)?'token_hash':'credential_ciphertext';
+    assert.equal(archive.manifest.tables[table][0][column],null,`${table} has no credential.`);
+  }
+  for(const [name,bytes]of Object.entries(archive.entries))for(const secret of secrets){
+    assert.ok(!name.includes(secret),`ZIP entry names exclude secret material.`);
+    assert.ok(!Buffer.from(bytes).includes(Buffer.from(secret)),`ZIP member ${name} excludes secret material.`);
+  }
 }
