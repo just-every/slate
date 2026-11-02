@@ -11,7 +11,7 @@ async function permitted(check: () => Promise<unknown>) {
   try { await check(); return true; }
   catch (error) {
     if (error instanceof ApiProblem && [403,404].includes(error.status)) return false;
-    if (error instanceof ApiProblem && ["DESTINATION_UNAVAILABLE","PAGE_READ_ONLY","INVALID_PARENT"].includes(error.code)) return false;
+    if (error instanceof ApiProblem && ["DESTINATION_UNAVAILABLE","PAGE_READ_ONLY","PAGE_LOCKED","INVALID_PARENT"].includes(error.code)) return false;
     throw error;
   }
 }

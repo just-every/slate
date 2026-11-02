@@ -122,6 +122,10 @@ for (const width of [1440]) {
 
 for (const width of [390]) {
   test(`space tree title filtering preserves ancestors, access and expansion at ${width}px`, { timeout: 420000 }, async () => {
+    await withWorkspace({ width, height: 844 }, 'core-wiki', async state => {
+      await setupWorkspace(state);
+      await step('PAGE-017 — phone keyboard creation and locked template destinations', () => createInPlaceJourney(state));
+    });
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await treeFilterJourney(state);

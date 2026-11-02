@@ -5404,7 +5404,7 @@
       "executable": false
     },
     "src/core/app/styles/shell.css": {
-      "sha256": "c8746f2f076da787291103d4a644ef7ba606653dc40a6ec6cce842e7a01d523a",
+      "sha256": "4b65c28eec342355d1d4446ea5ab3653a85d51f90c440211d4e82fedef3dcbed",
       "executable": false
     },
     "src/core/app/styles/theme.css": {
@@ -9504,7 +9504,7 @@
       "executable": false
     },
     "src/core/features/templates/permissions.ts": {
-      "sha256": "4ee48d2a8cb39f2ed853140e7d45a908c52aabe3e931e22a1ff4a0d41bee0c91",
+      "sha256": "c08aaf5dba0a1c41fe7e94f1925f1ddcf29af7d233c4e7dd064a451f7d7281b0",
       "executable": false
     },
     "src/core/features/templates/routes.ts": {
@@ -10612,7 +10612,7 @@
       "executable": false
     },
     "tests/e2e/pages/starter-templates.test.ts": {
-      "sha256": "f9d25aa0c66ea2f727371d27dadcda8df8866742ea095ac474ee94419e637ccb",
+      "sha256": "45281e15f1bde4806fdccfa7b596d9902a9799e2467aeb97cfd2e3c9f30c6104",
       "executable": false
     },
     "tests/e2e/platform-adapters.test.ts": {
@@ -11848,7 +11848,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/create-in-place-journey.mjs": {
-      "sha256": "fd028b5b21a2f934ad41777f307ec4c298a0febdd1904d5e5ec049d4e686e620",
+      "sha256": "8e4fb1ddd4c804669ff0023b77df4850ff3be9b6dea2ae629b8ac6f78d7f5487",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-journey.mjs": {
@@ -12024,7 +12024,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "46243df2bea4af96cddd120c187781085279e0c2a51cc4901f87c6b1a8d08c05",
+      "sha256": "1ba1c8ce417cac5e3435571ff3677b78a5e2cdeb7d34fb43d4ad51d70c4d01dc",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {
@@ -12276,7 +12276,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "7ed63e42d7a959ffc3ed9e0cde9850329801afc05ece66ad5278e0187e1a2625",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {

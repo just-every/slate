@@ -79,15 +79,17 @@
 .slate-app .tree-row .iconbutton { flex: none; width: 32px; min-width: 32px; height: 32px; margin-right: -4px; padding: 0; border: 0; background-color: var(--slate-sidebar); color: var(--slate-ink-muted); }
 .slate-app .tree-row .iconbutton svg { width: 16px; height: 16px; }
 .slate-app .tree-row .iconbutton:hover { background-color: var(--slate-sidebar-hover); }
-.slate-app .tree-row .tree-action { display: none; margin-right: 0; border-radius: 6px; }
-.slate-app .tree-row:hover .tree-action, .slate-app .tree-row:focus-within .tree-action { display: inline-flex; align-items: center; justify-content: center; }
+/* Keep row actions in keyboard order even when the pointer and focus leave the row. */
+.slate-app .tree-row .tree-action { display: inline-flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; margin-right: 0; border-radius: 6px; }
+.slate-app .tree-row:hover .tree-action, .slate-app .tree-row:focus-within .tree-action { opacity: 1; pointer-events: auto; }
 .slate-app .tree-row .tree-action svg { width: 14px; height: 14px; }
 .slate-app .favourite-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .slate-app .favourite-row > .navlink { flex: 1; min-width: 0; }
 .slate-app .favourite-row > .icon-action { display: none; }
 .slate-app .favourite-row:hover > .icon-action, .slate-app .favourite-row:focus-within > .icon-action { display: inline-flex; }
 @media (hover: none) {
-  .slate-app .tree-row .tree-action, .slate-app .favourite-row > .icon-action { display: inline-flex; }
+  .slate-app .tree-row .tree-action { opacity: 1; pointer-events: auto; }
+  .slate-app .favourite-row > .icon-action { display: inline-flex; }
 }
 
 .slate-app .workspace { position: sticky; bottom: 0; flex-shrink: 0; background: var(--slate-sidebar); margin-top: auto; padding: 10px 0 12px; border-top: 1px solid var(--slate-line); }
