@@ -21,7 +21,7 @@ const until = async (check, label) => {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 };
-const site = (pages) => JSON.stringify({ sections: [{ title: "Guide", pages }], githubOnly: [] });
+const site = (pages, githubOnly = []) => JSON.stringify({ sections: [{ title: "Guide", pages }], githubOnly });
 const home = { slug: "", source: "README.md", label: "Home" };
 
 test("the docs plugin follows edits to Markdown and docs/site.json in a running dev server", async () => {
@@ -100,7 +100,7 @@ test("the docs plugin follows edits to Markdown and docs/site.json in a running 
     // A published page whose Markdown is removed with its folder is dropped, not served from the cache.
     await mkdir(join(root, "docs/sub"));
     await writeFile(join(root, "docs/sub/PAGE.md"), "# Sub page\n\n## Inside\n");
-    await writeFile(join(root, "docs/site.json"), site([home, { slug: "sub", source: "docs/sub/PAGE.md", label: "Sub" }]));
+    await writeFile(join(root, "docs/site.json"), site([home, { slug: "sub", source: "docs/sub/PAGE.md", label: "Sub" }], [{ source: "docs/GUIDE.md", reason: "Retained guide" }, { source: "docs/THIRD.md", reason: "Retained third page" }]));
     await settled();
     // Loaded after the watcher has settled, so the plugin's cache holds the page when its folder goes.
     assert.match((await loadDocsPage("sub")).page.html, /<h2 id="inside">Inside<\/h2>/);

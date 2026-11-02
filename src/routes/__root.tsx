@@ -12,6 +12,7 @@ import appCss from "../core/app/styles.css?url";
 import {privateAppCss,privateFontCss,isWorkspacePath} from "../core/app/private-styles";
 import { fontLinks } from "../core/app/font-head";
 import { introCss, introGuardScript } from "../base/runtime/hydration/intro-guard";
+import { DocsNotFound } from "../core/features/docs/DocsPage";
 
 export const Route = createRootRoute({
   loader: () => loadPreviewEnvironment(),
@@ -49,6 +50,8 @@ function Root() {
 }
 
 function NotFound() {
+  const path = useRouterState({ select: state => state.location.pathname });
+  if (path === '/docs' || path.startsWith('/docs/')) return <DocsNotFound />;
   return (
     <main className="grid min-h-screen place-items-center px-5 py-10 text-stone-900">
       <section className="max-w-md text-center">

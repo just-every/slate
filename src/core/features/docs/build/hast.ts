@@ -102,6 +102,11 @@ export function docsHast(state: HastState) {
   // Typed as unified's transformer argument (a unist node); react-markdown hands it the hast root.
   return (node: { type: string }) => {
     const tree = node as Root;
+    const refuseRaw = (child: Node) => {
+      if (child.type === 'raw') state.problems.push('raw HTML is not allowed in published Markdown');
+      if ('children' in child) child.children.forEach(refuseRaw);
+    };
+    refuseRaw(tree);
     const first = tree.children.find(isElement);
     const before = first ? tree.children.slice(0, tree.children.indexOf(first)) : tree.children;
     if (first?.tagName === 'h1' && before.every(child => child.type === 'text' && !child.value.trim())) {

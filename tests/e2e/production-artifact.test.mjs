@@ -15,6 +15,7 @@ import {
   stop,
 } from "./runtime-harness.mjs";
 
+import { docsBrowserJourney } from './docs-browser.mjs';
 import { managedFirstOpen } from './managed-first-open.mjs';
 import { randomUUID } from 'node:crypto';
 import { confirmationFlow } from './confirmation-flow.mjs';
@@ -463,12 +464,16 @@ test("emitted Worker admission serves configured public doors and protects nativ
       }
     }
 
+    await docsBrowserJourney(baseUrl, manifest);
+
     // Unknown, miscased and nested slugs are real 404s, with and without a navigation request.
     for (const unknownPath of ["/docs/nothing-here", "/docs/Install", "/docs/install/extra", "/docs/index"]) {
       for (const headers of [{}, { "sec-fetch-mode": "navigate" }]) {
         const response = await fetch(`${baseUrl}${unknownPath}`, { headers });
         assert.equal(response.status, 404, `${unknownPath} ${JSON.stringify(headers)}`);
-        await response.body?.cancel();
+        const unavailable = await response.text();
+        assert.match(unavailable, /class="slate-landing slate-docs"/);
+        assert.match(unavailable, /Back to documentation/);
       }
     }
 

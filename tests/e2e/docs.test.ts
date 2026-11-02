@@ -1,8 +1,11 @@
-import { SELF } from "cloudflare:test";
+import { SELF, env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { isHonoRequest } from "../../src/core/app/hono";
+import { handleApplicationRequest } from "../../src/core/app/request-handler";
+import type { AppBindings } from "../../src/core/app/types";
+import { seedWorkspace, seedMember, sessionFor } from "./setup/fixtures";
 import { Landing } from "../../src/core/features/landing/Landing";
 
 /**
@@ -61,7 +64,10 @@ describe("DOCS-001 public documentation supporting regressions", () => {
     for (const path of ["/docs/does-not-exist", "/docs/Install", "/docs/install/extra", "/docs/index", "/docs/__proto__", "/docs/constructor"]) {
       const response = await get(path);
       expect(response.status, path).toBe(404);
-      expect(await response.text(), path).toContain("Not found");
+      const unavailable = await response.text();
+      expect(unavailable, path).toContain("Not found");
+      expect(unavailable, path).toContain('class="slate-landing slate-docs"');
+      expect(unavailable, path).toContain('href="/docs">Back to documentation');
     }
     for (const path of ["/docs", "/docs/", "/docs/install"]) expect(isHonoRequest(path), path).toBe(false);
     // /docs/ is the docs home, not a redirect.
@@ -89,6 +95,76 @@ describe("DOCS-001 public documentation supporting regressions", () => {
     const header = docs.slice(docs.indexOf("<header"), docs.indexOf("</header>"));
     expect(header).toMatch(/aria-current="page"[^>]*href="\/docs"/);
     expect(header.indexOf('href="/docs"')).toBeLessThan(header.indexOf('href="https://github.com/just-every/run-slate"'));
+  } }
+    , { name: "docs read no native identity or workspace data, including with a valid or revoked session", run: async () => {
+    const { workspaceId } = await seedWorkspace({ name: "synthetic-slate-private-workspace" });
+    const { memberId } = await seedMember(workspaceId, { role: "owner", email: ["synthetic-slate-1", "example.test"].join("@"), displayName: "synthetic-slate-private-member" });
+    const cookie = await sessionFor(memberId);
+    const statements: string[] = [];
+    const db = new Proxy(env.DB, { get(target, property) {
+      if (property === "prepare") return (sql: string) => { statements.push(sql); return target.prepare(sql); };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    } });
+    const bindings: AppBindings = { ...env, DB: db };
+    const request = async (path: string, cookie?: string) => {
+      const execution = createExecutionContext();
+      const response = await handleApplicationRequest(new Request("https://slate.test" + path, { headers: cookie ? { cookie } : {} }), bindings, execution);
+      const html = await response.text();
+      await waitOnExecutionContext(execution);
+      expect(response.status, path).toBe(200);
+      expect(response.headers.get("set-cookie")).toBeNull();
+      expect(html).not.toMatch(/synthetic-slate-private/);
+    };
+    for (const path of ["/docs", "/docs/install", "/docs/backup"]) {
+      await request(path);
+      await request(path, cookie);
+    }
+    await env.DB.prepare("DELETE FROM sessions WHERE member_id = ?").bind(memberId).run();
+    await request("/docs", cookie);
+    expect(statements.length).toBeGreaterThan(0);
+    expect(statements.some(sql => /INSERT INTO request_limits/.test(sql))).toBe(true);
+    for (const sql of statements) expect(sql, "docs native reads").not.toMatch(/\b(?:workspaces|members|sessions|member_identity_bindings|pages|blocks)\b/i);
+  } },
+    { name: "docs and the root refuse missing configuration identically and share one public request budget", run: async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-06-01T12:00:15Z"));
+    const request = async (path: string, address: string, bindings: AppBindings = env) => {
+      const execution = createExecutionContext();
+      const response = await handleApplicationRequest(new Request("https://slate.test" + path, { headers: { "cf-connecting-ip": address } }), bindings, execution);
+      await waitOnExecutionContext(execution);
+      return response;
+    };
+    try {
+      const missing: AppBindings = { ...env, SESSION_SECRET: "" };
+      const failures = [];
+      for (const path of ["/", "/docs", "/docs/install"]) {
+        const response = await request(path, "synthetic-slate-configuration", missing);
+        expect(response.status).toBe(503);
+        failures.push(await response.json());
+      }
+      expect(failures[0]).toMatchObject({ code: "CONFIGURATION_INVALID" });
+      expect(failures[1]).toEqual(failures[0]);
+      expect(failures[2]).toEqual(failures[0]);
+      expect((await request("/", "synthetic-slate-shared")).status).toBe(200);
+      let limited = false;
+      for (let index = 0; index < 200; index++) {
+        const response = await request(index % 2 ? "/docs/install" : "/docs", "synthetic-slate-shared");
+        await response.body?.cancel();
+        if (response.status === 429) { limited = true; break; }
+        expect(response.status).toBe(200);
+      }
+      expect(limited, "the native public request budget is finite").toBe(true);
+      for (const path of ["/", "/docs", "/docs/install"]) {
+        const response = await request(path, "synthetic-slate-shared");
+        expect(response.status).toBe(429);
+        expect(Number(response.headers.get("retry-after"))).toBeGreaterThan(0);
+        expect(await response.json()).toMatchObject({ code: "RATE_LIMITED" });
+        expect((await request(path, "synthetic-slate-fresh")).status).toBe(200);
+      }
+      vi.advanceTimersByTime(60_000);
+      expect((await request("/docs", "synthetic-slate-shared")).status).toBe(200);
+    } finally { vi.useRealTimers(); }
   } }
   ];
   for (const scenario of cases) {

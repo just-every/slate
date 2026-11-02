@@ -1,4 +1,6 @@
 import test from "node:test";
+import { build } from "vite";
+import { docsSite } from "../../src/core/features/docs/build/plugin.ts";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -171,7 +173,7 @@ test("docs build renders declared pages and refuses invalid manifests, markup, l
 } },
     { name: "a page has one H1, first, and a description from its first real paragraph", run: () => {
   assert.deepEqual(renderPage("Intro first.\n\n# Title\n", fixtureContext()).problems, ["the first block must be the page's H1", "an H1 that is not the first block (a page has exactly one H1, first)"]);
-  assert.deepEqual(renderPage("<b>x</b>\n\n# Title\n", fixtureContext()).problems, ["the first block must be the page's H1", "an H1 that is not the first block (a page has exactly one H1, first)"]);
+  assert.deepEqual(renderPage("<b>x</b>\n\n# Title\n", fixtureContext()).problems, ["raw HTML is not allowed in published Markdown", "raw HTML is not allowed in published Markdown", "the first block must be the page's H1", "an H1 that is not the first block (a page has exactly one H1, first)"]);
   assert.deepEqual(renderPage("# One\n\n# Two\n", fixtureContext()).problems, ["an H1 that is not the first block (a page has exactly one H1, first)"]);
   const page = render(`**Short line.**\n\nThis paragraph explains what the page covers in more than eight words, ${"and keeps going ".repeat(12)}until the end.`);
   assert.ok(page.description.startsWith("This paragraph explains what the page covers in more than eight words, and keeps going"));
@@ -200,6 +202,39 @@ test("docs build renders declared pages and refuses invalid manifests, markup, l
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
+} }
+    , { name: "the real Vite build emits valid docs and refuses unsafe repository inputs", run: async () => {
+  const fixture = await realpath(await mkdtemp(join(tmpdir(), "slate-docs-boundary-")));
+  try {
+    await mkdir(join(fixture, "docs"));
+    await writeFile(join(fixture, "package.json"), JSON.stringify({ repository: { url: "https://example.test/source.git" } }));
+    await writeFile(join(fixture, "docs/site.json"), JSON.stringify({ sections: [{ title: "Guide", pages: [{ slug: "", source: "README.md", label: "Home" }] }], githubOnly: [] }));
+    await writeFile(join(fixture, "entry.js"), 'export * from "virtual:slate-docs";');
+    const valid = "# Guide\n\n## Start\n\nA safe document with a [working anchor](#start).\n";
+    const compile = () => build({ root: fixture, configFile: false, logLevel: "silent", plugins: [docsSite()], build: { write: false, minify: false, lib: { entry: join(fixture, "entry.js"), formats: ["es"] } } });
+    await writeFile(join(fixture, "README.md"), valid);
+    const output = await compile();
+    assert.ok([output].flat().flatMap(result => result.output).some(item => item.type === "chunk" && item.code.includes('<h2 id=')), "valid Markdown becomes emitted HTML");
+    for (const unlisted of ["UNLISTED.md", "docs/NESTED.md", "guide/README.md"]) {
+      await mkdir(join(fixture, unlisted.split("/").slice(0, -1).join("/")), { recursive: true });
+      await writeFile(join(fixture, unlisted), "# Unlisted\n");
+      await assert.rejects(compile, error => error.message.includes(`unlisted Markdown \"${unlisted}\"`), unlisted);
+      await rm(join(fixture, unlisted));
+    }
+    for (const [input, diagnostic] of [
+      ["[Missing](MISSING.md)", /MISSING\.md.*does not exist/],
+      ["[Missing heading](#absent)", /no such heading in README\.md/],
+      ["Inline <b>raw</b> HTML", /raw HTML is not allowed/],
+      ["<script>tracking()</script>", /raw HTML is not allowed/],
+      ["![Outside](outside.png)", /images must be files in docs\/media/],
+      ["Build folder: /home/synthetic-slate-1/private", /absolute machine path/],
+    ]) {
+      await writeFile(join(fixture, "README.md"), valid + "\n" + input + "\n");
+      await assert.rejects(compile, diagnostic, input);
+    }
+    await writeFile(join(fixture, "README.md"), valid);
+    await compile();
+  } finally { await rm(fixture, { recursive: true, force: true }); }
 } }
   ];
   for (const scenario of cases) {

@@ -11,6 +11,24 @@ import { useCurrentDocs } from './useCurrentDocs';
 import '../landing/styles';
 import './docs.css';
 
+/** Unknown docs addresses keep the public frame and a route back to the guide. */
+export function DocsNotFound() {
+  return <div className="slate-landing slate-docs" id="top">
+    <a className="skip-link" href="#docs-content">Skip to the content</a>
+    <SiteHeader page="docs" />
+    <div className="docs-shell">
+      <main id="docs-content" className="docs-main">
+        <h1 className="docs-title">Not found</h1>
+        <div className="docs-prose">
+          <p>There is no documentation at this address.</p>
+          <p><a href="/docs">Back to documentation</a></p>
+        </div>
+      </main>
+    </div>
+    <SiteFooter />
+  </div>;
+}
+
 /** A documentation page in the landing's own header, footer, paper, ink and type. */
 export function DocsPage({ page, sections, repository, version }: DocsView) {
   useCurrentDocs(version);

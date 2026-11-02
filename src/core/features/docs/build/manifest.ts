@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 // docs/site.json is the one list of what the site publishes from the repository's Markdown, in display order, and of
-// what stays on GitHub. This module reads it and enforces its rules; tests/docs-site.mjs adds the coverage rule.
+// what stays on GitHub. The build enforces both its entries and its coverage of repository Markdown.
 
 export const manifestPath = 'docs/site.json';
 
@@ -57,6 +57,24 @@ export function readManifest(root: string): Manifest {
     if (!reason) problems.push(`githubOnly entry "${source}" has no reason`);
     return { source, reason };
   });
+  const markdown: string[] = [];
+  const docsFiles = (directory: string) => {
+    for (const entry of readdirSync(join(root, directory), { withFileTypes: true })) {
+      const source = `${directory}/${entry.name}`;
+      if (entry.isDirectory()) docsFiles(source);
+      else if (entry.isFile() && entry.name.endsWith('.md')) markdown.push(source);
+    }
+  };
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith('.md')) markdown.push(entry.name);
+    else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+      if (entry.name === 'docs') docsFiles(entry.name);
+      else if (isFile(root, `${entry.name}/README.md`)) markdown.push(`${entry.name}/README.md`);
+    }
+  }
+  for (const source of markdown.sort()) {
+    if (!sources.has(source)) problems.push(`unlisted Markdown "${source}": publish it or list it as GitHub-only with a reason`);
+  }
   if (problems.length) throw new Error(`${manifestPath} is invalid:\n- ${problems.join('\n- ')}`);
   return { sections, pages: sections.flatMap(section => section.pages), githubOnly };
 }
