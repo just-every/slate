@@ -12052,7 +12052,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "d9e3ea115e1334d1ba93fa7fcc8abfafd01e09227ba52c17917389575bc1e7de",
+      "sha256": "8dd14dd87ff8e446212a4a917dcacdb1ce78adae63e9fe0427f4e89cdbf9d216",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {

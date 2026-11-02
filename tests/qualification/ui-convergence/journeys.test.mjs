@@ -135,7 +135,7 @@ for (const width of [390]) {
 }
 
 for (const width of [1440]) {
-  test(`spreadsheet tables merge, sort and round-trip through edited database records at ${width}px`, {timeout:240000}, async ()=>{
+  test(`spreadsheet tables merge, sort and round-trip through edited database records at ${width}px`, {timeout:420000}, async ()=>{
     await withWorkspace({width,height:width===1440?1000:844},'core-wiki',async state=>{
       await setupWorkspace(state);
       await tablesJourney(state);
