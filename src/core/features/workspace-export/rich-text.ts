@@ -23,7 +23,7 @@ export function markdownText(value: unknown): string {
     if (span.marks?.includes('italic')) text = `_${text}_`;
     if (span.marks?.includes('bold')) text = `**${text}**`;
     if (span.status && colours.has(span.status.colour)) text = `[${text}]{status:${span.status.colour}}`;
-    if (span.link?.href && safeUrl(span.link.href)) text = `[${text}](${span.link.href.replace(/[\s()<>\\"]/g, char => encodeURIComponent(char))})`;
+    if (span.link?.href && safeUrl(span.link.href)) text = `[${text}](${span.link.href.replace(/[\s()<>\\"]/g, char => encodeURIComponent(char).replace(/[()]/g, value => '%' + value.charCodeAt(0).toString(16)))})`;
     return text;
   }).join('');
 }

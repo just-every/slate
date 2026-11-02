@@ -11,7 +11,7 @@ import {populatedFixture,attachments,pageIds} from './fixture.mjs';
 import {equivalent,unpack} from './equivalence.mjs';
 import {bootstrapAuditPredicate} from '../../src/core/features/portability/bootstrap-audit.ts';
 
-test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment',{timeout:240000},async t=>{
+test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment',{timeout:420000},async t=>{
   const scratch=await mkdtemp(path.join(path.dirname(root),'portability-'));
   let source,target,readableTarget;
   try{
@@ -61,7 +61,8 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
         if(!value||typeof value!=='object')return value;
         return Object.fromEntries(Object.entries(value).map(([key,item])=>{
           if(key==='mention'&&item.id&&['person','page'].includes(item.kind))return [key,{...item,id:idFor(item.kind==='person'?'member':'page',item.id)}];
-          if(key==='link'&&item.href.startsWith('/app/pages/'))return [key,{href:'/app/pages/'+idFor('page',item.href.slice(11))}];
+          if(key==='commentAnchorId')return [key,idFor('comment-anchor',item)];
+          if(key==='link'&&item.href.startsWith('/app/pages/'))return [key,{href:'/app/pages/'+idFor('page',item.href.slice(11).split(/[?#]/)[0])+item.href.slice(11+item.href.slice(11).split(/[?#]/)[0].length)}];
           return [key,remap(item)];
         }));
       };

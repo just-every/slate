@@ -7156,7 +7156,7 @@
       "executable": false
     },
     "src/core/features/imports/canonical-block.ts": {
-      "sha256": "d4aaabcbb95523166aadadcf8fe74637219d3b07f9366480e6530286277a2ee3",
+      "sha256": "82c7caafbe4197c80514a2b3c56d9baf6c1b19dcb8185848de4ba175968a3c2a",
       "executable": false
     },
     "src/core/features/imports/comment-plan.ts": {
@@ -9736,7 +9736,7 @@
       "executable": false
     },
     "src/core/features/workspace-export/rich-text.ts": {
-      "sha256": "49c4f51075e385a87a737de5fae98e2703ebab5416d625083cd5fe707af56ee8",
+      "sha256": "ee2656bbffc5bc3ee5a86cc169849f2392de6a81bbdef7a926f3ddcee614c2b9",
       "executable": false
     },
     "src/core/features/workspace-export/routes.ts": {
@@ -11368,7 +11368,7 @@
       "executable": false
     },
     "tests/portability/fixture.mjs": {
-      "sha256": "12d16a1edbc49f6bdf1f5648380a8b9872abe2f7a973b0ab43c2f6b5956204ec",
+      "sha256": "d20517eb03f3315637dfc86876aea9e369ab5a43657006a0866f489a295e853b",
       "executable": false
     },
     "tests/portability/restore-database.mjs": {
@@ -11380,7 +11380,7 @@
       "executable": false
     },
     "tests/portability/roundtrip.test.mjs": {
-      "sha256": "047a0d8002b29ff181111b5d8c65c5b912dae40f7067233f0414f50493f64db7",
+      "sha256": "30231bf0839f400261c3965bab416960da9b13257fe5b248ddbe581b0227ac98",
       "executable": false
     },
     "tests/portability/runtime.mjs": {
@@ -11968,7 +11968,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/export-comments-journey.mjs": {
-      "sha256": "51168fb33658c0dde58b51710d38ec512b9a14a1f6ba43d99eb88d09dbb1f9e1",
+      "sha256": "0694220e564e4dccd680058c9b668ea971759fdb09c9a4cad94ad9f4d0d30c5a",
       "executable": false
     },
     "tests/qualification/ui-convergence/failed-save-journey.mjs": {
@@ -12020,7 +12020,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/inline-text-journey.mjs": {
-      "sha256": "04110161cc12841e15a6d86e97168554de623e690bba284ec7ee7acd305f67e3",
+      "sha256": "b3ef05b19a712aa0c12eaca9fde463038080508aae3db272886c78457287dace",
       "executable": false
     },
     "tests/qualification/ui-convergence/journey-shard.mjs": {

@@ -4,13 +4,13 @@ import type {ImportedBlock} from './types';
 /** Rewrite only typed, known identities; arbitrary strings remain author content. */
 export function canonicalContent(block: ImportedBlock, idFor: (kind: string, id: string) => string): JsonValue {
   const rewrite = (value: JsonValue): JsonValue => {
-    if (typeof value === 'string') {
-      if (value.startsWith('/api/media/')) return '/api/media/' + idFor('file', value.slice(11));
-      if (value.startsWith('/app/pages/')) return '/app/pages/' + idFor('page', value.slice(11));
-      return value;
-    }
+    if (typeof value === 'string') return value;
     if (Array.isArray(value)) return value.map(rewrite);
     if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+      if ((key === 'href' || key === 'url') && typeof item === 'string') {
+        const reference = /^(\/app\/pages\/|\/api\/media\/)([^?#]+)(.*)$/.exec(item);
+        if (reference) return [key, reference[1] + idFor(reference[1] === '/app/pages/' ? 'page' : 'file', decodeURIComponent(reference[2]!)) + reference[3]];
+      }
       if (key === 'mention' && item && typeof item === 'object' && !Array.isArray(item) && typeof item.id === 'string') {
         const kind = item.kind === 'person' ? 'member' : item.kind === 'page' ? 'page' : item.kind === 'group' ? 'group' : undefined;
         return [key, kind ? {...item, id: idFor(kind, item.id)} : item];

@@ -17,7 +17,7 @@ export async function exportCommentsJourney(state, people) {
   await grant(context, origin, pageId, people.bob.id, 'comment');
   const original = await api(`/api/pages/${pageId}`);
   const spans = inlineSpans(people.bob.id, pageId).map(span => span.mention?.kind === 'page' ? {...span,text:'Customer incident handover',mention:{...span.mention,label:'Customer incident handover'}} : span);
-  await ok(context, origin, 'PUT', `/api/pages/${pageId}/blocks`, {operationKey:randomUUID(),expectedRevisionId:original.page.revisionId,blocks:[...original.blocks,{id:randomUUID(),blockType:'paragraph',parentBlockId:null,treePosition:'b',content:{text:spans}}]});
+  await ok(context, origin, 'PUT', `/api/pages/${pageId}/blocks`, {operationKey:randomUUID(),expectedRevisionId:original.page.revisionId,blocks:[...original.blocks.map(({id,blockType,content,parentBlockId,treePosition})=>({id,blockType,content,parentBlockId,treePosition})),{id:randomUUID(),blockType:'paragraph',parentBlockId:null,treePosition:'b',content:{text:spans}}]});
   const source = await api(`/api/pages/${pageId}`);
   const first = (await ok(context, origin, 'POST', `/api/comments/page/${pageId}`, { operationKey: randomUUID(), kind: 'inline', blockId, anchor: { anchorId, quote: 'Confirm the recovery owner' }, anchorRevisionId: source.workingRevisionId, body: [{ text: 'Who will coordinate the next customer update?' }] })).value;
   await ok(people.bob.context, origin, 'POST', `/api/comments/page/${pageId}`, { operationKey: randomUUID(), threadId: first.threadId, parentCommentId: first.id, body: [{ text: 'Morgan will send the update at the next handover.' }] });
@@ -62,7 +62,8 @@ export async function exportCommentsJourney(state, people) {
     if (format === 'markdown') {
       for (const fragment of ['**bold words**','_italic words_','<u>underline words</u>','~~strikethrough words~~','`code words`','[Ready for review]{status:green}','External reference','Research member','Customer incident handover']) assert.ok(readable.includes(fragment), `Readable Markdown retains ${fragment}.`);
       for (const colour of ['yellow','blue','green','red','purple']) assert.ok(readable.includes(`data-slate-colour="${colour}"`));
-      assert.ok(!readable.includes('<script>') && !readable.includes('<img src=x'));
+      assert.ok(readable.includes(String.raw`\<img src=x onerror=alert(1)\>`));
+      assert.ok(readable.includes(String.raw`\<script\>unsafe()\</script\>`));
     }
     assert.equal(archived.threads.length, 2);
     assert.equal(archived.threads.find(t => t.kind === 'inline').state, 'resolved');
@@ -78,7 +79,7 @@ export async function exportCommentsJourney(state, people) {
           assert.notEqual(await highlight.evaluate(element=>getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0)');
         }
         await expect(output.locator('script,img')).toHaveCount(0);
-        await expect(output.getByText('Literal <img src=x onerror=alert(1)> & <script>unsafe()</script>',{exact:true})).toBeVisible();
+        await expect(output.locator('body')).toContainText('Literal <img src=x onerror=alert(1)> & <script>unsafe()</script>');
         await expect(output.getByRole('link',{name:'External reference',exact:true})).toHaveAttribute('href','https://example.invalid/document?part=1&next=2');
         await expect(output.getByRole('region', { name: 'Comments', exact: true })).toContainText('Alex Owner');
         await expect(output.getByRole('region', { name: 'Comments', exact: true })).toContainText('Morgan Reader');
@@ -108,7 +109,7 @@ export async function exportCommentsJourney(state, people) {
     assert.equal(restored.threads.find(t => t.kind === 'inline').block_id, (await api(`/api/pages/${copy.id}`)).blocks[0].id);
     const copyDocument = await api(`/api/pages/${copy.id}`);
     const author = restored.comments.find(comment => comment.authorDisplayName === 'Morgan Reader').authorMemberId;
-    const expectedSpans = spans.map(span => span.mention?.kind === 'page' ? {...span,mention:{...span.mention,id:copy.id}} : span.mention?.kind === 'person' ? {...span,mention:{...span.mention,id:author}} : span.link?.href === `/app/pages/${pageId}` ? {...span,link:{href:`/app/pages/${copy.id}`}} : span);
+    const expectedSpans = spans.map(span => span.mention?.kind === 'page' ? {...span,mention:{...span.mention,id:copy.id}} : span.mention?.kind === 'person' ? {...span,mention:{...span.mention,id:author}} : span.link?.href === `/app/pages/${pageId}?mode=read#details` ? {...span,link:{href:`/app/pages/${copy.id}?mode=read#details`}} : span);
     assert.deepEqual(copyDocument.blocks[1].content.text, expectedSpans, 'Page re-import changes only explicitly mapped native identities.');
     await expect(page.locator('[data-block-id]').nth(1).locator('strong').filter({hasText:'bold words'})).toBeVisible();
     assert.deepEqual(restored.comments.map(c => [c.authorDisplayName, c.createdAt, c.body]), discussion.comments.map(c => [c.authorDisplayName, c.createdAt, c.body]));

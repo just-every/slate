@@ -8,7 +8,8 @@ export function inlineSpans(personId, pageId) {
     {text:'combined marks',marks:['bold','italic','underline','strikethrough','code'],colour:'blue'},
     ...['yellow','blue','green','red','purple'].map(colour=>({text:`${colour} highlight`,colour})),
     {text:'External reference',link:{href:'https://example.invalid/document?part=1&next=2'}},
-    {text:'Child link',link:{href:`/app/pages/${pageId}`}},
+    {text:'Child link',link:{href:`/app/pages/${pageId}?mode=read#details`}},
+    {text:`/app/pages/${pageId}`},
     {text:'Research member',mention:{kind:'person',id:personId,label:'Research member'}},
     {text:'Linked child',mention:{kind:'page',id:pageId,label:'Linked child'}},
     {text:'2030-06-15',mention:{kind:'date',id:'2030-06-15',label:'2030-06-15'}},
@@ -35,7 +36,7 @@ export function populatedFixture(owner){
   add('container_grants',{id:'group-container-grant',container_id:'archive-container',principal_kind:'group',principal_id:'archive-group',level:'edit',created_at:now,updated_at:now});
   for(const [index,id]of pageIds.entries()){
     const title=['Restorable research Ω','Linked child','Private sibling'][index];
-    const block={id:`${id}-block`,pageId:id,parentBlockId:null,blockType:'paragraph',content:{text:[{text:`${title}: durable body`},...inlineSpans('archive-member','archive-child')]},treePosition:'0010',revisionId:`${id}-block-revision`};
+    const block={id:`${id}-block`,pageId:id,parentBlockId:null,blockType:'paragraph',content:{text:[{text:`${title}: durable body`,commentAnchorId:`${id}-anchor`},...inlineSpans('archive-member','archive-child')]},treePosition:'0010',revisionId:`${id}-block-revision`};
     const props={title,icon:'📚',coverFileId:null,ownerMemberId:owner.id,statusKey:null,labels:['portable','research'],typeface:'serif',smallText:true,fullWidth:true};
     add('pages',{id,workspace_id:workspace,container_id:index===2?'archive-private':'archive-container',parent_page_id:index===1?'archive-root':null,title,icon:'📚',author_member_id:owner.id,owner_member_id:owner.id,lifecycle:'live',working_revision_id:`${id}-current`,published_revision_id:`${id}-current`,tree_position:index===1?'0005':'0020',typeface:'serif',small_text:1,full_width:1,created_at:now,updated_at:now,revision_id:`${id}-current`});
     add('page_blocks',{id:block.id,page_id:id,parent_block_id:null,block_type:block.blockType,content_json:JSON.stringify(block.content),tree_position:block.treePosition,revision_id:block.revisionId,created_at:now,updated_at:now});
@@ -45,7 +46,7 @@ export function populatedFixture(owner){
   }
   add('page_grants',{id:'guest-page-grant',page_id:'archive-child',principal_kind:'member',principal_id:'archive-guest',level:'comment',created_at:now,updated_at:now});
   add('page_grants',{id:'group-page-grant',page_id:'archive-root',principal_kind:'group',principal_id:'archive-group',level:'edit',expires_at:'2030-01-01T00:00:00.000Z',created_at:now,updated_at:now});
-  add('comment_threads',{id:'archive-thread',workspace_id:workspace,page_id:'archive-root',kind:'inline',block_id:'archive-root-block',anchor_json:JSON.stringify({start:0,end:10,quote:'Restorable'}),anchor_revision_id:'archive-root-current',state:'open',created_at:now,updated_at:now,revision_id:'thread-revision'});
+  add('comment_threads',{id:'archive-thread',workspace_id:workspace,page_id:'archive-root',kind:'inline',block_id:'archive-root-block',anchor_json:JSON.stringify({anchorId:'archive-root-anchor',start:0,end:10,quote:'Restorable'}),anchor_revision_id:'archive-root-current',state:'open',created_at:now,updated_at:now,revision_id:'thread-revision'});
   add('comments',{id:'archive-comment',thread_id:'archive-thread',author_member_id:'archive-member',body_json:JSON.stringify([{text:'Keep the exact inline anchor.'}]),created_at:now,updated_at:now,revision_id:'comment-revision'});
   add('comments',{id:'archive-reply',thread_id:'archive-thread',parent_comment_id:'archive-comment',author_member_id:'archive-guest',body_json:JSON.stringify([{text:'Scoped reply — retain author.'}]),created_at:now,updated_at:now,revision_id:'reply-revision'});
   return statements.join('\n');

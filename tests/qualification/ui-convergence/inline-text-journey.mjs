@@ -29,6 +29,14 @@ export async function inlineTextJourney(state, pageId, width) {
     await save(() => toolbar.getByRole('button', { name, exact: true }).click());
   }
   await select();
+  for (const name of ['Bold','Italic','Underline','Strikethrough','Inline code','Text colour','Add a link']) {
+    const control = toolbar.getByRole('button', { name, exact: true });
+    await expect(control).toHaveAttribute('data-tooltip', /\S+\s+\S+/);
+  }
+  const colourControl = toolbar.getByRole('button', { name: 'Text colour', exact: true });
+  await colourControl.focus();
+  await expect.poll(() => colourControl.evaluate(element => getComputedStyle(element, '::after').opacity)).toBe('1');
+  await select();
   await toolbar.getByRole('button', { name: 'Text colour', exact: true }).click();
   await save(() => page.getByRole('button', { name: 'Blue', exact: true }).click());
   await page.keyboard.press('Escape');
@@ -45,7 +53,6 @@ export async function inlineTextJourney(state, pageId, width) {
   await expect(formatted.getByRole('link', { name: 'Every inline mark' })).toHaveAttribute('href', 'https://example.invalid/document');
   assert.notEqual(await formatted.locator('span.bg-hl-blue').evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0)');
   assert.deepEqual((await read()).blocks.at(-1).content.text, expected);
-  await page.screenshot({ path: `.artifacts/ui-convergence/inline-marks-${width}.png`, fullPage: true });
 
   const mentions = await addText();
   for (const [query, option] of [['Alex', 'Alex Owner · Person'], [state.journeyTitle, `${state.journeyTitle} · Page`], ['2030-06-15', '2030-06-15 · Date']]) {
@@ -61,13 +68,16 @@ export async function inlineTextJourney(state, pageId, width) {
   await expect(restored.locator('[data-mention-kind=page] a')).toHaveAttribute('href', `/app/pages/${pageId}`);
   await expect(restored.locator('[data-mention-kind=date]')).toHaveText('6/15/2030');
   assert.deepEqual((await read()).blocks, document.blocks);
+  await page.screenshot({ path: `.artifacts/ui-convergence/inline-marks-${width}.png`, fullPage: true });
   const block = document.blocks.at(-1);
-  const activity = await api('/api/activity');
+  const activity = (await api('/api/activity')).items;
   for (const span of [{text:'unsafe',link:{href:'javascript:alert(1)'}},{text:'unsafe',marks:['script']},{text:'unsafe',html:'<img src=x onerror=alert(1)>'}]) {
     const response = await call(context, origin, 'PATCH', `/api/pages/${pageId}/blocks/${block.id}`, {operationKey:randomUUID(),expectedRevisionId:block.revisionId,content:{text:[span]}});
     assert.equal(response.status, 400);
-    assert.deepEqual((await read()).blocks, document.blocks, 'Refused markup cannot change canonical content.');
-    assert.deepEqual(await api('/api/activity'), activity, 'A refusal creates no activity.');
+    const unchanged = await read();
+    assert.deepEqual(unchanged.blocks, document.blocks, 'Refused markup cannot change canonical content.');
+    assert.deepEqual(unchanged.page, document.page, 'A refusal cannot advance the page revision.');
+    assert.deepEqual((await api('/api/activity')).items, activity, 'A refusal creates no activity.');
   }
   console.log(`PROBE BLOCK-002 native marks, links, mentions and unsafe writes at ${width}: persisted spans and visible output agree; three unsafe writes refused without changes`);
 }
