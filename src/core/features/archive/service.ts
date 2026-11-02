@@ -36,6 +36,15 @@ export async function prepareArchivePage(ctx: FeatureContext, id: string, input:
 } = {}) {
     const pages = await descendants(ctx, id), root = pages.find(p => p.id === id)!;
     const statements = [await treeTopologyGuard(ctx, id), pageLockGuard(ctx, root, input.expectedRevisionId)];
+    if (input.action === 'restore' && !options.restoringContainer && input.parentPageId === undefined) {
+        const available = await ctx.db.prepare(`SELECT 1 FROM content_archive_locations l JOIN containers c ON c.id=l.prior_container_id
+            WHERE l.page_id=? AND c.workspace_id=? AND c.archived_at IS NULL AND c.trashed_at IS NULL
+            AND (l.prior_parent_id IS NULL OR EXISTS(SELECT 1 FROM pages parent WHERE parent.id=l.prior_parent_id AND parent.workspace_id=c.workspace_id
+                AND parent.container_id=c.id AND parent.deleted_at IS NULL AND parent.archived_at IS NULL AND parent.trashed_at IS NULL))`)
+            .bind(id, ctx.actor.workspaceId).first();
+        if (!available) throw new ApiProblem(409, 'RESTORE_DESTINATION_REQUIRED', 'The original location is unavailable. Choose a destination before restoring.');
+    }
+
     if (input.action === 'restore' && (input.containerId !== undefined || input.parentPageId !== undefined)) {
         // Restoring somewhere else is a move: changing who can read requires sharing authority over every affected page.
         const overrides: Record<string, { containerId: string; parentPageId: string | null }> = {};
