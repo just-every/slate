@@ -43,6 +43,11 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     await mutate(source,sourceCookie,'PATCH',pagePath,{expectedRevisionId:record.revisionId,properties:{icon:'📚'}});
     await mutate(source,sourceCookie,'PUT',pagePath+'/blocks',{expectedRevisionId:(await get(source,sourceCookie,pagePath)).page.revisionId,
       blocks:[{id:'portable-record-body',blockType:'paragraph',treePosition:'a',content:{text:[{text:'Imported record body remains intact'}]}}]});
+    const earlierRecord = await get(source,sourceCookie,recordPath);
+    await mutate(source,sourceCookie,'PATCH',pagePath+'/blocks/portable-record-body',{expectedRevisionId:earlierRecord.page.blocks[0].revisionId,
+      content:{text:[{text:'Imported record body remains intact after an edit'}]}});
+    const earlierSnapshot=await get(source,sourceCookie,'/api/revisions/'+record.pageId+'/'+earlierRecord.revisionId);
+    assert.equal(earlierSnapshot.blocks[0].content.text[0].text,'Imported record body remains intact');
     const retainedRecord = await get(source,sourceCookie,recordPath);
     const recordHistory = await get(source,sourceCookie,'/api/revisions/'+record.pageId);
     const recordPlacement=(await get(source,sourceCookie,'/api/pages?containerId=archive-container')).items.find(item=>item.id===record.pageId);
@@ -123,6 +128,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     assert.equal(restoredRecord.page.page.id,record.pageId);
     assert.deepEqual(storedRecord(restoredRecord),storedRecord(retainedRecord));
     assert.deepEqual(await get(target,targetCookie,'/api/revisions/'+record.pageId),recordHistory);
+    assert.deepEqual(await get(target,targetCookie,'/api/revisions/'+record.pageId+'/'+earlierRecord.revisionId),earlierSnapshot);
     const reexport=await target.cli('export',second,targetCookie);const after=unpack(await readFile(second));
     await target.close();
     const [bootstrapAudit]=await target.sql(`SELECT a.* FROM activity_entries a WHERE ${bootstrapAuditPredicate};
@@ -137,6 +143,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
       assert.equal(restored.page.page.id,record.pageId);
       assert.deepEqual(storedRecord(restored),storedRecord(retainedRecord));
       assert.deepEqual(await get(target,targetCookie,'/api/revisions/'+record.pageId),recordHistory);
+      assert.deepEqual(await get(target,targetCookie,'/api/revisions/'+record.pageId+'/'+earlierRecord.revisionId),earlierSnapshot);
       const pages=(await get(target,targetCookie,'/api/pages?containerId=archive-container')).items.filter(item=>item.id===record.pageId);
       const search=await get(target,targetCookie,'/api/search?kind=page&query='+encodeURIComponent('Portable populated record'));
       assert.equal(pages.length,parity==='record-is-page'?1:0);

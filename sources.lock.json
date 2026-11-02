@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "9e09227fc7c8d8bd984cc01298e6593a16880add8a590a3e846d799a4446e51d",
       "executable": false
     },
     "DEMO.md": {
@@ -11380,7 +11380,7 @@
       "executable": false
     },
     "tests/portability/roundtrip.test.mjs": {
-      "sha256": "69c184098c80eaf4e76a739baffa7fd4db5cfb03f67187c59a222ff0e6551e5d",
+      "sha256": "1c1197c9c65305c965e7f42538faeea519858939b2628b989f128c74e42d1f70",
       "executable": false
     },
     "tests/portability/runtime.mjs": {
