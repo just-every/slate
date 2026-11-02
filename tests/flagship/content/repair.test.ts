@@ -1,3 +1,4 @@
+import {containerGrantPrincipalsCase} from './container-grant-principals.case';
 import {structureSaveLabelsCase} from './structure-save-labels.case';
 import {runFoldCases} from '../fold-cases';
 import {beforeEach,it,expect} from 'vitest';
@@ -8,6 +9,7 @@ import {fixture,page} from './journeys';
 beforeEach(resetDeployment);
 it("content structure, task attribution, privacy and activity retain exact revisions", async () => {
   await runFoldCases([
+{name:"container grant editors receive scoped labels while group administration and ordinary readers stay refused",before:async()=>{await resetDeployment();},run:containerGrantPrincipalsCase},
 {name:"normalizes creation and structural task attribution and preserves existing completion",before:async()=>{await resetDeployment();},run:async()=>{
 try {
 

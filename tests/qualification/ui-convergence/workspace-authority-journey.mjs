@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {expect} from '@playwright/test';
 import {accessible} from './browser-evidence.mjs';
 import {call,ok} from './two-people-support.mjs';
+import {containerGrantsJourney} from './container-grants-journey.mjs';
 import {memberRemovalJourney} from './member-removal-journey.mjs';
 import {guestScopeJourney} from './guest-scope-journey.mjs';
 
@@ -121,6 +122,7 @@ export async function workspaceAuthorityJourney(state,width) {
       await expect(more).toHaveAttribute('data-tooltip',/\S+\s+\S+/);
     }
     await accessible(page,'deleted group leaves individual grants intact');
+    await containerGrantsJourney(state,width);
     await memberRemovalJourney(state,width);
     await guestScopeJourney(state,width);
   } finally {await reader.close();}
