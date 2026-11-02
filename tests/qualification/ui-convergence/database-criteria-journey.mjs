@@ -80,6 +80,7 @@ export async function databaseCriteriaJourney(state, width) {
   const builder = dialog.locator('.filter-builder').first();
   for (const criterion of criteria) await leaf(builder, criterion);
   await group(builder, nested);
+  await accessible(page, 'database criteria nested native filters');
   const sorts = dialog.getByRole('group', {name: 'Sort order', exact: true});
   // Start in the wrong priority, then reorder with the native move control.
   for (const sort of [expected.sorts[1], expected.sorts[0], expected.sorts[2]]) {

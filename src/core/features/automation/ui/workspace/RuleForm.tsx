@@ -199,6 +199,7 @@ export function RuleForm({
       ) : null}
       <h3>Only when</h3>
       <FilterBuilder
+        databaseId={draft.sourceDatabaseId}
         filters={draft.conditions}
         fields={source.data?.fields ?? []}
         onChange={(conditions) => setDraft({ ...draft, conditions })}

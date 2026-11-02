@@ -5908,7 +5908,7 @@
       "executable": false
     },
     "src/core/features/automation/ui/workspace/RuleForm.tsx": {
-      "sha256": "e29728fd3f4525a8ec2b8445f0f80a76fd8c17821695f41d2cfc963a9f7bc3cd",
+      "sha256": "de6a2335e18129fcffb3f1332811c3bc32a2e11627f0c14656b9d931ecf6cb9f",
       "executable": false
     },
     "src/core/features/automation/validation.ts": {
@@ -11876,7 +11876,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/database-criteria-journey.mjs": {
-      "sha256": "0cf809b3f63bfeeae36db46cc481a2cc886003b7bc98058979ce5c8976b0fe1c",
+      "sha256": "6344cad4bf1e230b392b637fb8dc0b7c6813bd457b6ae100760481c75ab29f88",
       "executable": false
     },
     "tests/qualification/ui-convergence/database-journey.mjs": {
