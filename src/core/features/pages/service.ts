@@ -1,3 +1,4 @@
+import { sharingConfiguration } from '../sharing/configuration';
 import { rejectErasedPage } from '../pages/erased';
 import {projectSynced} from '../editor/synced/read';
 import {syncedGuards} from '../editor/synced/guards';
@@ -54,7 +55,7 @@ export async function readPage(ctx: FeatureContext, id: string): Promise<PageDoc
     if (p.trashed_at)
         throw new ApiProblem(404, 'NOT_FOUND', 'Not found.');
     const canEdit = access.decision.level === 'edit' || access.decision.level === 'full';
-    const [content, author, owner, contributors, schedule, v, projections, policyProfile, locker] = await Promise.all([
+    const [content, author, owner, contributors, schedule, v, projections, policyProfile, locker, sharing] = await Promise.all([
         (async () => {
             // Render immutable content for the revision named in this response, even if another edit commits mid-read.
             const delivered = await revisionRow(ctx, id, canEdit ? p.working_revision_id : p.published_revision_id ?? p.working_revision_id);
@@ -88,10 +89,11 @@ export async function readPage(ctx: FeatureContext, id: string): Promise<PageDoc
         authorScheduleProjections(ctx, [id]),
         contentPolicy(ctx),
         p.locked_at && p.locked_by_member_id ? ctx.db.prepare("SELECT display_name AS displayName FROM members WHERE id=? AND workspace_id=? AND status='active'").bind(p.locked_by_member_id, ctx.actor.workspaceId).first<{displayName:string}>() : Promise.resolve(null),
+        sharingConfiguration(ctx),
     ]);
     const { props, mentions, blocks } = content;
     const verificationNow = v ? verificationState({ status_key: v.statusKey, revision_id: v.revisionId, expires_at: v.expiresAt }, p, ctx.now) : null;
-    return { lock: p.locked_at ? { lockedAt: p.locked_at, lockedByMemberId: locker ? p.locked_by_member_id : null, lockedByDisplayName: locker?.displayName ?? 'Former member' } : null, authorDisplayName: author?.displayName ?? 'Former member', ownerDisplayName: owner?.displayName ?? null, contributors: contributors.results, schedule, verification: v ? { ...v, ownerDisplayName: v.ownerDisplayName ?? 'Former member', ownerActive: !!v.ownerActive, state: verificationNow, lapsed: !!v.expiresAt && v.expiresAt <= ctx.now, current: verificationNow === 'current' } : undefined, mentions, page: { ...ref(p), ...projections.get(id), title: props.title }, blocks, properties: props, parentPageId: p.parent_page_id, createdAt: p.created_at, updatedAt: p.updated_at, authorMemberId: p.author_member_id, workingRevisionId: p.working_revision_id, publishedRevisionId: p.published_revision_id, permissions: { level: access.decision.level!, canEdit: canEdit && !p.archived_at && !p.locked_at, canUnlock: canEdit && !p.archived_at, canShare: access.decision.level === 'full' }, policyProfile };
+    return { lock: p.locked_at ? { lockedAt: p.locked_at, lockedByMemberId: locker ? p.locked_by_member_id : null, lockedByDisplayName: locker?.displayName ?? 'Former member' } : null, authorDisplayName: author?.displayName ?? 'Former member', ownerDisplayName: owner?.displayName ?? null, contributors: contributors.results, schedule, verification: v ? { ...v, ownerDisplayName: v.ownerDisplayName ?? 'Former member', ownerActive: !!v.ownerActive, state: verificationNow, lapsed: !!v.expiresAt && v.expiresAt <= ctx.now, current: verificationNow === 'current' } : undefined, mentions, page: { ...ref(p), ...projections.get(id), title: props.title }, blocks, properties: props, parentPageId: p.parent_page_id, createdAt: p.created_at, updatedAt: p.updated_at, authorMemberId: p.author_member_id, workingRevisionId: p.working_revision_id, publishedRevisionId: p.published_revision_id, permissions: { level: access.decision.level!, canComment: access.decision.level !== 'view' && sharing.levels.includes('comment'), canEdit: canEdit && !p.archived_at && !p.locked_at, canUnlock: canEdit && !p.archived_at, canShare: access.decision.level === 'full' }, policyProfile };
 }
 export async function createPage(ctx: FeatureContext, input: PageCreateInput) {
     return commitOperation(ctx, { operationKey: input.operationKey, action: 'pages.create', request: input, authorize: () => destination(ctx, input.containerId, input.parentPageId), prepare: async ({ revisionId }) => {

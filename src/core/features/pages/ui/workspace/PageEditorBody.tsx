@@ -113,6 +113,7 @@ export function PageEditorBody({
     element.addEventListener('slate-insert-at-cursor',insertAt);
     element.addEventListener('keydown',undo);
     const selected = async (event:Event, comment:boolean) => {
+      if (comment && (document.permissions.canComment === false || document.permissions.level === "view")) return;
       const target=event.target as HTMLElement,blockId=target.closest<HTMLElement>('[data-block-id]')?.dataset.blockId;
       const range=(event as CustomEvent<{anchor:number;focus:number}>).detail;
       const block=editor.blocks.find(b=>b.id===blockId);

@@ -1,3 +1,4 @@
+import { SharingLevels } from "./SharingLevels";
 import {GroupMentionSettings} from './GroupMentionSettings';
 import {NavigationSettings} from "./NavigationSettings";
 import { useState } from "react";
@@ -86,7 +87,7 @@ export function WorkspacePreferences() {
       >
         {data ? (
           <>
-            {member.role === "owner"?<><NavigationSettings/><GroupMentionSettings/></>:null}
+            {member.role === "owner"?<><NavigationSettings/><GroupMentionSettings/><SharingLevels/></>:null}
             <h3>{data.name}</h3>
             <p>{data.description || "No description yet."}</p>
             <dl className="settings-facts">

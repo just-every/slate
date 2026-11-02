@@ -57,7 +57,7 @@ export function PageComments({ document, selection, onSent, title = "Discussion"
   useEffect(()=>{const params=new URLSearchParams(window.location.search);const thread=params.get("thread"),comment=params.get("comment");if(thread||comment)window.document.getElementById(`${thread?"thread":"comment"}-${thread??comment}`)?.scrollIntoView({block:"center"});},[resource.data]);
   const mentionPreview=useMentionPreview(document.page.id,body);
   const editMentionPreview=useMentionPreview(document.page.id,editBody,edit?.body??[]);
-  const allowed = document.permissions.level !== "view";
+  const allowed = document.permissions.level !== "view" && document.permissions.canComment !== false;
   async function action(path: string, value: unknown, method = "POST") {
     setError(undefined);
     setSendFailed(false);

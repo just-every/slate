@@ -1,3 +1,4 @@
+import { CommentAffordance } from "../../../editor/ui/CommentAffordance";
 import { InitialResourcesContext } from "../../../../client/InitialResources";
 import { useFlagshipEnabled } from "../../../../app/ui/LaunchProfile";
 import { useLocation, useNavigate } from "@tanstack/react-router";
@@ -295,6 +296,7 @@ function LoadedPage({
   },[]);
   return (
     <>
+      <CommentAffordance.Provider value={document.permissions.canComment !== false && document.permissions.level !== "view"}>
       <PageTopBar
         trail={[...trail, { label: document.page.title || "Untitled", suffix: document.policyProfile["page.status.v1"] === "verification-only" ? <PageStatusBadge document={document}/> : null }]}
         flagship={flagship}
@@ -420,6 +422,7 @@ function LoadedPage({
           </aside>
         ) : null}
       </div>
+      </CommentAffordance.Provider>
     </>
   );
 }

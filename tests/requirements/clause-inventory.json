@@ -619,8 +619,13 @@
       "id": "SHARE-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for SHARE-005 — Access profile. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "The supporting Workers import journey proves the supplemental container-general grant under both profiles. Full acceptance and responsive public-door proof are recorded by the SHARE-005 Status row in CONTRACT.md and its named loaded browser journeys; this registry retains its supporting-only inventory convention.",
+      "supportingTests": [
+        {
+          "file": "tests/e2e/imports/preview-undo.test.ts",
+          "testName": "reviews, applies and reverses real Notion and Confluence content without losing native edits"
+        }
+      ]
     },
     {
       "id": "SHARE-006",

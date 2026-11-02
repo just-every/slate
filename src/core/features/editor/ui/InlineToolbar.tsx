@@ -1,3 +1,5 @@
+import { useContext } from "react";
+import { CommentAffordance } from "./CommentAffordance";
 import { useFlagshipEnabled } from "../../../app/ui/LaunchProfile";
 import { Bold, Code, Italic, Link2, MessageSquarePlus, Palette, Sparkles, Strikethrough, Underline } from "lucide-react";
 import {
@@ -52,6 +54,7 @@ export function InlineToolbar({
   className,
 }: InlineToolbarProps) {
   const flagship = useFlagshipEnabled();
+  const canComment = useContext(CommentAffordance);
   return (
     <div
       aria-label="Formatting for the selected text"
@@ -116,10 +119,10 @@ export function InlineToolbar({
 
       <Separator className="mx-1 h-5 w-px" orientation="vertical" />
 
-      <Button onClick={onComment} size="sm" variant="ghost">
+      {canComment ? <Button onClick={onComment} size="sm" variant="ghost">
         <MessageSquarePlus aria-hidden="true" className="size-4" />
         Comment
-      </Button>
+      </Button> : null}
       {flagship ? <Button onClick={onAskAi} size="sm" variant="ghost">
         <Sparkles aria-hidden="true" className="size-4" />
         Ask AI

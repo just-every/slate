@@ -1,3 +1,4 @@
+import { accessProfileArchive } from './fixtures/supplemental/access-profile';
 import {beforeEach,expect,it,vi} from 'vitest';
 import {env} from 'cloudflare:test';
 import {createApi} from '../../../src/core/app/hono';
@@ -85,6 +86,36 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  expect((await app.request(`https://slate.example/api/pages/${independent!.id}`,{headers:{Cookie:cookie}},env)).status).toBe(404);
  expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM pages WHERE workspace_id=?').bind(workspaceId).first<number>('n')).toBeLessThan(pages.length);
  }
+ // A labelled supplemental export supplies the general restriction absent from
+ // the genuine personal-space archive above. Persist through the real importer.
+ for (const profile of ['workspace-general', 'container-general']) {
+  await resetCase();
+  const {workspaceId}=await seedWorkspace();
+  const owner=await seedMember(workspaceId,{email:['synthetic-slate-127','example.test'].join('@'),displayName:'Supplemental owner',role:'owner',isSetupOwner:true});
+  const outsider=await seedMember(workspaceId,{email:['synthetic-slate-128','example.test'].join('@'),displayName:'Unrelated workspace member',role:'member'});
+  const cookie=await sessionFor(owner.memberId),app=createApi();
+  const request=(path:string,body?:unknown,method=body===undefined?'GET':'POST',session=cookie)=>app.request(`https://slate.example/api${path}`,{method,headers:{Cookie:session,...(body===undefined||body instanceof FormData?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:body instanceof FormData?body:JSON.stringify(body)})},env);
+  const call=async(path:string,body?:unknown,method?:string)=>{const response=await request(path,body,method);const value=await response.json() as any;expect(response.status,JSON.stringify(value)).toBe(200);return value;};
+  const workspace=await call('/workspace');
+  await call('/workspace',{name:workspace.name,mark:workspace.mark,description:workspace.description,guestAccess:workspace.guestAccess,publicLinkAccess:workspace.publicLinkAccess,anonymousAccess:workspace.anonymousAccess,operationKey:crypto.randomUUID(),expectedRevisionId:workspace.revisionId,policies:{...workspace.policies,'page.access.v1':profile}},'PUT');
+  const bytes=accessProfileArchive(),parsed=parseImport('confluence-space',{name:'synthetic-slate-127.zip',bytes});
+  expect(parsed.pages[0]!.grants).toEqual([{principalKind:'container',principalSourceId:'confluence-space:127',level:'view',general:true}]);
+  const form=new FormData();form.set('file',new File([bytes as BlobPart],'synthetic-slate-127.zip'));form.set('format','confluence-space');form.set('operationKey',crypto.randomUUID());
+  let job=await call('/imports',form);job=await call(`/imports/${job.id}/preview`,{});job=await call(`/imports/${job.id}/apply`,{fingerprint:job.report.fingerprint});
+  for(let n=0;job.state!=='completed'&&n<60;n++)job=await call(`/imports/${job.id}/resume`,{});
+  expect(job.state).toBe('completed');
+  const imported=await env.DB.prepare('SELECT id,container_id FROM pages WHERE workspace_id=?').bind(workspaceId).first<{id:string;container_id:string}>();expect(imported).toBeTruthy();
+  const stored=await env.DB.prepare("SELECT principal_kind,principal_id,level FROM page_grants WHERE page_id=? AND principal_kind IN ('container','workspace')").bind(imported!.id).all();
+  expect(stored.results).toEqual([{principal_kind:'container',principal_id:imported!.container_id,level:'view'}]);
+  for(const value of [profile,profile==='workspace-general'?'container-general':'workspace-general',profile]) {
+   const current=await call('/workspace');if(current.policies['page.access.v1']!==value)await call('/workspace',{name:current.name,mark:current.mark,description:current.description,guestAccess:current.guestAccess,publicLinkAccess:current.publicLinkAccess,anonymousAccess:current.anonymousAccess,operationKey:crypto.randomUUID(),expectedRevisionId:current.revisionId,policies:{...current.policies,'page.access.v1':value}},'PUT');
+   expect((await call(`/sharing/pages/${imported!.id}`)).items.filter((g:any)=>['container','workspace'].includes(g.principalKind))).toMatchObject([{principalKind:'container',principalId:imported!.container_id,level:'view'}]);
+   expect((await request(`/pages/${imported!.id}`,undefined,'GET',await sessionFor(outsider.memberId))).status).toBe(404);
+   expect((await call(`/pages/${imported!.id}`)).page.id).toBe(imported!.id);
+   expect((await env.DB.prepare("SELECT principal_kind,principal_id,level FROM page_grants WHERE page_id=? AND principal_kind IN ('container','workspace')").bind(imported!.id).all()).results).toEqual(stored.results);
+  }
+ }
+
 },120_000);
 
 it('erases historical and shared imported people through confirmed native removal, atomically retires custody and keeps unrelated Undo',async()=>{

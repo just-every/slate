@@ -17,12 +17,13 @@ type Grant = {
   level: string;
   expiresAt: string | null;
   revokedAt: string | null;
+  principalLabel?: string;
 };
 export function ContainerSharing({ id }: { id: string }) {
   const { member,workspace } = useWorkspace();
   const grantLed=workspace.data?.policies["container.access.v1"]==="grant-led";
   const [tab,setTab]=useState("member");
-  const grants = useResource<{ items: Grant[] }>(
+  const grants = useResource<{ items: Grant[]; levels: string[] }>(
     `/api/sharing/containers/${id}`,
   );
   const members = useResource<{ items: { id: string; displayName: string }[] }>(
@@ -35,7 +36,7 @@ export function ContainerSharing({ id }: { id: string }) {
   const key = useRef("");
   const [error, setError] = useState<unknown>();
   const name = (grant: Grant) =>
-    grant.principalKind === "workspace"
+    grant.principalLabel ?? (grant.principalKind === "workspace"
       ? "Everyone in workspace"
       : grant.principalKind === "container"
         ? "Space members"
@@ -43,7 +44,7 @@ export function ContainerSharing({ id }: { id: string }) {
             ?.displayName ??
           groups.data?.items.find((group) => group.id === grant.principalId)
             ?.name ??
-          "Unavailable person or group");
+          "Unavailable person or group"));
   return (
     <section>
       <h4>Who has access</h4>{grantLed?<nav className="tabs" aria-label="Access principals">{["member","group","guest"].map(value=><button key={value} aria-pressed={tab===value} onClick={()=>setTab(value)}>{value}s</button>)}</nav>:null}
@@ -95,6 +96,7 @@ export function ContainerSharing({ id }: { id: string }) {
             const [principalKind, principalId] = String(
               data.get("principal"),
             ).split(":");
+            if (!data.get("level") && data.get("revoke") !== "on") throw new Error("Choose an available access level.");
             await mutate("/api/sharing", {
               operationKey: key.current,
               targetKind: "container",
@@ -102,7 +104,7 @@ export function ContainerSharing({ id }: { id: string }) {
               id: editing === "new" ? undefined : editing.id,
               principalKind,
               principalId,
-              level: String(data.get("level")),
+              level: String(data.get("level") || (editing === "new" ? "" : editing.level)),
               expiresAt: data.get("expires")
                 ? new Date(String(data.get("expires"))).toISOString()
                 : null,
@@ -145,9 +147,11 @@ export function ContainerSharing({ id }: { id: string }) {
             Access
             <select
               name="level"
-              defaultValue={editing === "new" ? "view" : editing.level}
+              required={editing === "new"}
+              defaultValue={editing === "new" ? (grants.data?.levels.at(-1) ?? "") : (grants.data?.levels.includes(editing.level) ? editing.level : "")}
             >
-              {["view", "comment", "edit", "full"].map((level) => (
+              {editing !== "new" && !grants.data?.levels.includes(editing.level) ? <option value="" disabled>Stored access retained</option> : null}
+              {(grants.data?.levels ?? []).map((level) => (
                 <option key={level} value={level}>{({view:"View",comment:"Comment",edit:"Edit",full:"Manage access"} as Record<string,string>)[level]}</option>
               ))}
             </select>
