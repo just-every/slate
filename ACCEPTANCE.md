@@ -2035,8 +2035,8 @@ Core · published · **partial** · Cites BASE-ACCESS-001, BASE-MAIL-001
 2. `NOTIF-005` adds notification email and digests that a member opts into, through the same sender; without that opt-in, sign-in and invitation mail remain the only mail Slate sends.
 3. Only sign-in and invitation mail is sent; replies create nothing.
 
-**Evidence.** `tests/flagship/core/mail.test.ts`
-**Gap.** Missing a native sign-in/invitation mail journey that also attempts inbound reply handling and checks that unrelated wiki events send no mail; the cited mail suite tests adapters and dispatch custody.
+**Evidence.** `tests/flagship/core/mail.test.ts` — "MAIL-001 Worker sign-in and invitation mail share one sender, wiki events and schedules send none, and replies are refused" through `tests/flagship/core/mail-boundary.case.ts` (sign-in, member and guest invitation mail from one sender; page, block, comment, mention, archive and restore events and two scheduled runs add no mail row or provider request; reply-shaped requests to twelve undeclared inbound paths are refused with every canonical table unchanged); `tests/e2e/local-outbox.node.test.mts`
+**Gap.** Opted-in notification email and digests through the same sender (`NOTIF-005`) and real mailbox delivery remain unproven.
 
 #### MAIL-002 — Delivery failure
 
