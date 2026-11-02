@@ -1,3 +1,4 @@
+import {auditRetrievalProof} from './audit-retrieval-proof';
 import {auditExportProof} from './audit-export-proof';
 import {test,expect,vi} from 'vitest';
 import {auditFixture,env,createUlid,pageDurabilityProof,activityContextProof} from './audit-support';
@@ -51,4 +52,5 @@ test('ACT-002 BASE-OPS-005 audit content, publication, archive and version mutat
  await f.mutation('version deletions','versions.delete','DELETE',`/api/revisions/${p.id}/${initial}`,{});
 }
 await auditExportProof(f);
+await auditRetrievalProof();
 });

@@ -11,10 +11,12 @@ const resolvers=new Map<string,ActivityAccessResolver>();
 /** Feature-owned targets register their actual current authorization boundary at app assembly. */
 export function registerActivityResolver(kind:string,resolver:ActivityAccessResolver){resolvers.set(kind,resolver);}
 export async function activity(ctx:FeatureContext,input:ActivityInput={}){
- await currentSubject(ctx);for(const value of [input.from,input.to])if(value&&!Number.isFinite(Date.parse(value)))throw new ApiProblem(400,'INVALID_DATE','Invalid activity date.');
+ await currentSubject(ctx);
+ const dateBound=(value:string|undefined)=>{if(!value)return null;const time=Date.parse(value);if(!Number.isFinite(time))throw new ApiProblem(400,'INVALID_DATE','Invalid activity date.');return new Date(time).toISOString();};
+ const from=dateBound(input.from),to=dateBound(input.to);
  const cursor=timeCursor(input.cursor,ctx.now),limit=limitValue(input.limit);
  if(input.containerId&&!await permitted(()=>requireContainerLevel(ctx,input.containerId!,'view')))return {items:[]};
- const rows=await ctx.db.prepare('SELECT * FROM activity_entries WHERE workspace_id=? AND occurred_at<=? AND (occurred_at<? OR (occurred_at=? AND id<?)) AND (? IS NULL OR actor_member_id=?) AND (? IS NULL OR action=?) AND (? IS NULL OR target_kind=?) AND (? IS NULL OR occurred_at>=?) AND (? IS NULL OR occurred_at<=?) ORDER BY occurred_at DESC,id DESC').bind(ctx.actor.workspaceId,cursor.ceiling,cursor.at,cursor.at,cursor.id,input.actorId??null,input.actorId??null,input.action??null,input.action??null,input.kind??null,input.kind??null,input.from??null,input.from??null,input.to??null,input.to??null).all<Row>();
+ const rows=await ctx.db.prepare('SELECT * FROM activity_entries WHERE workspace_id=? AND occurred_at<=? AND (occurred_at<? OR (occurred_at=? AND id<?)) AND (? IS NULL OR actor_member_id=?) AND (? IS NULL OR action=?) AND (? IS NULL OR target_kind=?) AND (? IS NULL OR occurred_at>=?) AND (? IS NULL OR occurred_at<=?) ORDER BY occurred_at DESC,id DESC').bind(ctx.actor.workspaceId,cursor.ceiling,cursor.at,cursor.at,cursor.id,input.actorId??null,input.actorId??null,input.action??null,input.action??null,input.kind??null,input.kind??null,from,from,to,to).all<Row>();
  const contexts=new Map<string,string>();for(const row of rows.results){const id=await activityPageId(ctx,row.target_kind,row.target_id);if(id)contexts.set(row.id,id);}const pageIds=[...contexts.values()];const retained=await resolveCurrentAccessMany(ctx,pageIds,{includeDeleted:true,includeTrashed:true});
  const items=[];
  for(const row of rows.results){

@@ -37,7 +37,7 @@ export function ActivityWorkspace() {
           const data = new FormData(event.currentTarget);
           const params = new URLSearchParams();
           for (const [key, value] of data.entries())
-            if (String(value)) params.set(key, String(value));
+            if (String(value)) params.set(key, key === "from" || key === "to" ? new Date(String(value)).toISOString() : String(value));
           setCursor("");
           setFilters(params.toString());
         }}
@@ -70,10 +70,20 @@ export function ActivityWorkspace() {
             <option value="">All kinds</option>
             {[
               "page",
+              "record",
+              "page-status",
+              "revision",
               "container",
               "comment",
+              "comment-thread",
+              "review-request",
               "database",
+              "template",
               "decision",
+              "workspace",
+              "member",
+              "group",
+              "invitation",
               "run",
             ].map((kind) => (
               <option key={kind}>{kind}</option>
@@ -96,13 +106,14 @@ export function ActivityWorkspace() {
         error={resource.error}
         retry={resource.reload}
       >
-        <ol className="settings-list">
+        <ol className="settings-list" aria-label="Activity timeline">
           {resource.data?.items.map((item) => (
             <li key={item.id} data-activity-id={item.id}>
               <div>
                 <strong>{item.actor?.displayName ?? (item.action.startsWith("verification-rules.") ? "Verification rules" : "Former member")}</strong> ·{" "}
                 {item.action.replace(/[._-]/g, " ")}
                 <p>
+                  <span>{item.target.kind.replaceAll("-", " ")}</span>{" · "}
                   <time dateTime={item.occurredAt}>
                     {new Date(item.occurredAt).toLocaleString()}
                   </time>

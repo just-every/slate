@@ -1036,9 +1036,10 @@
         "ACT-002",
         "BASE-OPS-005",
         "ACT-001",
-        "ACT-004"
+        "ACT-004",
+        "ACT-003"
       ],
-      "reason": "Preserves the existing content audit assertions and extends them through native HTTP sign-in, sharing, token use, owner metadata exports, retention and signed ordered audit recovery. Real vendor receivers and resolved-address pinning remain unproven. Native page HTTP writes correlate the committed revision, durable receipt and one activity entry under replay; a late real D1 trigger abort leaves content, revisions, receipts and activity unchanged. Native scheduled publication retains the scheduler feature, operation key and exact revision. Comment and grant references retain their own context and revoked readers receive no target data."
+      "reason": "Preserves the existing content audit assertions and extends them through native HTTP sign-in, sharing, token use, owner metadata exports, retention and signed ordered audit recovery. Real vendor receivers and resolved-address pinning remain unproven. Native page HTTP writes correlate the committed revision, durable receipt and one activity entry under replay; a late real D1 trigger abort leaves content, revisions, receipts and activity unchanged. Native scheduled publication retains the scheduler feature, operation key and exact revision. Comment and grant references retain their own context and revoked readers receive no target data. The same loaded registration invokes auditRetrievalProof for populated native filters, inclusive dates, stable pagination and current access."
     },
     {
       "file": "tests/e2e/scim/contract.test.ts",

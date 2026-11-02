@@ -1444,8 +1444,13 @@
       "id": "ACT-003",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for ACT-003 — Retrieval. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "This legacy inventory classifies supporting tests only; CONTRACT.md owns native clause status. The loaded content audit registration now invokes populated native retrieval, date bounds, cursor continuity and current authority. Existing desktop and phone settings callers load the browser timeline journey; no external provider acceptance is claimed.",
+      "supportingTests": [
+        {
+          "file": "tests/qualification/core/audit-content.test.ts",
+          "testName": "ACT-002 BASE-OPS-005 audit content, publication, archive and version mutations once with actor/time"
+        }
+      ]
     },
     {
       "id": "ACT-004",

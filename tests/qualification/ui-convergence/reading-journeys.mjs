@@ -1,4 +1,5 @@
 import {statusVocabularyJourney} from './status-vocabulary-journey.mjs';
+import {activityRetrievalJourney} from './activity-retrieval-journey.mjs';
 import assert from 'node:assert/strict';
 import {themeJourney} from './theme-journey.mjs';
 import {activityContextJourney} from './activity-context-journey.mjs';
@@ -95,6 +96,7 @@ export async function settingsJourney(state, width) {
   await accessible(page, 'space settings');
   if(width===1440) await statusVocabularyJourney(state,width);
   await guestConsoleJourney(state);
+  await activityRetrievalJourney(state,width);
   await themeJourney(state, width);
   if(width===1440)await activityContextJourney(state);
   // Last: the operator's per-minute request budget is spent by the many screens above, not by this reconciliation.
