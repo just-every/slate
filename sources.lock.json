@@ -10563,6 +10563,10 @@
       "sha256": "9dc0d0dfb917139ece78b7bbb383a16e7b838493a8b238c339b84f4802d06c6b",
       "executable": false
     },
+    "tests/e2e/navigation-slot.mjs": {
+      "sha256": "acd40a2873683a2fb6dff9f05f817c2a4e27bf0cef28cf4d59260a137e34edc8",
+      "executable": false
+    },
     "tests/e2e/navigation/create-in-place.test.ts": {
       "sha256": "f38c6f1699f33eaa00c660084e1a8462520f9f92c283bd9b04c58dac6c48920b",
       "executable": false
@@ -10620,7 +10624,7 @@
       "executable": false
     },
     "tests/e2e/production-artifact.test.mjs": {
-      "sha256": "68574ba7e54c0c13d981f8724d0c5448efa301cc471acca5aae8bfebecc591f2",
+      "sha256": "0be954e43e715f570ee8a43e6bfef19c15e87f37a398669febfe2900f9cd985c",
       "executable": false
     },
     "tests/e2e/provider-fallback-flow.mjs": {
@@ -12043,6 +12047,10 @@
       "sha256": "a277f9134ea9f50b1e8c510ee56ce072dead5594bf18fa8ade7caf3b63ba5ce9",
       "executable": false
     },
+    "tests/qualification/ui-convergence/navigation-configuration.mjs": {
+      "sha256": "19338deaeca7cd253ddc0a11a73586088669d10bddcdf142a2d4d85783da21ff",
+      "executable": false
+    },
     "tests/qualification/ui-convergence/navigation-journey.mjs": {
       "sha256": "315aa9d1af14a4f340b49ad99a96ad94ddab14697240483998f67f215b271ceb",
       "executable": false
@@ -12092,7 +12100,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/reading-journeys.mjs": {
-      "sha256": "6159d2fa6eb17529a62c4b5e8b0ae93561de1ee2a28c865037917729966df20a",
+      "sha256": "7878571a8394979ba480be666b4ea2254253e485cd9d8bbed181c943675c3d44",
       "executable": false
     },
     "tests/qualification/ui-convergence/record-detail-journey.mjs": {
@@ -12125,6 +12133,10 @@
     },
     "tests/qualification/ui-convergence/sharing-journey.mjs": {
       "sha256": "11366a9c3177263fcc7ddbca0c394ac66cdc5c0ffb0d3f6df7bab2f0a02dfeb3",
+      "executable": false
+    },
+    "tests/qualification/ui-convergence/sidebar-journey.mjs": {
+      "sha256": "5d6133e52385c62e94f1da4b4e05e97827a15f31e808300e148013664488d50e",
       "executable": false
     },
     "tests/qualification/ui-convergence/starter-templates-journey.mjs": {
