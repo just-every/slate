@@ -92,6 +92,11 @@ export async function navigationJourney(state, width, { buyerSlot = false } = {}
   await expect(trees.locator(`a[href="/app/pages/${child}"]`)).toBeVisible();
   await trees.locator(`a[href="/app/pages/${child}"]`).click();
   await expect(page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue('Response escalation');
+  const editContent = async () => {
+    await page.getByRole('textbox', { name: 'Page title', exact: true }).fill('Response escalation ready');
+    await page.getByRole('textbox', { name: 'Page title', exact: true }).press('Tab');
+    await expect.poll(async () => (await api(`/api/pages/${child}`)).page.title).toBe('Response escalation ready');
+  };
   if (width === 1440) {
     const before = await page.getByRole('main').boundingBox();
     const collapse = page.getByRole('button', { name: 'Collapse sidebar', exact: true });
@@ -105,16 +110,15 @@ export async function navigationJourney(state, width, { buyerSlot = false } = {}
     assert.ok(after.width > before.width, 'Collapsing the sidebar returns width to the page.');
     await expect(page.locator('[data-page-editor]')).toContainText('Keep the response plan usable');
     await shot('collapsed');
+    await editContent();
     await page.getByRole('button', { name: 'Expand sidebar', exact: true }).click();
     await expect(sidebar).toHaveAttribute('data-collapsed', 'false');
   } else {
     await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toHaveAttribute('aria-expanded', 'false');
     await expect(page.locator('[data-page-editor]')).toBeInViewport();
     await shot('content');
+    await editContent();
   }
-  await page.getByRole('textbox', { name: 'Page title', exact: true }).fill('Response escalation ready');
-  await page.getByRole('textbox', { name: 'Page title', exact: true }).press('Tab');
-  await expect.poll(async () => (await api(`/api/pages/${child}`)).page.title).toBe('Response escalation ready');
   await page.reload({ waitUntil: 'networkidle' });
   await expect(page.getByRole('textbox', { name: 'Page title', exact: true })).toHaveValue('Response escalation ready');
   console.log(`PROBE NAV-004 2: nested container tree at ${width} -> same operator shell, persisted expansion and usable content after collapse`);

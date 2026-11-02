@@ -6,7 +6,7 @@ export async function configureNavigation({ page, origin, api }) {
   await page.goto(origin + '/app/settings', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Configure navigation', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Workspace navigation', exact: true });
-  const field = id => dialog.locator('fieldset').filter({ has: page.locator('legend', { hasText: new RegExp(`^${id}$`) }) });
+  const field = id => dialog.getByRole('group', { name: id, exact: true });
   await field('search').getByRole('textbox', { name: 'Destination label', exact: true }).fill('Find knowledge');
   await field('search').getByRole('button', { name: 'Move up', exact: true }).click();
   await field('archive').getByRole('checkbox', { name: 'Visible', exact: true }).uncheck();

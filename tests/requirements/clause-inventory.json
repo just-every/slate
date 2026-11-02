@@ -1336,7 +1336,7 @@
       "id": "NAV-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of NAV-004 — One navigation. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "The Workers report retains its listed supporting regression. Native browser acceptance is exercised by navigationJourney in the existing 1440px outline and 390px tree-filter journeys, and navigationSlotJourney in the existing emitted Worker admission registration. CONTRACT.md records the acceptance judgment; this Workers-only inventory does not certify independent release acceptance or ADMIN-007.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/structured.test.ts",
