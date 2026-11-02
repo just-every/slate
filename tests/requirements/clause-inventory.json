@@ -1225,7 +1225,7 @@
       "id": "AUTO-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of AUTO-005 — Automation profile. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "The existing desktop database registration invokes automationProfileJourney in tests/qualification/ui-convergence/automation-profile-journey.mjs: native toolbar creation, both populated rule-list profiles, complete scope and branch controls, actual executions, database-only logs and lossless native policy switches. The existing phone core registration captures all three forms. The existing portability round trip restores genuine container and site execution histories and repeats native profile changes while restored authority stays disabled. Exact-candidate Verify and guarded landing establish independent acceptance; this Workers registry retains its supporting regressions.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/structured.test.ts",

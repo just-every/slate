@@ -36,6 +36,13 @@ export function equivalent(before,after,ownerEmail,newExportId,bootstrapAuditRow
         expected.status=owner?'active':'historical';expected.is_setup_owner=owner?1:0;if(owner)expected.role='owner';
       }
       if(table==='files')expected.storage_key=blobKeys.get(expected.storage_key);
+      if(table==='automation_rules'){
+        const restored=actual.find(row=>row.id===expected.id);assert.ok(restored);
+        assert.match(restored.disabled_at,/^\d{4}-\d{2}-\d{2}T/,'Restored rules retain no active execution authority.');
+        assert.equal(restored.disabled_reason,'Restored: owner must re-enable authority.');
+        expected.disabled_at=restored.disabled_at;expected.disabled_reason=restored.disabled_reason;
+      }
+      if(table==='automation_jobs')expected.state='failed';
       if(table==='public_exposures'){
         const restored=actual.find(row=>row.id===expected.id);assert.ok(restored);
         assert.match(restored.revoked_at,/^\d{4}-\d{2}-\d{2}T/,'Restored public link is explicitly revoked.');

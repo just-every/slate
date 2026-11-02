@@ -8,6 +8,7 @@ import test from 'node:test';
 import {runtime,signIn,api,ownerEmail,root} from './runtime.mjs';
 import {populatedFixture,attachments,pageIds} from './fixture.mjs';
 import {equivalent,unpack} from './equivalence.mjs';
+import {populateAutomation,restoredAutomation} from './automation.mjs';
 import {bootstrapAuditPredicate} from '../../src/core/features/portability/bootstrap-audit.ts';
 
 test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/restore/backup preserves populated D1 and original R2 bytes in a separate empty deployment',{timeout:240000},async t=>{
@@ -19,6 +20,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     let sourceCookie=await signIn(source);
     const owner=(await(await api(source,sourceCookie,'/api/session')).json()).member;
     await source.close();await source.sql(populatedFixture(owner));await source.start();
+    const automation = await populateAutomation(source, sourceCookie);
     const originals=[];
     for(const attachment of attachments){
       const form=new FormData();form.set('operationKey',randomUUID());form.set('pageId','archive-root');form.set('file',new Blob([attachment.bytes],{type:attachment.type}),attachment.name);
@@ -30,7 +32,8 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const published=await fetch(source.origin+'/p/research/portable');assert.equal(published.status,200);assert.match(await published.text(),/Restorable research/);
     const first=path.join(scratch,'source.zip'),second=path.join(scratch,'restored.zip');
     const exportReceipt=await source.cli('export',first,sourceCookie);const before=unpack(await readFile(first));
-    assert.equal(exportReceipt.counts.pages,3);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.length,6);assert.equal(before.manifest.tables.comments.length,2);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
+    assert.equal(exportReceipt.counts.pages,4);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.length,7);assert.equal(before.manifest.tables.comments.length,4);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
+    assert.equal(before.manifest.tables.automation_rules.length,2);assert.equal(before.manifest.tables.automation_runs.length,4);
     await source.close();
     target=await runtime(path.join(scratch,'target'));
     assert.notEqual(target.persist,source.persist);
@@ -70,11 +73,11 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const restoreJob=await staged.json();
     assert.equal(staged.status,202,JSON.stringify(restoreJob));
     const imported=await(await api(target,localCookie,`/api/exports/jobs/${restoreJob.id}/run`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
-    assert.equal(imported.state,'completed');assert.equal(imported.counts.pages,3);assert.equal(imported.counts.files,2);
+    assert.equal(imported.state,'completed');assert.equal(imported.counts.pages,4);assert.equal(imported.counts.files,2);
     assert.equal((await fetch(target.origin+'/api/session',{headers:{Cookie:bootstrapCookie,...devKeyHeaders}})).status,401,'Restore revokes the original target session.');
     await target.close();
     const [index]=await target.sql('SELECT (SELECT COUNT(DISTINCT page_id) FROM search_text WHERE page_id IS NOT NULL) AS indexed,(SELECT COUNT(*) FROM search_dirty) AS pending');
-    assert.deepEqual(index.results,[{indexed:3,pending:0}],'Search is already rebuilt before a page or search request can repair it.');
+    assert.deepEqual(index.results,[{indexed:4,pending:0}],'Search is already rebuilt before a page or search request can repair it.');
     await target.start();const targetCookie=await signIn(target);
     const outboxBefore=await inbox(target.origin);
     for(const email of ['archive-member@example.invalid','archive-guest@example.invalid']){
@@ -96,6 +99,8 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     await target.start();
     const refused=await fetch(target.origin+'/api/exports/workspace',{method:'POST',headers:{Cookie:targetCookie,Origin:target.origin,'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID()})});
     assert.equal(refused.status,409);assert.equal((await refused.json()).code,'UNREGISTERED_PORTABLE_TABLE','Populated unknown tables still fail closed.');
+    await target.close();await target.sql('DROP TABLE portability_unregistered_record');await target.start();
+    await restoredAutomation(target,targetCookie,automation);
   }finally{
     const cleanup=await Promise.allSettled([source?.close(),target?.close()]);
     await rm(scratch,{recursive:true,force:true});
