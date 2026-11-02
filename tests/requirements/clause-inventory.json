@@ -276,8 +276,13 @@
       "id": "PAGE-003",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for PAGE-003 — Identity survives everything. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "This legacy inventory classifies Workers supporting tests only; CONTRACT.md owns native clause status. The existing responsive content-query registrations load pageIdentityJourney: one populated page retains its copied permanent address, body mention, exact-revision citation, saved content query and search result across rename, body edit, moves within and between spaces, archive and trash with restoration, workspace and web publication and unpublication. Independent reader reloads enforce current grants and restored result identity. Exact candidate execution is recorded by Verify.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/content/http.test.ts",
+          "testName": "content durable HTTP content saves, revisions, moves, deletion, suggestions and attachment limits preserve durable state"
+        }
+      ]
     },
     {
       "id": "PAGE-004",
