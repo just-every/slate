@@ -129,6 +129,7 @@ test('Verifying offers 7, 30 or 90 days, a date or none, only on the opened revi
   const bulk = await request('owner', 'POST', '/api/status/review/bulk-verify', {items: [{pageId: id, operationKey: op(), pageRevisionId: revision, attestRevisionId: changed.workingRevisionId, statusKey: 'verified'}]});
   expect(bulk.data.items).toEqual([{pageId: id, verified: true}]);
   await citationJourney(f);
+  await compareBlockHistory(f, op);
 }, 60_000);
 
 
@@ -246,4 +247,63 @@ async function citationJourney(f: Awaited<ReturnType<typeof reviewFixture>>) {
   const erasedPublic=await request('anonymous','GET',`/p/cited-handbook?revision=${snapshot}`);
   expect(erasedPublic.status).toBe(404);
   expect(erasedPublic.text).not.toContain('Committed citation body.');
+}
+
+/** Native commits, nonadjacent history and profile switches leave both snapshots intact. */
+async function compareBlockHistory(f: Awaited<ReturnType<typeof reviewFixture>>, op: () => string) {
+  const { request } = f;
+  const retained: { pageId: string; left: any; right: any; history: any }[] = [];
+  const profile = async (value: string) => {
+    const workspace = (await request('owner', 'GET', '/api/workspace')).data;
+    const { id: _id, revisionId, ...settings } = workspace;
+    const response = await request('owner', 'PUT', '/api/workspace', { ...settings, operationKey: op(), expectedRevisionId: revisionId, policies: { ...workspace.policies, 'page.version.v1': value } });
+    expect(response.status).toBe(200);
+  };
+  const compare = async (pageId: string, left: any, right: any, changes: Record<string, string>) => {
+    const response = await request('owner', 'GET', `/api/revisions/${pageId}/compare/${left.id}/${right.id}`);
+    expect(response.status).toBe(200);
+    expect(response.data).toMatchObject({ leftId: left.id, rightId: right.id, properties: { before: left.properties, after: right.properties } });
+    expect(Object.fromEntries(response.data.blocks.map((item: any) => [item.id.split('-').at(-1), item.change]))).toEqual(changes);
+    for (const item of response.data.blocks) {
+      expect(item.before).toEqual(left.blocks.find((block: any) => block.id === item.id) ?? null);
+      expect(item.after).toEqual(right.blocks.find((block: any) => block.id === item.id) ?? null);
+    }
+  };
+  const forward = { anchor: 'unchanged', removed: 'removed', changed: 'changed', moved: 'changed', typed: 'changed', nested: 'changed', added: 'added' };
+  const backward = { ...forward, removed: 'added', added: 'removed' };
+  for (const policy of ['autosnapshot', 'labelled']) {
+    await profile(policy);
+    const block = (name: string, text: string, position: string, extra = {}) => ({ id: `${policy}-${name}`, blockType: 'paragraph', content: { text: [{ text }] }, treePosition: position, ...extra });
+    const blocks = [block('anchor', 'Keep the introduction.', '00'), block('removed', 'Retire the old instruction.', '10'), block('changed', 'Call the old escalation line.', '20'), block('moved', 'Move this instruction earlier.', '30'), block('typed', 'Keep these words as a quotation.', '40'), block('nested', 'Nest this explanation.', '50')];
+    const created = await request('owner', 'POST', '/api/pages', { operationKey: op(), containerId: 'c', title: `Revision comparison ${policy}`, blocks });
+    expect(created.status).toBe(200);
+    const pageId = created.data.value.pageId;
+    const snapshot = async (revision: string) => {
+      const response = await request('owner', 'GET', `/api/revisions/${pageId}/${revision}`);
+      expect(response.status).toBe(200);
+      return response.data;
+    };
+    const middle = await request('owner', 'PATCH', `/api/pages/${pageId}`, { operationKey: op(), expectedRevisionId: created.data.receipt.revisionId, properties: { title: `Revision comparison ${policy}, edited` } });
+    expect(middle.status).toBe(200);
+    const after = [blocks[0], block('added', 'Add the new instruction here.', '05'), { ...blocks[3], treePosition: '15' }, block('changed', 'Call the new escalation line.', '20'), { ...blocks[4], blockType: 'quote' }, { ...blocks[5], parentBlockId: blocks[0].id }];
+    const edited = await request('owner', 'PUT', `/api/pages/${pageId}/blocks`, { operationKey: op(), expectedRevisionId: middle.data.receipt.revisionId, blocks: after });
+    expect(edited.status).toBe(200);
+    const left = await snapshot(created.data.receipt.revisionId);
+    const right = await snapshot(edited.data.receipt.revisionId);
+    const history = (await request('owner', 'GET', `/api/revisions/${pageId}`)).data;
+    expect(history.items.slice(0, 3).map((item: any) => item.id)).toEqual([right.id, middle.data.receipt.revisionId, left.id]);
+    await compare(pageId, left, right, forward);
+    await compare(pageId, right, left, backward);
+    await compare(pageId, right, right, Object.fromEntries(right.blocks.map((item: any) => [item.id.split('-').at(-1), 'unchanged'])));
+    retained.push({ pageId, left, right, history });
+  }
+  for (const policy of ['autosnapshot', 'labelled', 'autosnapshot']) {
+    await profile(policy);
+    for (const { pageId, left, right, history } of retained) {
+      await compare(pageId, left, right, forward);
+      expect((await request('owner', 'GET', `/api/revisions/${pageId}`)).data).toEqual(history);
+      expect((await request('owner', 'GET', `/api/revisions/${pageId}/${left.id}`)).data).toEqual(left);
+      expect((await request('owner', 'GET', `/api/revisions/${pageId}/${right.id}`)).data).toEqual(right);
+    }
+  }
 }

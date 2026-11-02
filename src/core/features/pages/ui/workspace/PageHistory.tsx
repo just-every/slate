@@ -9,6 +9,36 @@ import { RequestState } from "../../../../app/ui/RequestState";
 import { ActionDialog } from "../../../../app/ui/ActionDialog";
 import { BlockView as RenderBlock } from "../../../editor/ui/blocks/BlockView";
 import type { BlockView } from "../../../../shared/api/content";
+interface ComparedBlock {
+  id: string;
+  change: string;
+  before: BlockView | null;
+  after: BlockView | null;
+}
+
+function ComparisonSide({ items, side }: { items: ComparedBlock[]; side: "before" | "after" }) {
+  // Each side keeps its own committed order: an insertion or move must not be
+  // appended in the other revision's order.
+  const blocks = items.flatMap(item => item[side] ? [item[side]!] : [])
+    .sort((a, b) => a.treePosition < b.treePosition ? -1 : a.treePosition > b.treePosition ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const rendered = editorBlocks(blocks);
+  const changes = new Map(items.map(item => [item.id, item.change]));
+  return (
+    <section aria-label={side === "before" ? "Before revision" : "After revision"}>
+      <h4>{side === "before" ? "Before" : "After"}</h4>
+      {blocks.map((block, index) => (
+        <section key={block.id} data-comparison-block={block.id} data-tree-position={block.treePosition} data-parent-block-id={block.parentBlockId ?? ""}>
+          <h5>{changes.get(block.id)}</h5>
+          <div data-comparison-content style={{ marginInlineStart: `${(rendered[index].indent ?? 0) * 20}px` }}>
+            <RenderBlock block={rendered[index]} canEdit={false} onChange={() => {}} />
+          </div>
+        </section>
+      ))}
+      {!blocks.length ? <p>No blocks</p> : null}
+    </section>
+  );
+}
+
 interface Revision {
   id: string;
   origin: string;
@@ -43,7 +73,7 @@ export function PageHistory({
   const [compare,setCompare]=useState<string>(requestedCompare);
   useEffect(()=>{setSelected(requestedRevision);setCompare(requestedCompare);},[requestedRevision,requestedCompare]);
   const [deleting,setDeleting]=useState(false);
-  const comparison=useResource<{blocks:{id:string;change:string;before:BlockView|null;after:BlockView|null}[];properties:{before:unknown;after:unknown}}>(selected&&compare?`/api/revisions/${document.page.id}/compare/${selected}/${compare}`:null);
+  const comparison=useResource<{blocks:ComparedBlock[];properties:{before:unknown;after:unknown}}>(selected&&compare?`/api/revisions/${document.page.id}/compare/${selected}/${compare}`:null);
   const [restoring, setRestoring] = useState(false);
   const snapshot = useResource<{
     id: string;
@@ -62,7 +92,20 @@ export function PageHistory({
     <section>
       <h2>Version history</h2>
       {selected ? <label>Compare with<select aria-label="Compare with" value={compare} onChange={e=>setCompare(e.target.value)}><option value="">Choose another revision</option>{history.data?.items.filter(r=>r.id!==selected&&!r.deletedAt).map(r=><option key={r.id} value={r.id}>{r.label ? `${r.label} · ` : ""}{displayRevisionTime(r.createdAt)}{r.authorDisplayName ? ` · ${r.authorDisplayName}` : ""}</option>)}</select></label>:null}
-      {compare ? <RequestState loading={comparison.loading} error={comparison.error} retry={comparison.reload}><section aria-label="Revision comparison"><h3>Before and after</h3>{comparison.data?.blocks.map(item=><section key={item.id}><h4>{item.change}</h4><div className="conflict-columns">{[item.before,item.after].map((block,index)=><div key={index}><strong>{index===0?'Before':'After'}</strong>{block ? <RenderBlock block={editorBlocks([block])[0]} canEdit={false} onChange={()=>{}}/>:<p>No block</p>}</div>)}</div></section>)}<details><summary>Property changes</summary><pre>{JSON.stringify(comparison.data?.properties,null,2)}</pre></details></section></RequestState>:null}
+      {compare ? (
+        <RequestState loading={comparison.loading} error={comparison.error} retry={comparison.reload}>
+          {comparison.data ? (
+            <section aria-label="Revision comparison">
+              <h3>Before and after</h3>
+              <div className="conflict-columns">
+                <ComparisonSide items={comparison.data.blocks} side="before" />
+                <ComparisonSide items={comparison.data.blocks} side="after" />
+              </div>
+              <details><summary>Property changes</summary><pre>{JSON.stringify(comparison.data.properties, null, 2)}</pre></details>
+            </section>
+          ) : null}
+        </RequestState>
+      ) : null}
       <RequestState
         loading={history.loading}
         error={history.error}
