@@ -24,6 +24,11 @@ export async function containerGrantPrincipalsCase() {
     ...[f.a,f.b].sort().map(id=>({kind:'member',id,label:id,memberKind:'member'})),
     {kind:'group',id:group.data.value.id,label:'Container reviewers'},
   ]);
+  await env.DB.prepare("UPDATE members SET member_kind='guest' WHERE id=?").bind(f.b).run();
+  const guest=await f.request('GET',`/api/sharing/containers/${f.containerId}`,undefined,f.b);
+  expect(guest.status).toBe(200);
+  expect(guest.data.principals).toEqual([]);
+  await env.DB.prepare("UPDATE members SET member_kind='member' WHERE id=?").bind(f.b).run();
   const groups=await f.request('GET','/api/groups');
   expect((await f.request('GET','/api/groups',undefined,f.b)).status).toBe(403);
   expect((await f.request('POST','/api/groups',{operationKey:createUlid(),id:group.data.value.id,expectedRevisionId:group.data.value.revisionId,name:'Changed',memberIds:[]},f.b)).status).toBe(403);

@@ -19,9 +19,11 @@ async function openAccess(page,origin,id) {
 /** Native grant edits retain their exact receipt, grant snapshot and one activity under replay. */
 async function saveAccess(actor,origin,space,{principal,level,id,revoke=false,expires=false},proof) {
   const {page,context}=actor;
+  let previous;
   if(id) {
     const snapshot=await ok(context,origin,'GET',`/api/sharing/containers/${space}`);
     const row=snapshot.items.find(item=>item.id===id);
+    previous=row;
     const label=row.principalKind==='workspace'?'Everyone in workspace':row.principalKind==='container'?'Space members':row.principalLabel;
     await page.locator('.space-detail .settings-list li').filter({hasText:label}).filter({has:page.getByRole('button',{name:'Edit access',exact:true})}).getByRole('button',{name:'Edit access',exact:true}).click();
   } else await page.getByRole('button',{name:'Grant access',exact:true}).click();
@@ -33,6 +35,14 @@ async function saveAccess(actor,origin,space,{principal,level,id,revoke=false,ex
     await dialog.getByRole('textbox',{name:'Access expiry date and time',exact:true}).blur();
   }
   if(revoke)await dialog.getByRole('checkbox',{name:'Revoke this grant',exact:true}).check();
+  if(principal?.startsWith('group:')) {
+    const close=dialog.getByRole('button',{name:'Close dialog',exact:true});
+    await page.keyboard.press('Tab');
+    await close.focus();
+    await expect.poll(()=>close.evaluate(element=>getComputedStyle(element,'::after').opacity)).toBe('1');
+    await expect(close).toHaveAttribute('data-tooltip',/\S+\s+\S+/);
+    await accessible(page,'container administrator selects a group');
+  }
   const saving=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/sharing'&&response.request().method()==='POST');
   await dialog.getByRole('button',{name:'Save access',exact:true}).click();
   const response=await saving,input=response.request().postDataJSON();
@@ -43,7 +53,8 @@ async function saveAccess(actor,origin,space,{principal,level,id,revoke=false,ex
   const grant=snapshot.items.find(item=>item.id===receipt.value.id);
   assert.ok(grant);
   assert.deepEqual({kind:grant.principalKind,id:grant.principalId,level:grant.level,expiresAt:grant.expiresAt,revoked:!!grant.revokedAt},
-    {kind:input.principalKind,id:input.principalId,level:input.level,expiresAt:input.expiresAt,revoked:!!input.revoke});
+    input.revoke?{kind:previous.principalKind,id:previous.principalId,level:previous.level,expiresAt:previous.expiresAt,revoked:true}:
+      {kind:input.principalKind,id:input.principalId,level:input.level,expiresAt:input.expiresAt,revoked:false});
   assert.equal(receipt.receipt.operationKey,input.operationKey);
   const replay=await ok(context,origin,'POST','/api/sharing',input);
   assert.deepEqual(replay.receipt,receipt.receipt);
@@ -181,7 +192,7 @@ async function refusalAndLiveChange(state,people,proof) {
   for(const [name,revoke] of [['narrowed',false],['revoked',true]]) {
     await saveAccess(owner,origin,space,{id:access.id,level:'edit'},proof);
     // A real page notification proves the populated inbox loses the target after revocation.
-    await ok(context,origin,'POST',`/api/comments/page/${existing}`,{operationKey:key(),kind:'page',body:[{text:'Read this ',mention:{kind:'member',id:'browser-reader',label:'Morgan Reader'}}]});
+    await ok(context,origin,'POST',`/api/comments/page/${existing}`,{operationKey:key(),kind:'page',body:[{text:'Read this '},{text:'Morgan Reader',mention:{kind:'person',id:'browser-reader',label:'Morgan Reader'}}]});
     assert.deepEqual(await visible(),{page:true,tree:true,search:true,inbox:true});
     await bob.page.goto(`${origin}/app/pages/${existing}`,{waitUntil:'networkidle'});
     await caretAtEnd(bob.page,block);

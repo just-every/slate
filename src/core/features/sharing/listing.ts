@@ -1,6 +1,6 @@
 import type { FeatureContext } from '../../app/feature-context';
 import type { KnowledgeGrant } from '../../shared/knowledge/model';
-import { requirePageLevel, requireContainerAdministration } from './current-access';
+import { currentSubject, requirePageLevel, requireContainerAdministration } from './current-access';
 import { sharingConfiguration } from './configuration';
 import { isPrivateLifecycle } from './access';
 import { currentPageTitle, permitted } from '../search/visibility';
@@ -15,6 +15,7 @@ function presented(row:GrantRow,origin:{kind:'page'|'container';id:string|null;n
 }
 /** Principal labels for this authorized grant editor; group membership stays owner-only. */
 async function containerPrincipals(ctx:FeatureContext,id:string) {
+  if((await currentSubject(ctx)).isGuest)return [];
   const scope=await ctx.db.prepare('SELECT c.visibility,c.guest_access AS guests,w.guest_access AS workspaceGuests FROM containers c JOIN workspaces w ON w.id=c.workspace_id WHERE c.id=? AND c.workspace_id=?').bind(id,ctx.actor.workspaceId).first<{visibility:string;guests:string;workspaceGuests:string}>();
   if(!scope||scope.visibility==='personal')return [];
   const [members,groups]=await Promise.all([
