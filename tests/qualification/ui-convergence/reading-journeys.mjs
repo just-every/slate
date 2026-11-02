@@ -98,7 +98,7 @@ export async function settingsJourney(state, width) {
   await guestConsoleJourney(state);
   await themeJourney(state, width);
   if(width===1440)await activityContextJourney(state);
-  // Last: the operator's per-minute request budget is spent by the many screens above, not by this reconciliation.
+  // Finish with native container and navigation reconciliation after the settings screens.
   await containerIdentityJourney(state,width);
   await navigationJourney(state,width);
 }

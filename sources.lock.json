@@ -10564,7 +10564,7 @@
       "executable": false
     },
     "tests/e2e/navigation-slot.mjs": {
-      "sha256": "49cfabb31acfc7afaa8e6d56076a768f4a9d3ed0541594efe3892d02f5f54a22",
+      "sha256": "1a348d2c727d258cc0c03198bd0468a7626c760209be9c00af5ec095f11f49f0",
       "executable": false
     },
     "tests/e2e/navigation/create-in-place.test.ts": {
@@ -12100,7 +12100,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/reading-journeys.mjs": {
-      "sha256": "7878571a8394979ba480be666b4ea2254253e485cd9d8bbed181c943675c3d44",
+      "sha256": "5873d46b9dfc024938d4c3e194792643f637d7742a46c53766d8eaeda680aa8b",
       "executable": false
     },
     "tests/qualification/ui-convergence/record-detail-journey.mjs": {
@@ -12136,7 +12136,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/sidebar-journey.mjs": {
-      "sha256": "11052c1c0ffd45558cfdb997c3b027048ba56a39497d610c91bd93ab83d9faff",
+      "sha256": "f5f52f63f1463d9b8b5c7a152402911bd89ab77c946a79f70d0b349875a5a583",
       "executable": false
     },
     "tests/qualification/ui-convergence/starter-templates-journey.mjs": {

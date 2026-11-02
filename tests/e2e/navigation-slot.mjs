@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chromium } from '@playwright/test';
 import { root } from './runtime-harness.mjs';
@@ -58,10 +59,6 @@ export async function navigationSlotJourney() {
         runtime = await harness.startEmittedWorker(persistPath, harness.localDevelopmentVars);
         const origin = runtime.baseUrl;
         const { cookie } = await harness.signInLocally(origin);
-        const ssr = await fetch(origin + '/app', { headers: { cookie } });
-        assert.equal(ssr.status, 200);
-        const html = await ssr.text();
-        assert.ok(!html.includes('Response library'), 'The buyer contribution appears only after hydration.');
         context = await browser.newContext({ viewport: { width, height: width === 1440 ? 1000 : 844 } });
         await context.addCookies(cookie.split('; ').map(item => {
           const index = item.indexOf('=');
@@ -73,6 +70,15 @@ export async function navigationSlotJourney() {
           assert.equal(response.status(), 200, route);
           return response.json();
         };
+        assert.equal((await api('/api/workspace/first-run')).required, true);
+        const firstRun = await context.request.post(origin + '/api/workspace/first-run', {
+          headers: { origin },
+          data: { operationKey: randomUUID(), workspaceName: 'Buyer response team', containerName: 'Handbook', pageTitle: 'Welcome' },
+        });
+        assert.equal(firstRun.status(), 200, await firstRun.text());
+        const ssr = await fetch(origin + '/app', { headers: { cookie } });
+        assert.equal(ssr.status, 200);
+        assert.ok(!(await ssr.text()).includes('Response library'), 'The buyer contribution appears only after hydration.');
         await page.goto(origin + '/app', { waitUntil: 'networkidle' });
         await navigationJourney({ page, context, origin, api }, width, { buyerSlot: true });
       } finally {

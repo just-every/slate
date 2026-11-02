@@ -83,6 +83,12 @@ export async function navigationJourney(state, width, { buyerSlot = false } = {}
   await mkdir('.artifacts/ui-convergence', { recursive: true });
   const shot = label => page.screenshot({ path: `.artifacts/ui-convergence/navigation-${buyerSlot ? 'buyer-' : ''}${width}-${label}.png`, fullPage: true });
   await shot('configured');
+  await trees.locator(`a[href="/app/pages/${child}"]`).scrollIntoViewIfNeeded();
+  await shot('tree');
+  if (buyerSlot) {
+    await slot.scrollIntoViewIfNeeded();
+    await shot('slot');
+  }
   console.log(`PROBE NAV-004 1: native Configure navigation at ${width} -> relabelled, reordered and hidden destinations reconcile with API`);
   await navigationPolicies(state, reconcile);
   await page.goto(`${origin}/app/containers/${space.id}`, { waitUntil: 'networkidle' });
