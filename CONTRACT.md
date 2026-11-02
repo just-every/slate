@@ -3992,6 +3992,8 @@ Judged from the code and tests at commit `30886e55608596bb44862e4c6942dc1a24ef98
 
 CONT-001 is judged from source commit `12379d17957e993f2aa09d13a8df536aad5a41d8`; owners are read by members only, and a guest's container read carries none. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander.
 
+BLOCK-007 retains current main’s partial judgment and evidence gap. The replay adds supporting body task attribution, completion counts, undo, database exclusion and current-authority assertions; it does not promote the expanded task assignment and notification requirement.
+
 STAT-005 retains the current main judgment below. The native status-profile controls and responsive journeys have been reapplied as supporting implementation and assertions; this replay does not promote the clause or replace its recorded evidence gap.
 
 | Clauses | Done | Partial | Missing | Total |
