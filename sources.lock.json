@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "82f562826c26d5fe34c3c354f3d16bc3e2474a2d70032a5c88844ab2b19a3f1c",
       "executable": false
     },
     "DEMO.md": {
@@ -8436,7 +8436,7 @@
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageSharing.tsx": {
-      "sha256": "2fcaf6d57b8476f33c984f6e7544b94ebe970a5f6c428262f1ba30c93a365103",
+      "sha256": "efbda9fb44728ccedd448c2d0f3bab7b996e4dd96023f52f2ab8b8f1511ca347",
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageStatusBadge.tsx": {
@@ -9340,11 +9340,11 @@
       "executable": false
     },
     "src/core/features/sharing/inheritance.ts": {
-      "sha256": "7f93ce5d739dc584700874e10fa486f6571accf9daaee3da4599b4c2b55cc4f9",
+      "sha256": "ba31a95734f64d03990e126299132fd0701714ab1a4e02cd6b8ec9fd174f6cfe",
       "executable": false
     },
     "src/core/features/sharing/listing.ts": {
-      "sha256": "8138eb7027c9d272576980ee5c556695f4eaa2f96dc6132938694b70482b8678",
+      "sha256": "b27c07e4586f89742b750fdc92ea54c2b4e39d2466d7a96cedae3474075f4960",
       "executable": false
     },
     "src/core/features/sharing/recipients.ts": {
@@ -12123,8 +12123,12 @@
       "sha256": "713db30db4126472246cbc11ce456f2c5cf33ab9938a0a4e3f596e250de24e59",
       "executable": false
     },
+    "tests/qualification/ui-convergence/sharing-inheritance-journey.mjs": {
+      "sha256": "322b56cb3bcace81805715acf5d345f13ab091836fbf03b78adb185902629b14",
+      "executable": false
+    },
     "tests/qualification/ui-convergence/sharing-journey.mjs": {
-      "sha256": "11366a9c3177263fcc7ddbca0c394ac66cdc5c0ffb0d3f6df7bab2f0a02dfeb3",
+      "sha256": "7bdf431cde8f10c956cd7bd7a1d994d196cd2048016400d812b836a1a324780a",
       "executable": false
     },
     "tests/qualification/ui-convergence/starter-templates-journey.mjs": {
