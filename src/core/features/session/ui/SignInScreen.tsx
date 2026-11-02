@@ -87,6 +87,7 @@ export function SignInScreen({
             <div className="paper-alert" role="alert">
               <strong className="paper-alert-title">Provider review required</strong>
               <span>The mail provider’s acceptance is uncertain. Review the provider receipt with your workspace owner before requesting another link. Slate will not resend this attempt automatically.</span>
+              {deliveryError ? <code>{deliveryError}</code> : null}
             </div>
           ) : null}
 

@@ -9160,11 +9160,11 @@
       "executable": false
     },
     "src/core/features/session/ui/SignInPage.tsx": {
-      "sha256": "d7d411e1c5a70d7fe06b2ee206f602841c8c1bbaff75c644bb3196ada8d5b7c3",
+      "sha256": "5abce34ea4da19516a029b46c8b008f196b281de8caf66890644005cab3c22d3",
       "executable": false
     },
     "src/core/features/session/ui/SignInScreen.tsx": {
-      "sha256": "e960edae701530266bb28a66eca91237955557347d7a716180df9a6a77153a0a",
+      "sha256": "25c784b9923b6eefbbde2fd87f066e7c8aef82b0ce84f207ff4a10391073393a",
       "executable": false
     },
     "src/core/features/settings/ui/workspace/AppearancePanel.tsx": {
@@ -10556,7 +10556,7 @@
       "executable": false
     },
     "tests/e2e/mail-failure-journey.mjs": {
-      "sha256": "e9ab7bdb2aad9f21b85c245dcf31c74538471f9beaaa5ff50b565dae7944b541",
+      "sha256": "675ecd045e47a3f7b8bc266eabdaf981ffa5715a2f0cf550d88c9a68728c0cf1",
       "executable": false
     },
     "tests/e2e/mail-runtime.d.mts": {

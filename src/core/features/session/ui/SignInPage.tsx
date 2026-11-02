@@ -51,7 +51,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         .then((result) => {
           if (alive) {
             setDelivery(result.state);
-            setFailure(result.state === "failed" ? result.errorDetail ?? "Delivery failed." : null);
+            setFailure(result.state === "failed" || result.state === "uncertain" ? result.errorDetail ?? "Delivery failed." : null);
           }
         })
         .catch((cause) => {
@@ -118,7 +118,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
               try {
                 const status = await requestJson<{state: typeof delivery; errorDetail?: string}>("/api/auth/magic/status", {method:"POST",body:{email,requestKey:requestKey.current}});
                 setDelivery(status.state);
-                setFailure(status.state === 'uncertain' ? null : status.errorDetail ?? (cause instanceof Error ? cause.message : "The sign-in request failed."));
+                setFailure(status.errorDetail ?? (cause instanceof Error ? cause.message : "The sign-in request failed."));
               } catch {
                 setDelivery('unconfirmed');
                 setFailure(cause instanceof Error ? cause.message : "The sign-in request failed.");

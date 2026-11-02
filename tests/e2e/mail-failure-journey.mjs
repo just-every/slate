@@ -4,6 +4,7 @@ import {mkdir,mkdtemp,readFile,rm} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {request as httpsRequest} from 'node:https';
 import {tmpdir} from 'node:os';
+import {createHash,X509Certificate} from 'node:crypto';
 import path from 'node:path';
 import {chromium, expect} from '@playwright/test';
 import {managedMailRuntime} from './mail-runtime.mjs';
@@ -14,15 +15,17 @@ const credential = 'synthetic-slate-provider-credential';
 
 /** Real native sign-in and Settings controls; only the provider network edge is substituted. */
 export async function mailFailureJourney() {
-  const browser = await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']});
   const tlsDir=await mkdtemp(path.join(tmpdir(),'slate-mail-tls-'));
   execFileSync('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',path.join(tlsDir,'key.pem'),'-out',path.join(tlsDir,'cert.pem'),'-days','1','-subj','/CN=localhost','-addext','subjectAltName=IP:127.0.0.1,DNS:localhost'],{stdio:'ignore'});
   const tls={key:await readFile(path.join(tlsDir,'key.pem'),'utf8'),cert:await readFile(path.join(tlsDir,'cert.pem'),'utf8')};
+  const spki=createHash('sha256').update(new X509Certificate(tls.cert).publicKey.export({type:'spki',format:'der'})).digest('base64');
+  const browser = await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{}),args:['--no-sandbox',`--ignore-certificate-errors-spki-list=${spki}`,'--use-mock-keychain','--password-store=basic']});
   // Trust only this loopback runtime's ephemeral certificate for native probes.
   const localFetch=(url,init={})=>new Promise((resolve,reject)=>{
     const request=httpsRequest(url,{method:init.method??'GET',headers:init.headers,ca:tls.cert},response=>{
       const chunks=[];response.on('data',chunk=>chunks.push(chunk));response.on('end',()=>resolve(new Response(Buffer.concat(chunks),{status:response.statusCode,headers:Object.fromEntries(Object.entries(response.headers).map(([name,value])=>[name,Array.isArray(value)?value.join(', '):value]))})));
     });
+    request.setTimeout(30000,()=>request.destroy(new Error('Native loopback request timed out: '+new URL(url).pathname)));
     request.on('error',reject);request.end(init.body?.toString());
   });
   const shots = process.env.SLATE_MAIL_SHOTS;
@@ -40,7 +43,7 @@ export async function mailFailureJourney() {
         assert.equal(request.url,endpoint,'Only the configured provider receives mail');
         const wire=await request.text(),body=JSON.parse(wire);
         const to=provider==='rer'?body.to:provider==='sendgrid'?body.personalizations[0].to[0].email:body.to[0];
-        requests.push({to,wire,key:request.headers.get('idempotency-key'),outcome});
+        requests.push({to,wire,text:body.text??body.content.find(part=>part.type==='text/plain').value,key:request.headers.get('idempotency-key'),outcome});
         if(outcome==='reject')return new Response(privateDetail,{status:401});
         if(outcome==='throttle')return new Response(privateDetail,{status:429,headers:{'Retry-After':'240'}});
         if(outcome==='uncertain')return new Response(privateDetail,{status:503});
@@ -48,9 +51,11 @@ export async function mailFailureJourney() {
         return Response.json({accepted:true},{status:202,headers:provider==='sendgrid'?{'x-message-id':'synthetic-slate-accepted'}:{}});
       },{port,tls});
       try {
+        console.log(`Native mail browser ${provider}: emitted runtime ready`);
         const db=await runtime.getD1Database('DB'),worker=await runtime.getWorker();
         const {readD1Migrations}=await import('@cloudflare/vitest-pool-workers');
         for(const migration of await readD1Migrations('migrations/core'))await db.batch(migration.queries.map(query=>db.prepare(query)));
+        console.log(`Native mail browser ${provider}: D1 migrated`);
         const post=(route,body,cookie='')=>localFetch(origin+route,{method:'POST',headers:{origin,'content-type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(body)});
         const read=(email,kind)=>db.prepare('SELECT * FROM mail_deliveries WHERE target_email=? AND kind=? ORDER BY created_at DESC,id DESC LIMIT 1').bind(email,kind).first();
         const count=email=>requests.filter(request=>request.to===email).length;
@@ -62,11 +67,15 @@ export async function mailFailureJourney() {
         const rows=await db.prepare('SELECT count(*) AS n FROM mail_deliveries').first();assert.equal(rows.n,0);
         // Establish a real native owner session from mail captured at the provider edge.
         assert.equal((await post('/api/auth/magic',{email:owner,requestKey:crypto.randomUUID()})).status,200);
-        const link=JSON.parse(requests[0].wire).text.match(/https?:\/\/\S+/)[0];
+        const link=requests[0].text.match(/https?:\/\/\S+/)[0];
         const token=new URL(link).searchParams.get('token');
         const confirmed=await localFetch(origin+'/auth/confirm',{method:'POST',redirect:'manual',headers:{origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token})});
         assert.equal(confirmed.status,303);
+        console.log(`Native mail browser ${provider}: native owner confirmed`);
         const cookie=confirmed.headers.get('set-cookie').split(';')[0];
+        const setup=await post('/api/workspace/first-run',{operationKey:crypto.randomUUID(),workspaceName:'Synthetic Slate',containerName:'General',pageTitle:'Welcome'},cookie);
+        assert.equal(setup.status,200,await setup.text());
+        console.log(`Native mail browser ${provider}: first run complete`);
         const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1440,height:1000}});
         const page=await context.newPage();
         await context.addCookies([{name:cookie.split('=')[0],value:cookie.slice(cookie.indexOf('=')+1),url:origin}]);
@@ -103,6 +112,7 @@ export async function mailFailureJourney() {
         const safe=async target=>assert.doesNotMatch(await target.locator('body').innerText(),new RegExp(`${privateDetail}|${credential}|payload_ciphertext|request_digest|/auth/confirm\\?token=`));
         try {
           await page.goto(origin+'/app/settings/members');await panel.waitFor();
+          console.log(`Native mail browser ${provider}: owner Settings loaded`);
           outcome='reject';
           let signinRow=await requestSignIn();
           await expect(signIn.getByRole('alert')).toContainText('Delivery was not confirmed');
@@ -145,6 +155,7 @@ export async function mailFailureJourney() {
             await tick();assert.equal(count(owner),ownerBefore+2);assert.equal(count(exhausted),inviteBefore+2);
             await signIn.reload();await expect(signIn.getByRole('alert')).toContainText('Delivery was not confirmed');
             await reload();await expect(item(exhausted)).toContainText('failed');
+            const nativeWires=requests.filter(request=>request.to===owner).slice(-3);assert.equal(new Set(nativeWires.map(request=>request.wire)).size,1);assert.equal(new Set(nativeWires.map(request=>request.key)).size,1);
             const wires=requests.filter(request=>request.to===exhausted);assert.equal(new Set(wires.map(request=>request.wire)).size,1);assert.equal(new Set(wires.map(request=>request.key)).size,1);
             outcome='accept';await item(exhausted).getByRole('button',{name:'Retry delivery'}).click();await expect(item(exhausted)).toContainText('Accepted by mail provider');
             assert.equal(count(exhausted),inviteBefore+3);assert.equal((await read(exhausted,'invitation')).attempt_count,4);
@@ -158,7 +169,10 @@ export async function mailFailureJourney() {
             assert.equal(row.delivery_phase,'uncertain');await expect(item(uncertain)).toContainText('Review required');
             await expect(item(uncertain).getByRole('button',{name:'Retry delivery'})).toHaveCount(0);
             const ownerBefore=count(owner),inviteBefore=count(uncertain);
-            await tick();
+            const expired=new Date(Date.now()-1).toISOString();
+            await db.prepare("UPDATE mail_deliveries SET delivery_phase='sending',lease_until=?,next_attempt_at=? WHERE id=?").bind(expired,expired,row.id).run();
+            await tick();assert.equal((await read(uncertain,'invitation')).delivery_phase,'uncertain');
+            const nativeRefused=await post(`/api/workspace/mail/${signinRow.id}/retry`,{},cookie);assert.equal(nativeRefused.status,409);assert.equal((await nativeRefused.json()).code,'MAIL_UNCERTAIN');
             const refused=await post(`/api/workspace/mail/${row.id}/retry`,{},cookie);assert.equal(refused.status,409);assert.equal((await refused.json()).code,'MAIL_UNCERTAIN');
             const statusKey=await signIn.evaluate(()=>JSON.parse(sessionStorage.getItem('slate.sign-in-status')).requestKey);
             assert.equal((await post('/api/auth/magic',{email:owner,requestKey:statusKey})).status,200);
@@ -179,8 +193,29 @@ export async function mailFailureJourney() {
             await signIn.setViewportSize({width:390,height:844});await page.setViewportSize({width:390,height:844});
             await signIn.reload();await reload();await shot('sign-in-failed',signIn);await shot('invitation-recovered',page);
           }
+          if(provider==='resend'){
+            // A queued native proof must not outlive erasure or a revoked session.
+            await page.setViewportSize({width:1440,height:1000});
+            const erased=address('synthetic-slate-erased');outcome='accept';await invite(erased);
+            const invitationLink=new URL(requests.findLast(request=>request.to===erased).text.match(/https?:\/\/\S+/)[0]);
+            const accepted=await localFetch(invitationLink.origin+invitationLink.pathname,{method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:invitationLink.searchParams.get('token')})});assert.equal(accepted.status,303);
+            const removedCookie=accepted.headers.get('set-cookie').split(';')[0];
+            outcome='throttle';assert.equal((await post('/api/auth/magic',{email:erased,requestKey:crypto.randomUUID()})).status,200);
+            const pending=await read(erased,'sign-in-link'),attempts=count(erased);
+            const member=await db.prepare('SELECT id FROM members WHERE email=?').bind(erased).first();
+            const removed=await post('/api/members/remove',{operationKey:crypto.randomUUID(),memberId:member.id,erase:true},cookie);assert.equal(removed.status,200,await removed.text());
+            assert.equal((await post('/api/invitations',{operationKey:crypto.randomUUID(),email:address('synthetic-slate-refused'),kind:'member'},removedCookie)).status,401);
+            await due(pending);assert.equal(count(erased),attempts);
+            const held=await db.prepare('SELECT * FROM mail_deliveries WHERE id=?').bind(pending.id).first();assert.equal(held.delivery_phase,'cancelled');assert.equal(held.payload_ciphertext,null);assert.notEqual(held.target_email,erased);
+            assert.equal((await db.prepare('SELECT count(*) AS n FROM auth_proofs WHERE member_id=?').bind(member.id).first()).n,0);
+            console.log('PROBE MAIL-002 authority: erase a member with a queued native proof -> revoked session refused, no scheduled send, no recovered proof or payload');
+          }
           await safe(signIn);await safe(page);
           console.log(`PROBE MAIL-002 2 ${provider}: rejected native sign-in and Settings invitation -> safe visible failures, no Sent claim, durable reload, explicit recovery reconciled with provider counts`);
+        } catch(cause) {
+          console.log(`Native mail browser ${provider}: failure at ${new URL(page.url()).pathname}`);
+          if(shots)await page.screenshot({path:path.join(shots,`${provider}-failure.png`),fullPage:true,timeout:5000}).catch(()=>{});
+          throw cause;
         } finally {await anonymous.close();await context.close();}
       } finally {await runtime.dispose();}
     }
