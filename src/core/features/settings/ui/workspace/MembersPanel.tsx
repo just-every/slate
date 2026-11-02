@@ -18,6 +18,11 @@ export function MembersPanel() {
   const [directory,setDirectory]=useState(false);
   const [invite, setInvite] = useState(false);
   const [sent, setSent] = useState("");
+  const [deliveryVersion, setDeliveryVersion] = useState(0);
+  async function refreshInvitations() {
+    setDeliveryVersion(version => version + 1);
+    return invitations.reload();
+  }
   const [remove, setRemove] = useState<MemberView>();
   const [group, setGroup] = useState<GroupView | "new">();
   return (
@@ -53,8 +58,8 @@ export function MembersPanel() {
           ))}
         </ul>
       </RequestState>
-      {owner ? <><PendingInvitations resource={invitations}/><GuestsPanel onInvited={invitations.reload}/></> : null}
-      {localDevelopment||!owner ? null : <MailDeliveryPanel key={sent}/>}
+      {owner ? <><PendingInvitations resource={invitations}/><GuestsPanel onInvited={refreshInvitations}/></> : null}
+      {localDevelopment||!owner ? null : <MailDeliveryPanel key={deliveryVersion}/>}
       <h3>Groups</h3>
       {owner ? (
         <button onClick={() => setGroup("new")}>Create group</button>
@@ -90,7 +95,7 @@ export function MembersPanel() {
               kind: "member",
             });
             setSent(String(data.get("email")));
-            if(owner)await invitations.reload();
+            if(owner)await refreshInvitations();
           }}
         >
 

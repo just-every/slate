@@ -130,6 +130,19 @@ export async function mailFailureJourney() {
           await expect(item(rejected)).toContainText('Accepted by mail provider');
           rejectedRow=await read(rejected,'invitation');assert.equal(rejectedRow.delivery_phase,'sent');assert.equal(count(rejected),2);
           await reload();await expect(item(rejected)).toContainText('Accepted by mail provider');assert.equal(count(rejected),2);
+          // Guest invitations share this delivery surface and must refresh it too.
+          const guest=address(`synthetic-slate-${provider}-guest-rejected`);outcome='reject';
+          await page.getByRole('button',{name:'Invite a guest',exact:true}).click();
+          const guestDialog=page.getByRole('dialog',{name:'Invite a guest',exact:true});
+          await guestDialog.getByLabel('Guest email',{exact:true}).fill(guest);
+          await guestDialog.getByLabel('Page to share').selectOption({label:'Welcome'});
+          await guestDialog.getByRole('button',{name:'Send invitation',exact:true}).click();
+          await expect(guestDialog).toHaveCount(0);await expect(item(guest)).toContainText('failed');
+          assert.equal((await read(guest,'invitation')).delivery_phase,'failed');assert.equal(count(guest),1);
+          await expect(page.getByText(`Invitation sent to ${guest}`,{exact:true})).toHaveCount(0);
+          outcome='accept';await item(guest).getByRole('button',{name:'Retry delivery'}).click();
+          await expect(item(guest)).toContainText('Accepted by mail provider');
+          await reload();await expect(item(guest)).toContainText('Accepted by mail provider');assert.equal(count(guest),2);
           const recover=signIn.waitForResponse(response=>new URL(response.url()).pathname==='/api/auth/magic'&&response.request().method()==='POST');
           await signIn.getByRole('button',{name:'Email me a sign-in link'}).click();await recover;
           await expect(signIn.getByRole('heading',{name:'Check your email'})).toBeVisible();

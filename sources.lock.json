@@ -9236,7 +9236,7 @@
       "executable": false
     },
     "src/core/features/settings/ui/workspace/MembersPanel.tsx": {
-      "sha256": "a160441fde0bc24305abe590fae24f3d19f6de002cdca4d4031a0c6a11e43dd4",
+      "sha256": "b1f5348c8c2ba4a8a1834f11d6eae96a9aac6d19fe6ecde2ec10758a867aab51",
       "executable": false
     },
     "src/core/features/settings/ui/workspace/NavigationSettings.tsx": {
@@ -10556,7 +10556,7 @@
       "executable": false
     },
     "tests/e2e/mail-failure-journey.mjs": {
-      "sha256": "e8ee3059910abf84e99bb95af960385ac07dc7bfd0efa6ebcf5af7ffec5fc829",
+      "sha256": "801b1a6570648526a5d1dae2a7b42b70ad1251313c27e11865444c71062c9273",
       "executable": false
     },
     "tests/e2e/mail-runtime.d.mts": {
