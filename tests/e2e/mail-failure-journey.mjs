@@ -101,13 +101,13 @@ export async function mailFailureJourney() {
           await item(email).waitFor();
           return read(email,'invitation');
         };
-        const requestSignIn=async()=>{
+        const requestSignIn=async(email=owner)=>{
           await signIn.goto(origin+'/signin');
-          await signIn.getByLabel('Email address',{exact:true}).fill(owner);
+          await signIn.getByLabel('Email address',{exact:true}).fill(email);
           const response=signIn.waitForResponse(response=>new URL(response.url()).pathname==='/api/auth/magic'&&response.request().method()==='POST');
           await signIn.getByRole('button',{name:'Email me a sign-in link'}).click();
           await response;
-          return read(owner,'sign-in-link');
+          return read(email,'sign-in-link');
         };
         const safe=async target=>assert.doesNotMatch(await target.locator('body').innerText(),new RegExp(`${privateDetail}|${credential}|payload_ciphertext|request_digest|/auth/confirm\\?token=`));
         try {
@@ -200,12 +200,14 @@ export async function mailFailureJourney() {
             const invitationLink=new URL(requests.findLast(request=>request.to===erased).text.match(/https?:\/\/\S+/)[0]);
             const accepted=await localFetch(invitationLink.origin+invitationLink.pathname,{method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:invitationLink.searchParams.get('token')})});assert.equal(accepted.status,303);
             const removedCookie=accepted.headers.get('set-cookie').split(';')[0];
-            outcome='throttle';assert.equal((await post('/api/auth/magic',{email:erased,requestKey:crypto.randomUUID()})).status,200);
+            outcome='throttle';await signIn.evaluate(()=>sessionStorage.clear());await requestSignIn(erased);
             const pending=await read(erased,'sign-in-link'),attempts=count(erased);
             const member=await db.prepare('SELECT id FROM members WHERE email=?').bind(erased).first();
             const removed=await post('/api/members/remove',{operationKey:crypto.randomUUID(),memberId:member.id,erase:true},cookie);assert.equal(removed.status,200,await removed.text());
             assert.equal((await post('/api/invitations',{operationKey:crypto.randomUUID(),email:address('synthetic-slate-refused'),kind:'member'},removedCookie)).status,401);
             await due(pending);assert.equal(count(erased),attempts);
+            await signIn.reload();await expect(signIn.getByRole('alert')).toContainText('The sign-in request is no longer active.');
+            await expect(signIn.getByRole('heading',{name:'Check your email'})).toHaveCount(0);
             const held=await db.prepare('SELECT * FROM mail_deliveries WHERE id=?').bind(pending.id).first();assert.equal(held.delivery_phase,'cancelled');assert.equal(held.payload_ciphertext,null);assert.notEqual(held.target_email,erased);
             assert.equal((await db.prepare('SELECT count(*) AS n FROM auth_proofs WHERE member_id=?').bind(member.id).first()).n,0);
             console.log('PROBE MAIL-002 authority: erase a member with a queued native proof -> revoked session refused, no scheduled send, no recovered proof or payload');

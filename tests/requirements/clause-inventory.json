@@ -1409,7 +1409,7 @@
       "id": "MAIL-002",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Exact supporting regressions cover public relay sign-in and rejection, durable Retry-After invitation delivery, held uncertainty, and ordinary provider policy. Full UI, profile and live relay acceptance remains unproven.",
+      "unmetReason": "This registry inventories supporting Workers regressions. MAIL-002 native browser acceptance is mailFailureJourney in tests/e2e/mail-failure-journey.mjs, invoked by the existing emitted-Worker mail registration in Verify core: rejection, bounded exhausted retries, explicit recovery, durable reload, held uncertainty, expired ownership, revoked authority and erasure. CONTRACT.md owns the complete clause judgment; no live mailbox delivery is claimed.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/mail.test.ts",

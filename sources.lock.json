@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "19fefb6d552c805b1e8c79e8405c0e9577d911b41614266002422b7a787ab8dc",
       "executable": false
     },
     "DEMO.md": {
@@ -9160,7 +9160,7 @@
       "executable": false
     },
     "src/core/features/session/ui/SignInPage.tsx": {
-      "sha256": "5abce34ea4da19516a029b46c8b008f196b281de8caf66890644005cab3c22d3",
+      "sha256": "05fd189921228f59f1104284706b241136aa6da5c24885297db7443aa681e87f",
       "executable": false
     },
     "src/core/features/session/ui/SignInScreen.tsx": {
@@ -10556,7 +10556,7 @@
       "executable": false
     },
     "tests/e2e/mail-failure-journey.mjs": {
-      "sha256": "675ecd045e47a3f7b8bc266eabdaf981ffa5715a2f0cf550d88c9a68728c0cf1",
+      "sha256": "e8ee3059910abf84e99bb95af960385ac07dc7bfd0efa6ebcf5af7ffec5fc829",
       "executable": false
     },
     "tests/e2e/mail-runtime.d.mts": {
@@ -12284,7 +12284,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "9030447efd9ab23627bde3e8d03e2782f247bdd89c28dc500b542b5e5a1f3a15",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12300,7 +12300,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "a9bfdb72ca0d1cfb9210d49711f0f206251866dcc78cdf94ccca5081485cf746",
+      "sha256": "55fc6e589ae477241dcd488f8e80684701d787f22b4d417dadad63b6c147a53b",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

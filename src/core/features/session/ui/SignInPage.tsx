@@ -14,7 +14,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
     try { return normalizeEmail(loginHint); } catch { return ""; }
   });
   const [delivery, setDelivery] = useState<
-    "queued" | "sent" | "failed" | "uncertain" | "unconfirmed" | null
+    "queued" | "sent" | "failed" | "uncertain" | "unconfirmed" | "cancelled" | null
   >(requested ? "unconfirmed" : null);
   const requestKey = useRef<string | null>(null);
   const storageKey = 'slate.sign-in-status';
@@ -42,7 +42,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
     let alive = true;
     const check = () => {
       requestJson<{
-        state: "queued" | "sent" | "failed" | "uncertain" | "unconfirmed";
+        state: "queued" | "sent" | "failed" | "uncertain" | "unconfirmed" | "cancelled";
         errorDetail?: string;
       }>("/api/auth/magic/status", {
         method: "POST",
@@ -51,7 +51,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         .then((result) => {
           if (alive) {
             setDelivery(result.state);
-            setFailure(result.state === "failed" || result.state === "uncertain" ? result.errorDetail ?? "Delivery failed." : null);
+            setFailure(result.state === "cancelled" ? "The sign-in request is no longer active." : result.state === "failed" || result.state === "uncertain" ? result.errorDetail ?? "Delivery failed." : null);
           }
         })
         .catch((cause) => {
@@ -105,7 +105,7 @@ export function SignInPage({ capabilities, requested = false, loginHint, ownerLi
         onSubmit={() => {
           setSubmitting(true);
           setFailure(null);
-          if (delivery === 'failed') forgetRequest();
+          if (delivery === 'failed' || delivery === 'cancelled') forgetRequest();
           requestKey.current ??= crypto.randomUUID();
           try { sessionStorage.setItem(storageKey, JSON.stringify({email,requestKey:requestKey.current})); } catch { /* Status still works until navigation. */ }
           requestJson("/api/auth/magic", {
