@@ -6616,7 +6616,7 @@
       "executable": false
     },
     "src/core/features/docs/DocsPage.tsx": {
-      "sha256": "30ab46c9b48499526e2b6b059e0679e6917b46adb16911175f65f00f2fe1139c",
+      "sha256": "e1f8c5b7afa9aa057c2124bb5ef83cd9fec8a837cfeba7fcebeaf2092ccdf333",
       "executable": false
     },
     "src/core/features/docs/DocsPager.tsx": {
@@ -6628,7 +6628,7 @@
       "executable": false
     },
     "src/core/features/docs/DocsToc.tsx": {
-      "sha256": "b1467b55274f0271c6d965239ae05a4fbd69daff237aec3f5848a1d5875db50e",
+      "sha256": "e8b479a72c1b22b8aa46cd8b89a58e21d6c29d48f66699ba6cc507beec869441",
       "executable": false
     },
     "src/core/features/docs/head.ts": {
@@ -10372,11 +10372,11 @@
       "executable": false
     },
     "tests/e2e/docs-browser.mjs": {
-      "sha256": "8e1ff924dfb9bf702eacb3eb99c4aa679df6670d6cffd3c60f91f3d5d31916d1",
+      "sha256": "d59c1ad06df492dcfd84cc348b07ddcdd1bf0a3b182de88c0c961c01e1851ba6",
       "executable": false
     },
     "tests/e2e/docs.test.ts": {
-      "sha256": "90d4918da4678745c91245936041355a7b76bcb538aad83a8b35904f98219676",
+      "sha256": "ec85591bacd2e83c85c20cab4d615f8873b924b813b04017ff74b440b86fa772",
       "executable": false
     },
     "tests/e2e/editor/columns-case.ts": {
@@ -12296,7 +12296,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "f82827e767f699a90164adcedf29a2e2f8dc22d996df50ff636db8a518e370e2",
+      "sha256": "556664d18df46c7a0203b61db318ba9d3306b3e30876e27a7a8058db28c8f29a",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

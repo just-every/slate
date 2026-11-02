@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test, vi } from "vitest";
 import { isHonoRequest } from "../../src/core/app/hono";
 import { handleApplicationRequest } from "../../src/core/app/request-handler";
+import { requestBindings } from "../../src/core/platform/bindings.server";
 import type { AppBindings } from "../../src/core/app/types";
 import { seedWorkspace, seedMember, sessionFor } from "./setup/fixtures";
 import { Landing } from "../../src/core/features/landing/Landing";
@@ -101,12 +102,14 @@ describe("DOCS-001 public documentation supporting regressions", () => {
     const { memberId } = await seedMember(workspaceId, { role: "owner", email: ["synthetic-slate-1", "example.test"].join("@"), displayName: "synthetic-slate-private-member" });
     const cookie = await sessionFor(memberId);
     const statements: string[] = [];
-    const db = new Proxy(env.DB, { get(target, property) {
-      if (property === "prepare") return (sql: string) => { statements.push(sql); return target.prepare(sql); };
-      const value = Reflect.get(target, property);
-      return typeof value === "function" ? value.bind(target) : value;
-    } });
-    const bindings: AppBindings = { ...env, DB: db };
+    const fixturePrepare = env.DB.prepare.bind(env.DB);
+    // Observe both the HTTP bindings and Start's ambient native binding. The
+    // statements still execute on real D1; no application response is replaced.
+    const observations = [...new Set([env.DB, requestBindings().DB])].map(db => {
+      const prepare = db.prepare.bind(db);
+      return vi.spyOn(db, "prepare").mockImplementation(sql => { statements.push(sql); return prepare(sql); });
+    });
+    const bindings: AppBindings = { ...env };
     const request = async (path: string, cookie?: string) => {
       const execution = createExecutionContext();
       const response = await handleApplicationRequest(new Request("https://slate.test" + path, { headers: cookie ? { cookie } : {} }), bindings, execution);
@@ -116,15 +119,17 @@ describe("DOCS-001 public documentation supporting regressions", () => {
       expect(response.headers.get("set-cookie")).toBeNull();
       expect(html).not.toMatch(/synthetic-slate-private/);
     };
-    for (const path of ["/docs", "/docs/install", "/docs/backup"]) {
-      await request(path);
-      await request(path, cookie);
-    }
-    await env.DB.prepare("DELETE FROM sessions WHERE member_id = ?").bind(memberId).run();
-    await request("/docs", cookie);
-    expect(statements.length).toBeGreaterThan(0);
-    expect(statements.some(sql => /INSERT INTO request_limits/.test(sql))).toBe(true);
-    for (const sql of statements) expect(sql, "docs native reads").not.toMatch(/\b(?:workspaces|members|sessions|member_identity_bindings|pages|blocks)\b/i);
+    try {
+      for (const path of ["/docs", "/docs/install", "/docs/backup"]) {
+        await request(path);
+        await request(path, cookie);
+      }
+      await fixturePrepare("DELETE FROM sessions WHERE member_id = ?").bind(memberId).run();
+      await request("/docs", cookie);
+      expect(statements.length).toBeGreaterThan(0);
+      expect(statements.some(sql => /INSERT INTO request_limits/.test(sql))).toBe(true);
+      for (const sql of statements) expect(sql, "docs native reads").not.toMatch(/\b(?:workspaces|members|sessions|member_identity_bindings|pages|blocks)\b/i);
+    } finally { observations.forEach(observation => observation.mockRestore()); }
   } },
     { name: "docs and the root refuse missing configuration identically and share one public request budget", run: async () => {
     vi.useFakeTimers({ toFake: ["Date"] });

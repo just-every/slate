@@ -2,9 +2,8 @@ import type { DocsTocEntry } from './types';
 
 type Group = DocsTocEntry & { children: DocsTocEntry[] };
 
-/** h3 entries nest under the h2 before them. Pages with fewer than two h2s get no contents list. */
+/** h3 entries nest under the h2 before them; short pages retain their title entry. */
 function groups(toc: DocsTocEntry[]) {
-  if (toc.filter(entry => entry.depth === 2).length < 2) return [];
   return toc.reduce<Group[]>((list, entry) => {
     if (entry.depth === 3 && list.length) list[list.length - 1].children.push(entry);
     else list.push({ ...entry, children: [] });

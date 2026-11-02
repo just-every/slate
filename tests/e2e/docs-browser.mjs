@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -10,6 +10,9 @@ export async function docsBrowserJourney(origin, manifest, { width = 1440, proof
   const context = await browser.newContext({ viewport: { width, height: 960 } });
   const page = await context.newPage();
   const pages = manifest.sections.flatMap(section => section.pages);
+  const titles = new Map(await Promise.all(pages.map(async entry => [entry.source,
+    /^# (.+)$/m.exec(await readFile(new URL('../../' + entry.source, import.meta.url), 'utf8'))[1],
+  ])));
   const href = entry => entry.slug ? '/docs/' + entry.slug : '/docs';
   const requests = [], cookies = [], errors = [];
   page.on('request', request => requests.push({ url: request.url(), method: request.method(), type: request.resourceType() }));
@@ -19,7 +22,7 @@ export async function docsBrowserJourney(origin, manifest, { width = 1440, proof
   await context.route('https://github.com/**', route => route.fulfill({ contentType: 'text/html', body: '<title>Source destination</title>' }));
   const arrive = async entry => {
     await expect(page).toHaveURL(origin + href(entry));
-    await expect(page.locator('.docs-title')).toBeVisible();
+    await expect(page.locator('.docs-title')).toHaveText(titles.get(entry.source));
     await expect(page.locator('h1')).toHaveCount(1);
   };
   try {
@@ -37,7 +40,8 @@ export async function docsBrowserJourney(origin, manifest, { width = 1440, proof
       if (width < 1200) await toc.locator('summary').click();
       const anchors = await toc.locator('a').evaluateAll(links => links.map(link => link.getAttribute('href')));
       assert.ok(anchors.length, entry.source + ' offers on-this-page navigation');
-      assert.deepEqual(anchors, await page.locator('.docs-prose :is(h2,h3)').evaluateAll(headings => headings.map(heading => '#' + heading.id)));
+      const headings = await page.locator('.docs-prose :is(h2,h3)').evaluateAll(headings => headings.map(heading => '#' + heading.id));
+      assert.deepEqual(anchors, headings.length ? headings : ['#' + await page.locator('h1').getAttribute('id')]);
       for (const anchor of anchors) {
         await toc.locator(`a[href="${anchor}"]`).click();
         await expect(page).toHaveURL(origin + href(entry) + anchor);

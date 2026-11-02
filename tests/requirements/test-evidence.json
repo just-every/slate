@@ -739,7 +739,7 @@
       "clauses": [
         "DOCS-001"
       ],
-      "reason": "Native documentation HTTP journey: declared page rendering and branded unknown-route refusal, populated valid and revoked sessions with observed database statements excluding workspace and identity reads, matching root and docs configuration failures, and a clock-pinned shared public-document budget with recovery. Complete DOCS-001 proof also uses the existing emitted Worker admission and bundle checks in tests/e2e/production-artifact.test.mjs, its native docsBrowserJourney helper, and the real Vite build and development-sync journeys in tests/docs/."
+      "reason": "Native documentation HTTP journey: declared page rendering and branded unknown-route refusal, populated valid and revoked sessions with observed database statements excluding workspace and identity reads, matching root and docs configuration failures, and a clock-pinned shared public-document budget with recovery. Complete DOCS-001 proof also uses the existing emitted Worker admission and bundle checks in tests/e2e/production-artifact.test.mjs, its native docsBrowserJourney helper, and the real Vite build and development-sync journeys in ./tests/docs/."
     },
     {
       "file": "tests/e2e/search/fts-permissions.test.ts",
