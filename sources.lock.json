@@ -6484,7 +6484,7 @@
       "executable": false
     },
     "src/core/features/databases/ui/workspace/SortBuilder.tsx": {
-      "sha256": "da9c97a0b2ef9dc20fb41c9d035f94062ac2dfb380cd8a243d81221c9aa08a09",
+      "sha256": "60eca37b69a078413679fe62ac499aba28d8dc5fb6fbf3e1e6bf2c8b9749e527",
       "executable": false
     },
     "src/core/features/databases/ui/workspace/ViewCriteria.tsx": {

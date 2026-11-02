@@ -20,14 +20,14 @@ export function SortBuilder({ sorts, fields, onChange }: {
           <legend>Sort {index + 1}</legend>
           <label>
             Sort field
-            <select value={sort.field} onChange={event => change(index, { field: event.target.value })}>
+            <select aria-label="Sort field" value={sort.field} onChange={event => change(index, { field: event.target.value })}>
               <option value="$title">Name</option>
               {fields.map(field => <option key={field.id} value={field.id}>{field.name}</option>)}
             </select>
           </label>
           <label>
             Sort direction
-            <select value={sort.direction} onChange={event => change(index, { direction: event.target.value as "asc" | "desc" })}>
+            <select aria-label="Sort direction" value={sort.direction} onChange={event => change(index, { direction: event.target.value as "asc" | "desc" })}>
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
             </select>
