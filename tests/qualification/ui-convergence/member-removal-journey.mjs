@@ -47,12 +47,19 @@ async function acceptFromMail(state, context, link) {
 }
 
 /** Request and consume a new native, session-bound email proof; never seed proof. */
-async function confirmOwnerAction(state, context) {
+async function confirmOwnerAction(state, context, wrongSession) {
   const {origin}=state,before=await inbox(origin);
   const response=await context.request.post(origin+'/auth/step-up',{headers:{origin},data:{action:'owner:transfer',returnTo:'/app/settings/members'}});
   assert.equal(response.status(),202);
   const link=await newOutboxLink(origin,before),confirmation=await context.newPage();
   try {
+    if(wrongSession) {
+      const members=await ok(context,origin,'GET','/api/members');
+      const refused=await wrongSession.request.post(origin+'/auth/confirm',{headers:{origin},form:{token:new URL(link).searchParams.get('token')},maxRedirects:0});
+      assert.equal(refused.status(),400,'Another owner cannot consume the setup member’s session-bound proof.');
+      assert.deepEqual(await ok(context,origin,'GET','/api/members'),members);
+      assert.equal((await ok(context,origin,'GET','/api/session')).member.id,'browser-owner');
+    }
     await confirmation.goto(link,{waitUntil:'networkidle'});
     const pending=confirmation.waitForResponse(response=>new URL(response.url()).pathname==='/auth/confirm'&&response.request().method()==='POST');
     await confirmation.getByRole('button',{name:'Confirm',exact:true}).click();
@@ -199,7 +206,7 @@ export async function setupMemberRemovalJourney(state,width,reader) {
     await accessible(otherPage,'another owner cannot remove the setup member');
     await otherPage.close();
 
-    await confirmOwnerAction(state,context);
+    await confirmOwnerAction(state,context,otherOwner);
     await page.goto(origin+'/app/settings?section=members',{waitUntil:'networkidle'});
     const ownRow=page.locator('.settings-list li').filter({has:page.getByText('Alex Owner',{exact:true})});
     await ownRow.getByRole('button',{name:'Remove yourself',exact:true}).click();

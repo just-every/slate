@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "4a229b63ad2d3198575765a56f9f26e98ed048a0ff6932e255564af56b313577",
       "executable": false
     },
     "DEMO.md": {
@@ -12032,7 +12032,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/member-removal-journey.mjs": {
-      "sha256": "c0a6c2c0be68f2bde05b5c7ccb092a1a7496d4719c8a0627b8d60265c6f6bfa3",
+      "sha256": "5b732d760d8f5c070978e8691aec7cd5531e942c4cc61c861f06e89e91fc8246",
       "executable": false
     },
     "tests/qualification/ui-convergence/mixed-search-journey.mjs": {
@@ -12280,7 +12280,7 @@
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
-      "sha256": "17096ea5ce839469a578ef547bb76aa8656688c160ef97dac6edb72519c17218",
+      "sha256": "a679b4d52d439af5c0c5c1199a7e84723258d89409f70f5f565fde1841305f2f",
       "executable": false
     },
     "tests/requirements/count-registrations.mjs": {
