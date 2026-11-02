@@ -12136,7 +12136,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/sidebar-journey.mjs": {
-      "sha256": "67aa689a3af123a53315d9b8553a2155909885f2a1f4b25a5ab172342651c3c5",
+      "sha256": "11052c1c0ffd45558cfdb997c3b027048ba56a39497d610c91bd93ab83d9faff",
       "executable": false
     },
     "tests/qualification/ui-convergence/starter-templates-journey.mjs": {

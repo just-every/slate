@@ -49,6 +49,15 @@ export async function navigationJourney(state, width, { buyerSlot = false } = {}
   assert.deepEqual(favouriteData.slice(0, 3).map(item => item.id), [privatePage, space.id, database.id]);
   assert.deepEqual(await links(favourites.locator('a')), favouriteData.map(({ href, title }) => ({ href, label: title })));
   const group = trees.locator('details.space-group').filter({ has: page.locator('summary', { hasText: 'Navigation response team' }) });
+  const apiNodes = (await api(`/api/pages?containerId=${space.id}`)).items;
+  assert.ok(apiNodes.some(item => item.id === root && !item.parentPageId));
+  assert.ok(apiNodes.some(item => item.id === child && item.parentPageId === root));
+  assert.ok(apiNodes.some(item => item.id === database.pageId));
+  assert.ok(!apiNodes.some(item => item.id === privatePage), 'The personal node stays outside the team container.');
+  await expect(group.locator('.page-tree a')).toHaveCount(apiNodes.length);
+  const expectedNodes = apiNodes.map(item => ({ href: item.id === database.pageId ? `/app/databases/${database.id}` : `/app/pages/${item.id}`, label: item.title }));
+  const byHref = (left, right) => left.href.localeCompare(right.href);
+  assert.deepEqual((await links(group.locator('.page-tree a'))).sort(byHref), expectedNodes.sort(byHref), 'The populated container tree exactly reconciles with its native inventory.');
   await expect(trees.locator(`a[href="/app/pages/${privatePage}"]`)).toBeVisible();
   await expect(trees.locator(`a[href="/app/pages/${child}"]`)).toBeVisible();
   assert.equal(await trees.locator(`a[href="/app/pages/${child}"]`).evaluate(anchor => new URL(anchor.closest('li').parentElement.closest('li').querySelector(':scope > .tree-row a').href).pathname), `/app/pages/${root}`);
