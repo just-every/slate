@@ -13,7 +13,6 @@ import {addSource,refreshSource,resolveEvidence} from '../../../src/core/feature
 import {exportWorkspace,restoreWorkspace} from '../../../src/core/features/portability/service';
 import {createApi} from '../../../src/core/app/hono';
 import {startOAuth,finishOAuth,inferSource} from '../../../src/core/features/connectors/oauth';
-import {exportReadable} from '../../../src/core/features/workspace-export/readable';
 import {searchSources} from '../../../src/core/features/source-memory/search';
 import {decodeArchive,encodeArchive} from '../../../src/core/features/portability/archive';
 async function context(){const {workspaceId}=await seedWorkspace();const {memberId}=await seedMember(workspaceId,{email:'owner@federation.test',displayName:'Owner',role:'owner',isSetupOwner:true});return {db:env.DB,files:env.FILES,jobs:env.JOBS,actor:{id:memberId,workspaceId,workspaceName:'Test',email:'owner@federation.test',displayName:'Owner',initials:'OW',role:'owner'},now:new Date().toISOString()} as FeatureContext;}
@@ -65,7 +64,23 @@ const ctx=await context();const key='01234567890123456789012345678901';const con
 }},
 {name:"durable imports and federation exports readable Markdown HTML and embedded-font PDF and reimports its tree",before:async()=>{await reset();},run:async()=>{
 try {
-const ctx=await context();const job=await startImport(ctx,{operationKey:'readable-source',format:'text',source:{name:'portable.txt',bytes:new TextEncoder().encode('Unicode café Ω readable content')}});await runImport(ctx,job.id);const page=await ctx.db.prepare('SELECT id FROM pages').first<{id:string}>();for(const format of ['markdown','html','pdf'] as const){const archive=await exportReadable(ctx,{scope:'page',id:page!.id,format});expect(archive.bytes[0]).toBe(80);if(format==='markdown'){const imported=await startImport(ctx,{operationKey:'readable-restore',format:'slate-readable',source:{name:archive.filename,bytes:archive.bytes}});expect((await runImport(ctx,imported.id)).state).toBe('completed');}}expect(await ctx.db.prepare('SELECT count(*) AS count FROM pages').first<number>('count')).toBe(2);
+const ctx=await context();
+const job=await startImport(ctx,{operationKey:'readable-source',format:'text',source:{name:'portable.txt',bytes:new TextEncoder().encode('Unicode café Ω readable content')}});
+await runImport(ctx,job.id);
+const page=await ctx.db.prepare('SELECT id FROM pages').first<{id:string}>();
+const api=createApi(),cookie=await sessionFor(ctx.actor.id);
+for(const format of ['markdown','html','pdf'] as const){
+ const response=await api.request('https://slate.example/api/exports/readable',{method:'POST',headers:{cookie,origin:'https://slate.example','content-type':'application/json'},body:JSON.stringify({scope:'page',id:page!.id,format})},env);
+ expect(response.status).toBe(200);
+ const bytes=new Uint8Array(await response.arrayBuffer());expect(bytes[0]).toBe(80);
+ const form=new FormData();form.set('operationKey',`readable-restore-${format}`);form.set('format','slate-readable');form.set('file',new File([bytes],`${format}.zip`));
+ const staged=await api.request('https://slate.example/api/imports',{method:'POST',headers:{cookie,origin:'https://slate.example'},body:form},env);
+ expect(staged.status).toBe(200);
+ const imported=await staged.json<{id:string}>();
+ const run=await api.request(`https://slate.example/api/imports/${imported.id}/run`,{method:'POST',headers:{cookie,origin:'https://slate.example'}},env);
+ expect(run.status).toBe(200);expect(await run.json()).toMatchObject({state:'completed'});
+}
+expect(await ctx.db.prepare('SELECT count(*) AS count FROM pages').first<number>('count')).toBe(4);
 } finally {{vi.unstubAllGlobals();}}
 }},
 {name:"durable imports and federation keeps the previous published source on provider failure and treats deletion as a content-free tombstone",before:async()=>{await reset();},run:async()=>{

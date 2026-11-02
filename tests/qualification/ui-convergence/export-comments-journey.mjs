@@ -1,3 +1,4 @@
+import { readableExportJourney } from './readable-export-journey.mjs';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -8,6 +9,7 @@ import { grant, ok } from './two-people-support.mjs';
 import { openPageAction } from './browser-support.mjs';
 
 export async function exportCommentsJourney(state, people) {
+  await readableExportJourney(state);
   const { page, context, origin, api } = state;
   const width = page.viewportSize().width;
   const space = (await api('/api/containers')).items.find(item => item.name === 'Handbook');

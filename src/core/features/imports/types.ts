@@ -115,6 +115,8 @@ export interface ImportedPage extends SourceIdentity {
   /** Shared page reading options retained by Slate readable archives. */
   display?: { typeface: "default" | "serif" | "mono"; smallText: boolean; fullWidth: boolean };
   parentSourceId?: string;
+  /** Readable archives retain sibling placement independently of archive entry order. */
+  treePosition?: string;
   containerSourceId: string;
   title: string;
   icon?: string;

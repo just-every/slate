@@ -1709,7 +1709,7 @@
       "id": "PORT-007",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of PORT-007 — Exporting a page or a container. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "The Workers registration is supporting evidence for native HTTP export and re-import of all three readable formats. Complete public scope, independent document reads, CSV values, original media and mapped tree readback are exercised by readableExportJourney in ./tests/qualification/ui-convergence/readable-export-journey.mjs through the existing desktop export and phone tree registrations; their exact-SHA CI and landing receipts remain separate from this Workers-only registry.",
       "supportingTests": [
         {
           "file": "tests/flagship/federation/federation.test.ts",
