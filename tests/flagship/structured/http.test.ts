@@ -138,6 +138,7 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
   ];
   let structure = (await call("GET", base)).body.database.revision_id;
   for (const field of definitions) structure = (await mutate("POST", base + "/fields", {expectedRevisionId: structure, field})).revisionId;
+  await mutate("POST", base + "/views", {expectedRevisionId: structure, view: {id:"detail-view",name:"Records",layout:"table",filters:[],sorts:[],groups:[],calculations:{},display:{},position:0}});
   const record = await mutate("POST", base + "/records", {title: "Populated record", values: {notes: "Retained notes", quantity: 7}});
   const recordPath = base + "/records/" + record.pageId;
   const decorated = await mutate("PATCH", `/pages/${record.pageId}`, {expectedRevisionId: record.revisionId, properties: {icon: "📚"}});
@@ -155,6 +156,7 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
   expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(200);
   const edited = (await call("GET", recordPath, memberCookie)).body;
   expect(edited.values).toMatchObject({quantity: 11, double: 22, notes: "Retained notes"});
+  expect((await call("GET", base + "/views/detail-view", memberCookie)).body.records).toEqual([expect.objectContaining({pageId:record.pageId,title:"Populated record",icon:"📚"})]);
   for (const values of [{double: 99}, {created: "2026-01-01"}, {updated: "2026-01-01"}, {identifier: "other-record"}]) {
     const denied = await call("PATCH", recordPath, memberCookie, {operationKey: `case:readonly-${++operation}`, expectedRevisionId: edited.revisionId, values});
     expect(denied.status).toBe(400);
@@ -199,6 +201,13 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
     const search = (await call("GET", "/search?kind=page&query=Populated%20record", memberCookie)).body;
     expect(search.items.map((item: any) => item.id)).toEqual(parity === "record-is-page" ? [record.pageId] : []);
   }
+  await mutate("POST", "/sharing", {id:memberGrant.id,targetKind:"page",targetId:dbPage,principalKind:"member",principalId:reader.actor.id,level:"view",revoke:true});
+  expect((await call("GET", "/search?kind=page&query=Populated%20record", memberCookie)).body.items).toEqual([]);
+  expect((await call("GET", recordPath, memberCookie)).status).toBe(404);
+  expect((await call("PATCH", recordPath, memberCookie, edit)).status).toBe(404);
+  expect((await call("GET", recordPath)).body.page.blocks).toEqual(edited.page.blocks);
+  expect((await call("GET", `/revisions/${record.pageId}`)).body).toEqual(history);
+  expect((await call("GET", "/search?kind=page&query=Populated%20record", await sessionFor(reader.actor.id, {revokedAt:ctx.now}))).status).toBe(401);
 });
 
 test("database file references list only attachments the reader could open", async () => {

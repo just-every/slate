@@ -235,6 +235,7 @@ export async function queryView(
       pageId: string;
       revisionId: string;
       title: string;
+      icon: string | null;
       values: Values;
     }[] = [];
   for (const r of raw.results) {
@@ -261,6 +262,7 @@ export async function queryView(
           pageId: r.page_id,
           revisionId: r.revision_id,
           title: p.page.title,
+          icon: p.properties.icon,
           values: computed,
         });
     } catch (e) {

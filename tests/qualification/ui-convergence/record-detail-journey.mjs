@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {expect} from '@playwright/test';
 import {accessible} from './browser-evidence.mjs';
+import {openNavigation} from './browser-support.mjs';
 import {call, grant, ok, withSecondPerson} from './two-people-support.mjs';
 
 /** Populated native records, independent member sessions and retained snapshots. */
@@ -68,7 +69,7 @@ export async function recordDetailJourney(state, width) {
     for (const field of [computed, created, updated, identifier]) await expect(row(page, field.name).getByRole('button')).toHaveCount(0);
     await expect(page.locator('.record-fields-list').getByRole('button', {name: 'Edit', exact: true})).toHaveCount(canEdit ? 2 : 0);
   };
-  const projections = async parity => {
+  const projections = async (parity, browser) => {
     const pages = (await api('/api/pages?containerId=' + container.id)).items.filter(item => item.id === record.pageId);
     const search = await api('/api/search?kind=page&query=' + encodeURIComponent('Populated record'));
     if (parity === 'record-is-page') {
@@ -83,6 +84,22 @@ export async function recordDetailJourney(state, width) {
       assert.deepEqual(search.items, []);
       assert.equal(search.total, 0);
     }
+    await browser.goto(origin + '/app/search?q=Populated%20record&kind=page', {waitUntil: 'networkidle'});
+    await expect(browser.locator('.search-results h2')).toHaveText(parity === 'record-is-page' ? ['Populated record'] : []);
+    await accessible(browser, 'record page search ' + parity);
+    await openNavigation(browser);
+    const tree = browser.getByRole('navigation', {name: 'Pages', exact: true});
+    const filter = tree.getByRole('textbox', {name: 'Filter pages in Shared with me · Handbook', exact: true});
+    await filter.fill('Populated record');
+    const recordLink = tree.getByRole('link', {name: 'Populated record', exact: true});
+    if (parity === 'record-is-page') {
+      await expect(recordLink).toBeVisible();
+      await expect(recordLink).toHaveAttribute('href', '/app/pages/' + record.pageId);
+      await expect(recordLink.locator('.stored-page-icon')).toHaveText('📚');
+      await expect(tree.getByRole('link', {name: 'Record detail proof', exact: true})).toBeVisible();
+    } else await expect(recordLink).toHaveCount(0);
+    await accessible(browser, 'record tree ' + parity);
+    await browser.goto(recordUrl, {waitUntil: 'networkidle'});
   };
   try {
     await withSecondPerson(state, width, async ({bob}) => {
@@ -106,7 +123,7 @@ export async function recordDetailJourney(state, width) {
       await expect(bob.page).toHaveURL(recordUrl);
       await expect(peek).toHaveCount(0);
       await expect(bob.page.locator('.stored-page-icon')).toHaveText('📚');
-      await projections('record-is-page');
+      await projections('record-is-page', bob.page);
       console.log('PROBE DB-010 1–2: native record and page identifiers agree; populated icon, fields and body open in side peek, centre peek and full page; exact tree placement and page-search ID retained');
       await checkFields(bob.page, true, 7);
       await row(bob.page, quantity.name).getByRole('button', {name: 'Edit', exact: true}).click();
@@ -132,9 +149,15 @@ export async function recordDetailJourney(state, width) {
       assert.deepEqual(await api(`/api/revisions/${record.pageId}`), historyBefore);
       for (const parity of ['record-is-page', 'record-is-row', 'record-is-page']) {
         await policies(parity);
-        await bob.page.goto(recordUrl, {waitUntil: 'networkidle'});
+        if (parity === 'record-is-row') {
+          await bob.page.goto(`${origin}/app/databases/${database.id}`, {waitUntil: 'networkidle'});
+          await expect(title).toHaveText('Populated record');
+          await title.click();
+          await expect(bob.page).toHaveURL(recordUrl);
+          await expect(bob.page.getByRole('dialog', {name: 'Record preview', exact: true})).toHaveCount(0);
+        } else await bob.page.goto(recordUrl, {waitUntil: 'networkidle'});
         await checkFields(bob.page, false, 11);
-        await projections(parity);
+        await projections(parity, bob.page);
         const current = await api(recordPath);
         assert.deepEqual({page: current.page.page, properties: current.page.properties, blocks: current.page.blocks, values: current.values}, stored);
         assert.deepEqual(await api(`/api/revisions/${record.pageId}`), historyBefore);

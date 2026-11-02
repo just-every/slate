@@ -314,9 +314,10 @@
       "kind": "supporting-regression",
       "clauses": [
         "BASE-ACCESS-002",
-        "DB-012"
+        "DB-012",
+        "DB-010"
       ],
-      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys."
+      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys. DB-010 support reconciles record and page identity, retained icon in the authorized view, exact tree placement and page-search membership under both native policy values without changing fields, blocks or history."
     },
     {
       "file": "tests/flagship/structured/template-permissions.test.ts",

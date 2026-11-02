@@ -29,8 +29,11 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     await api(source,sourceCookie,'/api/publishing/archive-root',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),expectedRevisionId:'archive-root-current',host:new URL(source.origin).host,slug:'research/portable',theme:'dark',indexable:false,socialPreview:{title:'Portable knowledge',description:'Retain publication settings'}})});
     const published=await fetch(source.origin+'/p/research/portable');assert.equal(published.status,200);assert.match(await published.text(),/Restorable research/);
     const get = async (instance, cookie, route) => (await api(instance,cookie,route)).json();
-    const mutate = async (instance, cookie, method, route, data) => getMutation(await api(instance,cookie,route,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),...data})}));
-    const getMutation = async response => (await response.json()).value;
+    const mutate = async (instance, cookie, method, route, data) => {
+      const response=await fetch(new URL(route,instance.origin),{method,headers:{Cookie:cookie,Origin:instance.origin,'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),...data})});
+      assert.ok(response.ok,`${method} ${route} succeeds: ${await response.clone().text()}`);
+      return (await response.json()).value;
+    };
     const database = await mutate(source,sourceCookie,'POST','/api/databases',{containerId:'archive-container',title:'Portable record database'});
     const base = `/api/databases/${database.id}`;
     await mutate(source,sourceCookie,'POST',base+'/fields',{expectedRevisionId:database.revisionId,field:{id:'portable-quantity',name:'Quantity',type:'number',config:{},position:0}});

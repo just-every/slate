@@ -32,6 +32,7 @@ export interface RecordDto {
   pageId: string;
   revisionId: string;
   title: string;
+  icon?: string | null;
   values: Record<string, unknown>;
 }
 export interface DatabaseDto {
@@ -162,7 +163,11 @@ export function recordView(
   return {
     id: record.pageId,
     title: record.title,
-    icon: null,
+    icon: record.icon
+      ? record.icon.startsWith("file:")
+        ? { kind: "image", url: `/api/media/${encodeURIComponent(record.icon.slice(5))}?display=inline` }
+        : { kind: "emoji", emoji: record.icon }
+      : null,
     values: Object.fromEntries(
       fields.map((field) => [
         field.id,

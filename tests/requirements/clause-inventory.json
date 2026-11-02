@@ -1133,11 +1133,15 @@
       "id": "DB-010",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of DB-010 — A record is a page. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This Workers registry records supporting native record identity, icon projection, ordered fields, history and both parity projections through HTTP. Complete responsive presentation and actual native ZIP restoration are recorded by recordDetailJourney and the existing portability roundtrip journey in CONTRACT.md; this registry does not classify browser or Node runs as Workers acceptance.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/structured.test.ts",
           "testName": "structured records, computation, readers, templates, automation, policies and views retain durable semantics"
+        },
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
         }
       ]
     },
