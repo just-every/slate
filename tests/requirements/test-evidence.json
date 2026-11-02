@@ -74,7 +74,7 @@
       "clauses": [
         "BLOCK-009"
       ],
-      "reason": "Asserts rejects private origins before the first fetch and every redirect and accepts bounded HTML only. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance."
+      "reason": "Native authenticated preview and page HTTP routes use the real link.preview.v1 transport, substituting only DNS and remote HTTP. Captured requests prove anonymous bodyless public HTTPS, initial and redirect private-address refusals, declared redirect, byte, deadline and media bounds, disabled-preview refusal and persisted exact URL, title, description and bounded icon bytes. The existing responsive writing registrations separately prove actual clipboard insertion, surrounding rich text, plain, inline and block switches, native save and reload, and durable refused, failed and disabled explanations. No live provider account is required by BLOCK-009."
     },
     {
       "file": "tests/flagship/content/repair.test.ts",

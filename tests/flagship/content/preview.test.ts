@@ -45,7 +45,7 @@ it('rejects private origins before the first fetch and every redirect and accept
       seen.length = 0;
       const refused = await req(raw); expect(refused.status,raw).toBe(400); expect((await refused.json<any>()).code).toBe('PREVIEW_REFUSED'); expect(seen,raw).toHaveLength(0);
     }
-    for (const resolved of [[], ['127.0.0.1'], ['10.0.0.1'], ['169.254.169.254'], ['fd00::1'], ['fe80::1'], ['8.8.8.8','192.168.1.1']]) {
+    for (const resolved of [[], ['127.0.0.1'], ['10.0.0.1'], ['169.254.169.254'], ['fd00::1'], ['fe80::1'], ['2001:0000::1'], ['2001:0db8::1'], ['8.8.8.8','192.168.1.1']]) {
       addresses = resolved; seen.length = 0;
       expect((await req('https://synthetic-slate-1.test')).status).toBe(400); expect(remote()).toHaveLength(0);
     }
@@ -89,12 +89,15 @@ it('rejects private origins before the first fetch and every redirect and accept
     }
     target = () => new Response(null,{status:503}); expect((await req(exact)).status).toBe(400);
     target = () => {throw new TypeError('Synthetic remote transport failure');}; expect((await req(exact)).status).toBe(400);
-    // A stream that never supplies the next byte is still fenced by the total deadline.
-    let cancelled = false;
-    target = () => new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('<title>Never finishes'));},cancel(){cancelled=true;}}),{headers:{'content-type':'text/html'}});
-    const started = Date.now(), timed = await req(exact);
-    expect(timed.status).toBe(400); expect((await timed.json<any>()).code).toBe('PREVIEW_REFUSED');
-    expect(Date.now()-started).toBeLessThan((contentLimits.maximumUrlFetchSeconds+2)*1000); expect(cancelled).toBe(true);
+    // The same total deadline fences a missing response and a stalled response body.
+    for (const stalled of ['headers','stream']) {
+      let cancelled = false;
+      target = () => stalled === 'headers' ? new Promise<Response>(()=>{}) : new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('<title>Never finishes'));},cancel(){cancelled=true;}}),{headers:{'content-type':'text/html'}});
+      const started = Date.now(), timed = await req(exact);
+      expect(timed.status).toBe(400); expect((await timed.json<any>()).code).toBe('PREVIEW_REFUSED');
+      expect(Date.now()-started).toBeLessThan((contentLimits.maximumUrlFetchSeconds+2)*1000);
+      if (stalled === 'stream') expect(cancelled).toBe(true);
+    }
     expect(publicIp('10.1.2.3')).toBe(false); expect(publicIp('::ffff:127.0.0.1')).toBe(false);
   } finally {edge.mockRestore();}
 }, 30000);

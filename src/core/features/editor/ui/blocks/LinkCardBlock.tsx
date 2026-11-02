@@ -81,7 +81,7 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
             <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-control bg-sidebar-hover text-micro font-medium text-ink-muted"><LinkIcon aria-hidden="true" className="size-3.5"/></span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-ui font-medium text-ink">{page.resource.data.title}</span>
-              <span className="mt-1 block truncate text-tiny text-ink-faint">{block.url}</span>
+              <span className="mt-1 block truncate text-small text-ink-faint">{block.url}</span>
             </span>
           </a>
         )}
@@ -122,12 +122,12 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
             {preview.description ? (
               <span className="mt-0.5 block line-clamp-2 text-small text-ink-muted">{preview.description}</span>
             ) : null}
-            <span className="mt-1 block truncate text-tiny text-ink-faint">{preview.siteName ?? block.url}</span>
+            <span className="mt-1 block truncate text-small text-ink-faint">{preview.siteName ?? block.url}</span>
           </span>
         </a>
       )}
 
-      {block.previewState === "loading" ? <p role="status" className="text-small text-ink-muted">Fetching a preview. The link is already stored.</p> : null}
+      {block.previewState === "loading" ? <p role="status" className="text-small text-ink-muted">A preview has not completed. The link is shown as written.</p> : null}
       {failed ? (
         <p className="flex flex-wrap items-center gap-2 text-small text-ink-muted" role="status">
           <TriangleAlert aria-hidden="true" className="size-3.5 text-warn" />

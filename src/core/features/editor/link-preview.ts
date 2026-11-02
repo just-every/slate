@@ -11,9 +11,11 @@ export interface PreviewTransport {
 export function publicIp(address: string) {
     const ip = address.toLowerCase().replace(/^\[|\]$/g, '');
     if (ip.includes(':')) {
-        const prefix = parseInt(ip.split(':')[0]!, 16);
+        const [first, second] = ip.split(':');
+        const prefix = parseInt(first!, 16), subnet = parseInt(second || '0', 16);
         return /^[0-9a-f:]+$/.test(ip) && prefix >= 0x2000 && prefix < 0x4000
-            && !/^2001:(?:0:|db8:)|^2002:|^3fff:/.test(ip);
+            && !(prefix === 0x2001 && (subnet < 0x200 || subnet === 0xdb8))
+            && !/^2002:|^3fff:/.test(ip);
     }
     if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip)) return false;
     const parts = ip.split('.').map(Number);

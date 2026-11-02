@@ -27,6 +27,7 @@ import { reactionsJourney } from './reactions-journey.mjs';
 import { pageDisplayJourney } from './page-display-journey.mjs';
 import { createInPlaceJourney } from './create-in-place-journey.mjs';
 import { statusProfileJourney } from './status-profile-journey.mjs';
+import {disabledLinkCardJourney} from './link-card-journey.mjs';
 import assert from 'node:assert/strict';
 import { journeyTest as test } from './journey-shard.mjs';
 import { expect } from '@playwright/test';
@@ -111,6 +112,10 @@ for (const width of [390, 1440]) {
         }
       } finally {await touch?.close();}
     }, {}, { scheduled: true, slack: true });
+    if (width === 1440) await withWorkspace({width,height:1000}, 'core-wiki', async state => {
+      await setupWorkspace(state);
+      await disabledLinkCardJourney(state, width);
+    }, {LINK_PREVIEWS_ENABLED:'false'});
   });
 }
 

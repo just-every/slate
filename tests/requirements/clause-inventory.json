@@ -486,7 +486,7 @@
       "id": "BLOCK-009",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of BLOCK-009 — Link cards. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This legacy inventory classifies Workers supporting tests only; CONTRACT.md owns native clause status. The existing preview Workers registration now reaches the authenticated route with only DNS and remote HTTP substituted, captures outbound method, body and headers, checks declared limits and refusal request counts, and commits native card readback. The existing responsive core-wiki registrations invoke linkCardJourney through writeJourney and disabledLinkCardJourney at desktop, proving native clipboard insertion, target metadata and icon, retained rich-text neighbours, display switches, reload and durable fallback. Independent release acceptance remains separate.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/preview.test.ts",

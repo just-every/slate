@@ -26,7 +26,7 @@ export async function linkCardJourney(state, width) {
   assert.equal(card.content.url,url);
   assert.equal(saved.blocks[0].content.text[0].text,'Before ');
   assert.deepEqual(saved.blocks[0].content.text[0].marks,['bold']);
-  assert.equal(saved.blocks[2].content.text[0].text,'after');
+  assert.equal(saved.blocks[2].content.text[0].text,' after');
   assert.match(card.content.preview.iconData,/^data:image\/svg\+xml;base64,/);
   const storedPreview = card.content.preview;
   await expect(cards().first().locator('img')).toBeVisible();
@@ -67,4 +67,25 @@ export async function linkCardJourney(state, width) {
     assert.ok(!JSON.stringify(request).includes('browser-owner'));
   }
   assert.ok(!seen.some(item=>new URL(item.url).hostname==='private.synthetic-slate-preview.test'));
+}
+
+export async function disabledLinkCardJourney(state, width) {
+  const {page,origin,api,context} = state;
+  const container = (await api('/api/containers')).items.find(item=>item.name==='Handbook');
+  const made = await call(context,origin,'POST','/api/pages',{operationKey:crypto.randomUUID(),containerId:container.id,title:'Private previews setting'});
+  assert.equal(made.status,200); const id = made.body.value.pageId;
+  await page.goto(origin+'/app/pages/'+id,{waitUntil:'networkidle'});
+  const pasted = 'https://synthetic-slate-preview.test/Disabled?keep=%2f#Original';
+  await page.getByRole('textbox',{name:'Page body',exact:true}).focus();
+  await page.evaluate(value=>navigator.clipboard.writeText(value),pasted); await page.keyboard.press('Control+V');
+  const read = () => api('/api/pages/'+id);
+  await expect.poll(async()=>(await read()).blocks.find(block=>block.content.url===pasted)?.content.previewState).toBe('refused');
+  await page.reload({waitUntil:'networkidle'});
+  const card = page.locator('[data-block-id]').filter({has:page.getByRole('link',{name:pasted,exact:true})});
+  await expect(card.getByRole('link')).toHaveAttribute('href',pasted);
+  await expect(card.getByRole('status')).toContainText('workspace has disabled URL previews');
+  const stored = (await read()).blocks.find(block=>block.blockType==='link-card').content;
+  assert.equal(stored.url,pasted); assert.equal(stored.preview,undefined);
+  assert.deepEqual(await state.readLinkPreviewRequests(),[]);
+  await page.screenshot({path:'.artifacts/ui-convergence/link-card-disabled-'+width+'.png',fullPage:true});
 }
