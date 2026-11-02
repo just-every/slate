@@ -5908,7 +5908,7 @@
       "executable": false
     },
     "src/core/features/automation/ui/workspace/RuleForm.tsx": {
-      "sha256": "de6a2335e18129fcffb3f1332811c3bc32a2e11627f0c14656b9d931ecf6cb9f",
+      "sha256": "31e504c8729a6e2c882d917539a8b87684fe1c852fb4a673e23f2983cc13049f",
       "executable": false
     },
     "src/core/features/automation/validation.ts": {
