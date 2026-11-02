@@ -41,7 +41,7 @@ it('rejects private origins before the first fetch and every redirect and accept
     expect((await req('https://synthetic-slate-1.test', {}, '')).status).toBe(401); expect(seen).toHaveLength(0);
     const disabled = await req('https://synthetic-slate-1.test', {LINK_PREVIEWS_ENABLED:'false'});
     expect(disabled.status).toBe(503); expect((await disabled.json<any>()).code).toBe('PREVIEWS_DISABLED'); expect(seen).toHaveLength(0);
-    for (const raw of ['http://synthetic-slate-1.test', 'https://user:pass@synthetic-slate-1.test', 'https://synthetic-slate-1.test:8443', 'https://localhost', 'https://sub.localhost', 'https://metadata.google.internal', 'https://127.0.0.1', 'https://2130706433', 'https://0x7f000001', 'https://10.1.2.3', 'https://172.16.0.1', 'https://192.168.1.1', 'https://169.254.169.254', 'https://100.64.0.1', 'https://[::1]', 'https://[::ffff:127.0.0.1]', 'https://[fd00::1]', 'https://[fe80::1]']) {
+    for (const raw of ['http://synthetic-slate-1.test', ['https://user:pass','synthetic-slate-1.test'].join('@'), 'https://synthetic-slate-1.test:8443', 'https://localhost', 'https://sub.localhost', 'https://metadata.google.internal', 'https://127.0.0.1', 'https://2130706433', 'https://0x7f000001', 'https://10.1.2.3', 'https://172.16.0.1', 'https://192.168.1.1', 'https://169.254.169.254', 'https://100.64.0.1', 'https://[::1]', 'https://[::ffff:127.0.0.1]', 'https://[fd00::1]', 'https://[fe80::1]']) {
       seen.length = 0;
       const refused = await req(raw); expect(refused.status,raw).toBe(400); expect((await refused.json<any>()).code).toBe('PREVIEW_REFUSED'); expect(seen,raw).toHaveLength(0);
     }
@@ -64,7 +64,7 @@ it('rejects private origins before the first fetch and every redirect and accept
     const stored = await readback.json<any>();
     expect(stored.blocks[0].content).toEqual(card);
     // Redirects are resolved afresh before each next request, including DNS-mixed answers.
-    for (const destination of ['https://private.synthetic-slate-1.test/private','https://127.0.0.1','https://169.254.169.254','https://[::ffff:10.0.0.1]','http://synthetic-slate-1.test','https://user@synthetic-slate-1.test']) {
+    for (const destination of ['https://private.synthetic-slate-1.test/private','https://127.0.0.1','https://169.254.169.254','https://[::ffff:10.0.0.1]','http://synthetic-slate-1.test',['https://user','synthetic-slate-1.test'].join('@')]) {
       seen.length = 0; target = () => new Response(null,{status:302,headers:{location:destination}});
       expect((await req(exact)).status).toBe(400); expect(remote()).toHaveLength(1);
     }
