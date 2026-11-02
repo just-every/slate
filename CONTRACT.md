@@ -3984,9 +3984,9 @@ Contributed tree node kinds beyond pages, databases, cards and posts, and cross-
 | WORK-005 | merged into NAV-001 | The former planning overview is superseded by personal Home. |
 | SAVE-007 | merged into BLOCK-001 | The single-long-text template is superseded by the structured block body. |
 
-DB-005 native criteria proof reviewed from source commit `b448753da414d684af56f9791dfd03b72c2c8bad` (2 November 2026). Both responsive callers passed on that source; native HTTP proof at `97543356ffea2549ecb10c26c041af88e57a46a3` has byte-identical Worker code and tests. The exact candidate is identified by its branch Verify and guarded landing handoff.
-
 ## Status
+
+Judged from the code and tests at commit `b448753da414d684af56f9791dfd03b72c2c8bad` (2 November 2026). DB-005 native criteria proof. Both responsive callers passed on that source; native HTTP proof at `97543356ffea2549ecb10c26c041af88e57a46a3` has byte-identical Worker code and tests. The exact candidate is identified by its branch Verify and guarded landing handoff.
 
 Judged from the code and tests at commit `65d6c569c06f0150648800f3eaecce4bc77e6612` (29 October 2026); SEARCH-001 native source proof. Exact candidate and landing receipts are recorded by its branch Verify and the guarded lander. DB-012 record-detail proof reviewed from source `63a0e8f` (31 October 2026); its exact candidate and Verify are named by the branch handoff.
 
