@@ -2,10 +2,11 @@ import {expect} from 'vitest';
 
 type Request = (cookie:string,method:string,path:string,body?:unknown)=>Promise<any>;
 /** Retained native references, read by an editor and a viewer through the HTTP doors. */
-export async function referenceStateJourney(ok:Request,call:Request,owner:string,reader:string,readerId:string,containerId:string,origin:string) {
+export async function referenceStateJourney(ok:Request,call:Request,owner:string,reader:string,readerId:string,containerId:string,origin:string,outsider:{cookie:string;id:string}) {
   const key=()=>crypto.randomUUID();
   const original='Reference target before rename',renamed='Reference target after rename',secret='Working title not published';
-  const target=(await ok(owner,'POST','/api/pages',{operationKey:key(),containerId,title:original})).value.pageId;
+  const creation={operationKey:key(),containerId,title:original};
+  const target=(await ok(owner,'POST','/api/pages',creation)).value.pageId;
   const href=`/app/pages/${target}`;
   const share=()=>ok(owner,'POST','/api/sharing',{operationKey:key(),targetKind:'page',targetId:target,principalKind:'member',principalId:readerId,level:'view'});
   let grant=(await share()).value.id;
@@ -15,6 +16,7 @@ export async function referenceStateJourney(ok:Request,call:Request,owner:string
   ];
   const host=(await ok(owner,'POST','/api/pages',{operationKey:key(),containerId,title:'Retained reference index',blocks})).value.pageId;
   await ok(owner,'POST','/api/sharing',{operationKey:key(),targetKind:'page',targetId:host,principalKind:'member',principalId:readerId,level:'view'});
+  await ok(owner,'POST','/api/sharing',{operationKey:key(),targetKind:'page',targetId:host,principalKind:'member',principalId:outsider.id,level:'view'});
   const hostRevision=(await ok(owner,'GET',`/api/pages/${host}`)).workingRevisionId;
   const read=()=>ok(owner,'GET',`/api/pages/${target}`);
   const check=async(title:string,state:string)=>{
@@ -72,12 +74,14 @@ export async function referenceStateJourney(ok:Request,call:Request,owner:string
   const receipt=await ok(owner,'POST',`/api/archive/${target}/permanent-delete`,deletion);
   expect(receipt.value.deletedPageIds).toEqual([target]);
   await ok(owner,'POST',`/api/archive/${target}/permanent-delete`,deletion);
+  expect((await ok(owner,'POST','/api/pages',creation)).value).toEqual({deleted:true});
   await check('Deleted page','deleted');
+  const hidden=await ok(outsider.cookie,'GET',`/api/pages/${host}`);
+  expect(hidden.mentions[target]).toEqual({label:'Restricted page',available:false,state:'restricted'});
+  expect((await call(outsider.cookie,'GET',`/api/pages/${target}/link-card`)).status).toBe(404);
+  expect(JSON.stringify(hidden)).not.toContain(secret);
   const erased=await call(owner,'GET',`/api/pages/${target}`);
   expect(erased.status).toBe(404);
   expect(erased.body.code).toBe('PAGE_ERASED');
-  // The deletion never turns the reader's later revoked grant into tombstone authority.
-  // Native grant revocation is unavailable after erasure; the still-current grant is
-  // exercised above, while the existing LINK-004 journey proves revocation and expiry.
   await ok(owner,'PUT','/api/workspace',{operationKey:key(),expectedRevisionId:(await ok(owner,'GET','/api/workspace')).revisionId,name:workspace.name,mark:workspace.mark,description:workspace.description,guestAccess:workspace.guestAccess,publicLinkAccess:workspace.publicLinkAccess,anonymousAccess:workspace.anonymousAccess,policies:workspace.policies});
 }

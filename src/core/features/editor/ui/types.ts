@@ -27,7 +27,7 @@ export interface InlineSpan {
   status?: {colour:StatusColour};
   marks?: InlineMark[];
   colour?: InlineColour;
-  link?: { href: string };
+  link?: { href: string; state?:string; available?:boolean };
   /** `BLOCK-005` — a person, page or date mention rendered from its current value. */
   mention?: { kind: MentionKind; label: string; id?: string; state?:string; available?:boolean };
   /** `COMM-001` — the anchor an anchored comment points at. */

@@ -53,7 +53,7 @@ export async function resolvePageReferences(ctx:FeatureContext,ids:string[]):Pro
 /** The given content with every page mention labelled for this reader. */
 export async function labelForReader<T>(ctx:FeatureContext,value:T):Promise<T> {
     const mentions=await resolveMentions(ctx,[{content:value as JsonValue}]);
-    return canonicalGroupLabels(ctx,labelPageMentions(value,id=>mentions[id]?.label??'Unavailable page',ctx.appOrigin));
+    return canonicalGroupLabels(ctx,labelPageMentions(value,id=>mentions[id]??{label:'Unavailable page',state:'unavailable',available:false},ctx.appOrigin));
 }
 /**
  * The given content labelled for everyone it is shown to at once, such as an

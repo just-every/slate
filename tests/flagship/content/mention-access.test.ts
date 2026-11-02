@@ -44,7 +44,11 @@ test('LINK-004 — a mentioned page title reaches a reader through no door once 
   const anchorId = key();
   const mention = (text: string, anchored = false) => ({text: [{text: `${text} `}, {text: title, mention: {kind: 'page', id: supplier, label: title}}, {text: ' tonight.'}].map(span => anchored ? {...span, commentAnchorId: anchorId} : span)});
   const blockId = key(), quote = `Call ${title} tonight.`;
-  const index = (await ok(aliceCookie, 'POST', '/api/pages', {operationKey: key(), containerId: shared, title: 'Index', blocks: [{id: blockId, blockType: 'paragraph', content: mention('Call', true), treePosition: 'a0'}]})).value.pageId as string;
+  const index = (await ok(aliceCookie, 'POST', '/api/pages', {operationKey: key(), containerId: shared, title: 'Index', blocks: [
+    {id: blockId, blockType: 'paragraph', content: mention('Call', true), treePosition: 'a0'},
+    {id:key(),blockType:'paragraph',content:{text:[{text:title,link:{href:`/app/pages/${supplier}`}},{text:title,link:{href:`${origin}/app/pages/${supplier}`}}]},treePosition:'a1'},
+    {id:key(),blockType:'link-card',content:{url:`/app/pages/${supplier}`,display:'card',previewState:'ready',preview:{title,description:title,iconLabel:title}},treePosition:'a2'},
+  ]})).value.pageId as string;
   let document = await ok(aliceCookie, 'GET', `/api/pages/${index}`);
   const first = document.page.revisionId as string;
   await ok(aliceCookie, 'POST', `/api/comments/page/${index}`, {operationKey: key(), kind: 'page', body: mention('Check').text});
@@ -138,5 +142,5 @@ test('LINK-004 — a mentioned page title reaches a reader through no door once 
   const expired = await doors();
   expect(leaks(expired)).toEqual([]);
   expect(quoteSeen(expired)).toEqual(['Call Restricted page tonight.']);
-  await referenceStateJourney(ok,async (cookie,method,path,body)=>{const result=await call(cookie,method,path,body);return {status:result.status,body:JSON.parse(strFromU8(result.bytes))};},aliceCookie,bobCookie,bob,closed,origin);
+  await referenceStateJourney(ok,async (cookie,method,path,body)=>{const result=await call(cookie,method,path,body);return {status:result.status,body:JSON.parse(strFromU8(result.bytes))};},aliceCookie,bobCookie,bob,closed,origin,{cookie:carolCookie,id:carol});
 });

@@ -1,6 +1,3 @@
-import {ApiError} from '../../../../client/transport';
-import {RequestState} from '../../../../app/ui/RequestState';
-import {usePageLinkCard} from './usePageLinkCard';
 import type { ReactNode } from "react";
 import { cn } from "../../../../ui";
 import type { InlineColour, InlineSpan, RichText } from "../types";
@@ -65,14 +62,13 @@ function withMarks(span: InlineSpan, node: ReactNode): ReactNode {
   return out;
 }
 
+/** Editable markup is static; reference state arrives with its reader-safe text. */
 function PageLink({span,children}:{span:InlineSpan;children:ReactNode}) {
-  const href=span.link!.href;
-  const page=usePageLinkCard(href);
-  if(!page.internal)return <a className="text-accent underline underline-offset-2" href={href} rel="noreferrer" target="_blank">{children}</a>;
-  if(page.resource.error&&!(page.resource.error instanceof ApiError&&page.resource.error.status===404&&page.resource.error.code==='NOT_FOUND'))return <RequestState loading={false} error={page.resource.error} retry={page.resource.reload}/>;
-  const reference=page.resource.data;
+  const link=span.link!;
+  if(!link.state)return <a className="text-accent underline underline-offset-2" href={link.href} rel="noreferrer" target="_blank">{children}</a>;
+  const restricted=link.state==='restricted'||link.state==='unavailable';
   return <span data-page-reference="" data-slate-atomic-length={span.text.length} contentEditable={false}>
-    {reference?<><a className="text-accent underline underline-offset-2" href={href} rel="noreferrer" target="_blank">{new URL(href,'https://slate.invalid').searchParams.has('revision')?children:withMarks(span,reference.title)}</a>{reference.state!=='live'?<span className="text-small"> · {reference.state}</span>:null}</>:page.resource.error?<span>Access needed</span>:<span>Checking page access…</span>}
+    {restricted?<span>Access needed</span>:<><a className="text-accent underline underline-offset-2" href={link.href} rel="noreferrer" target="_blank">{children}</a>{link.state!=='live'?<span className="text-small"> · {link.state}</span>:null}</>}
   </span>;
 }
 

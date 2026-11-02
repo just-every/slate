@@ -78,7 +78,7 @@ export async function readPage(ctx: FeatureContext, id: string): Promise<PageDoc
                 filterRecordProperties(ctx, id, { ...snapshotProperties, ...(!publishedOnly ? {statusKey: p.status_key} : {}), ownerMemberId: p.owner_member_id }),
                 resolveMentions(ctx, blocks),
             ]);
-            return { props, mentions, blocks: await projectSynced(ctx,await canonicalGroupLabels(ctx,labelPageMentions(blocks, mention => mentions[mention]?.label ?? 'Unavailable page',ctx.appOrigin))) };
+            return { props, mentions, blocks: await projectSynced(ctx,await canonicalGroupLabels(ctx,labelPageMentions(blocks, mention => mentions[mention] ?? {label:'Unavailable page',state:'unavailable',available:false},ctx.appOrigin))) };
         })(),
         ctx.db.prepare('SELECT display_name AS displayName FROM members WHERE id=?').bind(p.author_member_id).first<{ displayName: string }>(),
         p.owner_member_id ? ctx.db.prepare('SELECT display_name AS displayName FROM members WHERE id=? AND workspace_id=?').bind(p.owner_member_id, ctx.actor.workspaceId).first<{ displayName: string }>() : Promise.resolve(null),

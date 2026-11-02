@@ -61,7 +61,7 @@ export function createPublicPagesRoutes() {
         const refusedHosts=new Set<string>();
         for(const block of JSON.parse(p.body_json)){if(block.blockType!=='link-card')continue;const embed=providerEmbed(block.content.url);if(embed&&(await observedEmbed(c.env.DB,p.workspace_id,embedDeployment(c.get('runtimeConfig')?.appUrl??new URL(c.req.url).origin,c.get('runtimeConfig')?.publicPageHost),block.content.url))?.verdict!=='embeddable')refusedHosts.add(new URL(embed.url).hostname);}
         // LINK-004: an anonymous reader sees the title of a mentioned page only when that page is public too.
-        return c.html(renderPublicDocument({ ...shown, body_json: JSON.stringify(labelPageMentions(JSON.parse((shown as Record<string, any>).body_json), id => titles[id] ?? 'Restricted page')) }, links, refusedHosts), 200, { 'X-Robots-Tag': p.indexable ? 'index,follow' : 'noindex,nofollow', ...publicDocumentHeaders });
+        return c.html(renderPublicDocument({ ...shown, body_json: JSON.stringify(labelPageMentions(JSON.parse((shown as Record<string, any>).body_json), id => titles[id] ?? 'Restricted page',new URL(c.get('runtimeConfig')?.appUrl??c.env.APP_URL).origin)) }, links, refusedHosts), 200, { 'X-Robots-Tag': p.indexable ? 'index,follow' : 'noindex,nofollow', ...publicDocumentHeaders });
         } catch (cause) {
             if (cause instanceof ApiProblem && cause.status === 404)
                 return c.html(renderUnavailablePublicDocument(), 404, { ...publicDocumentHeaders, 'X-Robots-Tag': 'noindex,nofollow' });
