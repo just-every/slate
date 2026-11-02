@@ -3994,11 +3994,13 @@ CONT-001 is judged from source commit `12379d17957e993f2aa09d13a8df536aad5a41d8`
 
 STAT-005 retains the current main judgment below. The native status-profile controls and responsive journeys have been reapplied as supporting implementation and assertions; this replay does not promote the clause or replace its recorded evidence gap.
 
+PORT-007 is judged from reviewed source commit `1bc712e02dbaa8cb55029ee59532dcc3ff649dc7`; native readable downloads and mapped document-import readback cover its three acceptance points. The exact candidate, branch Verify and guarded landing receipts are recorded in the branch handoff.
+
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 38 | 188 | 1 | 227 |
+| Published | 39 | 187 | 1 | 227 |
 | Target and push further | 16 | 55 | 40 | 111 |
-| All | 54 | 243 | 41 | 338 |
+| All | 55 | 242 | 41 | 338 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -4172,7 +4174,7 @@ STAT-005 retains the current main judgment below. The native status-profile cont
 | `PORT-004` | Search rebuild | published | partial | `tests/e2e/imports/preview-undo.test.ts` | Missing an import completion journey that reads canonical search and dirty-generation state and checks the promised search behavior before lazy refresh; the cited reviewed-import flow counts indexed pages but does not check the complete search bar. |
 | `PORT-005` | Access boundary | published | partial | `tests/e2e/imports/real-exports.test.ts` | Missing a public export/restore journey that checks all secret exclusions, sole active owner and unpublished restored pages, then tries an unsafe activation; the cited test parses historical actors only. |
 | `PORT-006` | Atomic import | published | partial | `tests/qualification/authority/atomic-recovery.test.ts` | Missing a public restore journey that completes and reads a valid restore and refuses a late-failing archive without changing the destination; the cited atomic-recovery test invokes restore services directly. |
-| `PORT-007` | Exporting a page or a container | published | partial | `tests/flagship/federation/federation.test.ts` | Missing a public page, subtree and container export journey opening Markdown, HTML, PDF and CSV media and re-importing the tree; the cited federation flow invokes readable-export services directly and re-imports a narrower case. |
+| `PORT-007` | Exporting a page or a container | published | done | `tests/qualification/ui-convergence/readable-export-journey.mjs` — "readableExportJourney", called by "exportCommentsJourney" in `tests/qualification/ui-convergence/export-comments-journey.mjs` through the existing desktop export registration and the existing phone tree registration in `tests/qualification/ui-convergence/journeys.test.mjs`: native page, descendants and container downloads in Markdown, HTML and PDF; independent document reads; quoted CSV values, original media and canonical mapped tree, order and record readback after native re-import. Acceptance 2 retains DONE PORT-010 evidence in `tests/e2e/imports/word-export.test.ts` — "PORT-010 — PORT-010 Word export carries every block kind, omits a child the member cannot read and re-imports with the same headings, merged tables and image alt", plus "exportCommentsJourney". |  |
 | `LINK-001` | Permanent URLs | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "Every page, page revision, container, database, record, comment thread and template has a permanent URL."<br>No validated CI-run proof for this acceptance point: "Renaming a record, moving it, changing its container, archiving it or restoring it never changes that URL, and every existing link, mention, citation, content query and search result continues to resolve to it." |
 | `LINK-002` | Tombstones | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A link to a deleted or erased record resolves to a tombstone naming the record kind and the time it was deleted, not an error page or an empty view, and exposes no erased content or personal metadata." |
 | `LINK-003` | References follow their target | published | partial | `CONTRACT.md` — requirement text only; no validated CI-run proof. | No validated CI-run proof for this acceptance point: "A mention or link to another record renders that record's current title and state, follows renames and moves, and is labeled archived, trashed or deleted rather than removed when its target is." |
