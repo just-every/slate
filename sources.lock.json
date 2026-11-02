@@ -7488,7 +7488,7 @@
       "executable": false
     },
     "src/core/features/imports/readable.ts": {
-      "sha256": "484df33c08028df6ca3e77fb37005254762f930e251a9c01778fb578fd67c32c",
+      "sha256": "e9e0473e66345a9a95521c5b04cd85abe5963675259be6699eba5e19483aa503",
       "executable": false
     },
     "src/core/features/imports/report-store.ts": {
@@ -9728,7 +9728,7 @@
       "executable": false
     },
     "src/core/features/workspace-export/readable-archive.ts": {
-      "sha256": "757fedbfbe4f7a77c7156dccc4b1c61e14df789249be1ce1345bcfad85079685",
+      "sha256": "2584656a7d062d17106e97100853268dd58244299c754dc9a27f948eed221051",
       "executable": false
     },
     "src/core/features/workspace-export/readable.ts": {
@@ -12024,7 +12024,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "628972130818c08144a5251b0cc5b1727e4fb0de3e130729e4ece94c021e0431",
+      "sha256": "d97033df316435b9ffd7e5d3d3bbfc3de0af56c7089ce81e2581a411e3c897a1",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {

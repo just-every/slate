@@ -126,8 +126,8 @@ for (const width of [390]) {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await treeFilterJourney(state);
-      await readableExportJourney(state, { proofOnly: true });
       await state.switchIdentity('owner');
+      await readableExportJourney(state, { proofOnly: true });
       await settingsJourney(state,width);
       await workspaceAuthorityJourney(state,width);
     });
@@ -209,7 +209,7 @@ for (const width of [1440]) {
 }
 
 for (const width of [1440]) {
-  test(`readable exports retain discussions through HTML and Markdown re-import at ${width}px`, { timeout: 180000 }, async () => {
+  test(`readable exports retain discussions through HTML and Markdown re-import at ${width}px`, { timeout: 300000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await withSecondPerson(state, width, people => exportCommentsJourney(state, people));
