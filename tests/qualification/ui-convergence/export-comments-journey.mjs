@@ -14,7 +14,12 @@ export async function exportCommentsJourney(state, people) {
   const blockId = randomUUID(), anchorId = randomUUID();
   const { value: { pageId } } = await ok(context, origin, 'POST', '/api/pages', { operationKey: randomUUID(), containerId: space.id, title: 'Customer incident handover', blocks: [{ id: blockId, blockType: 'paragraph', content: { text: [{ text: 'Confirm the recovery owner', commentAnchorId: anchorId }, { text: ' before handing the incident to the next shift.' }] }, treePosition: 'a' }] });
   await grant(context, origin, pageId, people.bob.id, 'comment');
-  const source = await api(`/api/pages/${pageId}`);
+  let source = await api(`/api/pages/${pageId}`);
+  const labels=['handover','response'];
+  const authored=await ok(context,origin,'PATCH',`/api/pages/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:source.page.revisionId,properties:{labels,typeface:'serif',smallText:true,fullWidth:true}});
+  assert.equal(authored.receipt.entity.id,pageId);
+  source=await api(`/api/pages/${pageId}`);assert.deepEqual(source.properties.labels,labels);
+
   const first = (await ok(context, origin, 'POST', `/api/comments/page/${pageId}`, { operationKey: randomUUID(), kind: 'inline', blockId, anchor: { anchorId, quote: 'Confirm the recovery owner' }, anchorRevisionId: source.workingRevisionId, body: [{ text: 'Who will coordinate the next customer update?' }] })).value;
   await ok(people.bob.context, origin, 'POST', `/api/comments/page/${pageId}`, { operationKey: randomUUID(), threadId: first.threadId, parentCommentId: first.id, body: [{ text: 'Morgan will send the update at the next handover.' }] });
   await ok(context, origin, 'POST', `/api/comments/page/${pageId}`, { operationKey: randomUUID(), body: [{ text: 'Keep this timeline with the incident report.' }] });
@@ -51,7 +56,13 @@ export async function exportCommentsJourney(state, people) {
     await openExport();
     const bytes = await download(format, format);
     const entries = unzipSync(bytes), manifest = JSON.parse(new TextDecoder().decode(entries['slate-readable.json']));
-    const archived = manifest.pages.find(p => p.id === pageId).comments;
+    assert.equal(manifest.pages.length,1);
+    const archivedPage=manifest.pages.find(p=>p.id===pageId);
+    assert.equal(archivedPage.title,source.page.title);assert.equal(archivedPage.parentId,source.parentPageId);
+    assert.deepEqual(archivedPage.labels,labels);
+    assert.deepEqual(archivedPage.display,{typeface:'serif',smallText:true,fullWidth:true});
+    assert.deepEqual(archivedPage.blocks.map(({revisionId,pageId,...block})=>block),source.blocks.map(({revisionId,pageId,...block})=>block));
+    const archived = archivedPage.comments;
     assert.equal(archived.threads.length, 2);
     assert.equal(archived.threads.find(t => t.kind === 'inline').state, 'resolved');
     assert.deepEqual(JSON.parse(new TextDecoder().decode(entries[`pages/${pageId}.comments.json`])), archived);
@@ -77,6 +88,11 @@ export async function exportCommentsJourney(state, people) {
     await page.screenshot({ path: `.artifacts/ui-convergence/export-comments-${width}-${format}-import.png`, fullPage: true });
     const copy = (await api('/api/pages')).items.find(p => !previous.has(p.id) && p.title === 'Customer incident handover');
     assert.ok(copy);
+    const restoredPage=await api(`/api/pages/${copy.id}`);
+    assert.notEqual(copy.id,pageId);assert.deepEqual(restoredPage.properties.labels,labels);
+    for(const key of ['title','typeface','smallText','fullWidth'])assert.equal(restoredPage.properties[key],source.properties[key]);
+    console.log(`PROBE PAGE-001 3: decoded ${format} download and reviewed re-import -> authored labels, title, display, body and page-bound comments retained`);
+
     await page.goto(`${origin}/app/pages/${copy.id}`, { waitUntil: 'networkidle' });
     await openPageAction(page, 'Comments');
     await expect(page.locator('.comment-thread')).toHaveCount(2);
@@ -84,6 +100,12 @@ export async function exportCommentsJourney(state, people) {
     await expect(page.locator('.right')).toContainText('Who will coordinate the next customer update?');
     await expect(page.locator('.right')).toContainText('Resolved');
     const restored = await api(`/api/comments/page/${copy.id}`);
+    const restoredAnchor=JSON.parse(restored.threads.find(t=>t.kind==='inline').anchor_json).anchorId;
+    assert.ok(restoredAnchor);assert.notEqual(restoredAnchor,anchorId,'A copied page receives its own anchor identity.');
+    const expectedBody=JSON.parse(JSON.stringify(source.blocks.map(block=>[block.blockType,block.content,block.treePosition])).replaceAll(anchorId,restoredAnchor));
+    assert.deepEqual(restoredPage.blocks.map(block=>[block.blockType,block.content,block.treePosition]),expectedBody);
+    assert.ok(restored.threads.every(thread=>thread.page_id===copy.id));
+
     assert.equal(restored.threads.find(t => t.kind === 'inline').block_id, (await api(`/api/pages/${copy.id}`)).blocks[0].id);
     assert.deepEqual(restored.comments.map(c => [c.authorDisplayName, c.createdAt, c.body]), discussion.comments.map(c => [c.authorDisplayName, c.createdAt, c.body]));
     await page.screenshot({ path: `.artifacts/ui-convergence/export-comments-${width}-${format}-restored.png`, fullPage: true });

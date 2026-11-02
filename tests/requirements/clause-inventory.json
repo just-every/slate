@@ -255,8 +255,17 @@
       "id": "PAGE-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for PAGE-001 — What a page is. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "This legacy inventory classifies Workers supporting tests only; CONTRACT.md owns native clause status. Native page creation and populated record, comment, revision, decision and exposure inventories run in the existing content HTTP registration. Existing responsive core journeys invoke pageDetailsJourney for complete page metadata, edit-only label addition and removal, invalid input and viewer refusals. The existing readable export journey and native ZIP round trip decode actual archives and read restored pages; reviewed Confluence global labels traverse Apply, readable export and re-import. Independent acceptance and guarded landing receipts remain separate.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/content/http.test.ts",
+          "testName": "content durable HTTP content saves, revisions, moves, deletion, suggestions and attachment limits preserve durable state"
+        },
+        {
+          "file": "tests/e2e/imports/preview-undo.test.ts",
+          "testName": "reviews, applies and reverses real Notion and Confluence content without losing native edits"
+        }
+      ]
     },
     {
       "id": "PAGE-002",

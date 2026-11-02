@@ -28,9 +28,28 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     }
     await api(source,sourceCookie,'/api/publishing/archive-root',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),expectedRevisionId:'archive-root-current',host:new URL(source.origin).host,slug:'research/portable',theme:'dark',indexable:false,socialPreview:{title:'Portable knowledge',description:'Retain publication settings'}})});
     const published=await fetch(source.origin+'/p/research/portable');assert.equal(published.status,200);assert.match(await published.text(),/Restorable research/);
+    // Author labels through the page door after fixture loading, before the real ZIP backup.
+    const nativeBlock=randomUUID();
+    const nativeCreate=await(await api(source,sourceCookie,'/api/pages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),containerId:'archive-container',parentPageId:'archive-root',treePosition:'0015',title:'Authored recovery page',properties:{icon:'📘',cover:{kind:'gallery',id:'forest'}},blocks:[{id:nativeBlock,blockType:'paragraph',treePosition:'a',content:{text:[{text:'Native authored recovery body'}]}}]})})).json();
+    const nativeId=nativeCreate.value.pageId;
+    assert.equal(nativeCreate.receipt.entity.id,nativeId);
+    const beforeEdit=await(await api(source,sourceCookie,`/api/pages/${nativeId}`)).json();
+    const labelWrite={operationKey:randomUUID(),expectedRevisionId:beforeEdit.page.revisionId,properties:{labels:['portable','research','authored']}};
+    const labelReceipt=await(await api(source,sourceCookie,`/api/pages/${nativeId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(labelWrite)})).json();
+    assert.equal(labelReceipt.receipt.entity.id,nativeId);
+    const labelRemoval=await(await api(source,sourceCookie,`/api/pages/${nativeId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID(),expectedRevisionId:labelReceipt.value.revisionId,properties:{labels:['authored','portable']}})})).json();
+    assert.equal(labelRemoval.receipt.entity.id,nativeId);
+    const authoredPages=new Map();
+    for(const id of [...pageIds,nativeId])authoredPages.set(id,await(await api(source,sourceCookie,`/api/pages/${id}`)).json());
+    assert.deepEqual(authoredPages.get(nativeId).properties.labels,['authored','portable']);
+    const authoredGrants=await(await api(source,sourceCookie,`/api/sharing/pages/${nativeId}`)).json();
     const first=path.join(scratch,'source.zip'),second=path.join(scratch,'restored.zip');
     const exportReceipt=await source.cli('export',first,sourceCookie);const before=unpack(await readFile(first));
-    assert.equal(exportReceipt.counts.pages,3);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.length,6);assert.equal(before.manifest.tables.comments.length,2);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
+    assert.equal(exportReceipt.counts.pages,4);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.length,9);assert.equal(before.manifest.tables.comments.length,2);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
+    assert.deepEqual(before.manifest.tables.page_labels.filter(row=>row.page_id===nativeId).map(row=>row.label).sort(),['authored','portable']);
+    const archivedRoot=before.manifest.tables.pages.find(row=>row.id===nativeId);
+    assert.equal(archivedRoot.working_revision_id,labelRemoval.value.revisionId);
+    assert.deepEqual(JSON.parse(before.manifest.tables.page_revisions.find(row=>row.id===labelRemoval.value.revisionId).properties_json).labels,['authored','portable']);
     await source.close();
     target=await runtime(path.join(scratch,'target'));
     assert.notEqual(target.persist,source.persist);
@@ -70,11 +89,11 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const restoreJob=await staged.json();
     assert.equal(staged.status,202,JSON.stringify(restoreJob));
     const imported=await(await api(target,localCookie,`/api/exports/jobs/${restoreJob.id}/run`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
-    assert.equal(imported.state,'completed');assert.equal(imported.counts.pages,3);assert.equal(imported.counts.files,2);
+    assert.equal(imported.state,'completed');assert.equal(imported.counts.pages,4);assert.equal(imported.counts.files,2);
     assert.equal((await fetch(target.origin+'/api/session',{headers:{Cookie:bootstrapCookie,...devKeyHeaders}})).status,401,'Restore revokes the original target session.');
     await target.close();
     const [index]=await target.sql('SELECT (SELECT COUNT(DISTINCT page_id) FROM search_text WHERE page_id IS NOT NULL) AS indexed,(SELECT COUNT(*) FROM search_dirty) AS pending');
-    assert.deepEqual(index.results,[{indexed:3,pending:0}],'Search is already rebuilt before a page or search request can repair it.');
+    assert.deepEqual(index.results,[{indexed:4,pending:0}],'Search is already rebuilt before a page or search request can repair it.');
     await target.start();const targetCookie=await signIn(target);
     const outboxBefore=await inbox(target.origin);
     for(const email of ['archive-member@example.invalid','archive-guest@example.invalid']){
@@ -82,7 +101,12 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
       assert.equal(inactive.status,200);assert.equal((await inactive.json()).accepted,true);
     }
     assert.deepEqual(await inbox(target.origin),outboxBefore,'Imported member and guest cannot obtain fresh sign-in mail before an invitation.');
-    for(const pageId of pageIds){const page=await(await api(target,targetCookie,`/api/pages/${pageId}`)).json();assert.equal(page.page.id,pageId);assert.equal(page.workingRevisionId,`${pageId}-current`);assert.equal(page.blocks[0].id,`${pageId}-block`);assert.deepEqual(page.properties.labels,['portable','research']);}
+    for(const pageId of [...pageIds,nativeId]){const page=await(await api(target,targetCookie,`/api/pages/${pageId}`)).json();assert.equal(page.page.id,pageId);assert.equal(page.workingRevisionId,pageId===nativeId?labelRemoval.value.revisionId:`${pageId}-current`);assert.equal(page.blocks[0].id,pageId===nativeId?nativeBlock:`${pageId}-block`);assert.deepEqual(page.properties.labels,pageId===nativeId?['authored','portable']:['portable','research']);
+      const original=authoredPages.get(pageId);
+      for(const key of ['page','properties','parentPageId','authorMemberId','createdAt','updatedAt','contributors','workingRevisionId','publishedRevisionId','blocks'])assert.deepEqual(page[key],original[key],`Restored page retains ${key}.`);
+    }
+    assert.deepEqual(await(await api(target,targetCookie,`/api/sharing/pages/${nativeId}`)).json(),authoredGrants);
+    console.log('PROBE PAGE-001 3: authored label add and removal -> decoded native ZIP and restored HTTP identity, metadata, body, labels and grants retained');
     for(const original of originals){const restored=await api(target,targetCookie,`/api/media/${original.id}`);assert.deepEqual(Buffer.from(await restored.arrayBuffer()),original.bytes);}
     // Use the source publication Host: a different target Host alone cannot prove unpublication.
     const {requestWithHost}=await import('../e2e/runtime-harness.mjs');

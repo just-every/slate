@@ -19,7 +19,7 @@ export async function pageDetailsJourney(state,people) {
   const pageId=await create('Response details',[
     {id:blockId,blockType:'paragraph',content:{text:[{text:'Initial response notes.'}]},treePosition:'a'},
     {id:randomUUID(),blockType:'table',content:{caption:'Handover',columns:['Task','Owner'],rows:[{id:randomUUID(),cells:['Review','Morgan']}]},treePosition:'b'},
-  ],{parentPageId:parentId,properties:{labels:['operations','handover']}});
+  ],{parentPageId:parentId,treePosition:'details-position',properties:{icon:'📚',cover:{kind:'gallery',id:'forest'},labels:['operations','handover']}});
   await grant(context,origin,pageId,member.id,'full');
   // Two actual content edits populate both contributors, independently of ownership.
   for(const [actor,text] of [[context,'Owner prepared response.'],[member.context,'Confirm the duty owner.']]) {
@@ -41,6 +41,18 @@ export async function pageDetailsJourney(state,people) {
   await openPageAction(view,'Details');
   const panel=view.locator('.right'),field=label=>panel.locator('dt').filter({hasText:new RegExp(`^${label}$`)}).locator('+ dd');
   const document=await api(`/api/pages/${pageId}`);
+  assert.equal(document.page.id,pageId);assert.equal(document.page.title,'Response details');
+  assert.equal(document.page.containerId,space.id);assert.equal(document.parentPageId,parentId);
+  assert.equal(document.page.lifecycle,'live');assert.ok(document.page.revisionId);
+  const snapshot=await api(`/api/revisions/${pageId}/${document.workingRevisionId}`);
+  assert.equal(snapshot.id,document.workingRevisionId);assert.deepEqual(snapshot.blocks,document.blocks);
+  assert.equal(document.properties.icon,'📚');assert.deepEqual(document.properties.cover,{kind:'gallery',id:'forest'});
+  assert.equal(document.properties.ownerMemberId,'browser-owner');
+  assert.deepEqual(document.blocks.map(block=>block.pageId),[pageId,pageId]);
+  const positions=(await api(`/api/pages?containerId=${space.id}`)).items.filter(item=>item.id===pageId);
+  assert.equal(positions.length,1);assert.equal(positions[0].treePosition,'details-position');
+  assert.equal(positions[0].parentPageId,parentId);
+
   assert.equal(document.authorMemberId,'browser-owner');
   assert.deepEqual(document.contributors.map(item=>item.id).sort(),['browser-owner','browser-reader']);
   assert.equal(document.permissions.level,'full');
@@ -118,9 +130,59 @@ export async function pageDetailsJourney(state,people) {
   assert.deepEqual(await api(`/api/sharing/pages/${pageId}`),grantsBeforeRefusal);
   assert.deepEqual(await timeline(),activityBeforeRefusal);
   await accessible(view,'edit-only member cannot reassign owner');
+  await editPageLabels(state,member,pageId,['handover','operations']);
+
   // A readable backlink opens its real target; the hidden source remains undisclosed.
   await panel.getByRole('link',{name:'Readable response reference',exact:true}).click();
   await expect(view).toHaveURL(`${origin}/app/pages/${readableId}`);
   await expect(view.getByRole('textbox',{name:'Page title',exact:true})).toHaveValue('Readable response reference');
   console.log(`PAGE-007 Details, replay and edit-only refusal passed at ${width}px`);
+}
+
+/** Details authoring keeps the same populated page and refuses invalid or viewer writes unchanged. */
+export async function editPageLabels(state,member,pageId,initial){
+  const {context,origin,api}=state,view=member.page,panel=view.locator('.right');
+  const grants=await api(`/api/sharing/pages/${pageId}`);
+  const write=async(labels,valid)=>{
+    const before=await api(`/api/pages/${pageId}`),history=await api(`/api/revisions/${pageId}`);
+    await panel.getByRole('button',{name:'Edit labels',exact:true}).click();
+    const dialog=view.getByRole('dialog',{name:'Edit page labels',exact:true});
+    await dialog.getByLabel('Labels, separated by commas',{exact:true}).fill(labels.join(', '));
+    const pending=view.waitForResponse(response=>new URL(response.url()).pathname===`/api/pages/${pageId}`&&response.request().method()==='PATCH');
+    await dialog.getByRole('button',{name:'Save details',exact:true}).click();
+    const response=await pending,submitted=response.request().postDataJSON(),receipt=await response.json();
+    assert.equal(response.status(),valid?200:400);
+    if(valid){
+      assert.equal(receipt.receipt.operationKey,submitted.operationKey);
+      assert.deepEqual(receipt.receipt.entity,{kind:'page',id:pageId,revisionId:receipt.value.revisionId});
+      await expect(dialog).toBeHidden();
+      const after=await api(`/api/pages/${pageId}`);assert.deepEqual([...after.properties.labels].sort(),[...labels].sort());
+      assert.equal(after.page.revisionId,receipt.value.revisionId);assert.deepEqual(after.blocks,before.blocks);
+      assert.equal(after.createdAt,before.createdAt);assert.equal(after.properties.ownerMemberId,before.properties.ownerMemberId);
+      assert.deepEqual(await api(`/api/sharing/pages/${pageId}`),grants);
+      await view.reload({waitUntil:'networkidle'});if(!await panel.getByRole('heading',{name:'Page details',exact:true}).isVisible())await openPageAction(view,'Details');
+      await expect(panel.locator('dt').filter({hasText:/^Labels$/}).locator('+ dd')).toContainText(labels.join(', '));
+    }else{
+      await expect(dialog.getByRole('alert')).toBeVisible();
+      assert.deepEqual(await api(`/api/pages/${pageId}`),before);assert.deepEqual(await api(`/api/revisions/${pageId}`),history);
+      await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+    }
+    return submitted;
+  };
+  const retained=[...initial,'response'];await write(retained,true);
+  await write(['handover','response'],true);
+  await write(['handover','handover'],false);await write(['x'.repeat(81)],false);
+  const before=await api(`/api/pages/${pageId}`);
+  const blank=await call(member.context,origin,'PATCH',`/api/pages/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:before.page.revisionId,properties:{labels:[' ']}});
+  assert.equal(blank.status,400);assert.deepEqual(await api(`/api/pages/${pageId}`),before);
+  await accessible(view,'authored page labels retained after reload');
+  const direct=grants.items.find(item=>item.principalId===member.id&&item.level==='edit');
+  await ok(context,origin,'POST','/api/sharing',{operationKey:randomUUID(),targetKind:'page',targetId:pageId,id:direct.id,principalKind:'member',principalId:member.id,level:'view'});
+  await view.reload({waitUntil:'networkidle'});if(!await panel.getByRole('heading',{name:'Page details',exact:true}).isVisible())await openPageAction(view,'Details');
+  await expect(panel.getByRole('button',{name:'Edit labels',exact:true})).toHaveCount(0);
+  const current=await api(`/api/pages/${pageId}`),history=await api(`/api/revisions/${pageId}`);
+  const refused=await call(member.context,origin,'PATCH',`/api/pages/${pageId}`,{operationKey:randomUUID(),expectedRevisionId:current.page.revisionId,properties:{labels:['viewer-write']}});
+  assert.equal(refused.status,404);assert.deepEqual(await api(`/api/pages/${pageId}`),current);assert.deepEqual(await api(`/api/revisions/${pageId}`),history);
+  await accessible(view,'viewer cannot change page labels');
+  console.log(`PROBE PAGE-001 1: Details at ${view.viewportSize().width}px -> edit-only add and remove persisted; duplicate, long, blank and viewer writes refused unchanged`);
 }

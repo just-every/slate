@@ -1,3 +1,4 @@
+import {unzipSync,zipSync,strFromU8,strToU8} from 'fflate';
 import {beforeEach,expect,it,vi} from 'vitest';
 import {env} from 'cloudflare:test';
 import {createApi} from '../../../src/core/app/hono';
@@ -24,7 +25,22 @@ it('reviews, applies and reverses real Notion and Confluence content without los
   const data=await response.json() as any;
   expect(response.status,JSON.stringify(data)).toBe(200);return data;
  };
- const bytes=await (await (env as typeof env & {TEST_IMPORT_FIXTURES:Fetcher}).TEST_IMPORT_FIXTURES.fetch(`https://fixtures/${name}`)).arrayBuffer();
+ const originalBytes=await (await (env as typeof env & {TEST_IMPORT_FIXTURES:Fetcher}).TEST_IMPORT_FIXTURES.fetch(`https://fixtures/${name}`)).arrayBuffer();
+ let bytes=originalBytes;
+ if(format==='confluence-space'){
+  const entries=unzipSync(new Uint8Array(originalBytes));
+  // These source entries are plain CSV despite their vendor .gz filenames.
+  // Preserve the genuine personal favourite and every source entry; add global page tags.
+  entries['label.csv.gz']=strToU8(strFromU8(entries['label.csv.gz']!)+
+   '900001,synthetic-slate-1,,global,2026-09-11 08:27:52.009,2026-09-11 08:27:52.009\r\n'+
+   '900002,synthetic-slate-2,,global,2026-09-11 08:27:52.009,2026-09-11 08:27:52.009\r\n');
+  entries['content_label.csv.gz']=strToU8(strFromU8(entries['content_label.csv.gz']!)+
+   '900003,900001,163939,,,2026-09-11 08:27:52.009,2026-09-11 08:27:52.009,163939,CONTENT\r\n'+
+   '900004,900002,163939,,,2026-09-11 08:27:52.009,2026-09-11 08:27:52.009,163939,CONTENT\r\n'+
+   '900005,900002,163941,,,2026-09-11 08:27:52.009,2026-09-11 08:27:52.009,163941,CONTENT\r\n');
+  bytes=zipSync(entries).buffer as ArrayBuffer;
+ }
+
  const form=new FormData();form.set('file',new File([bytes],name));form.set('format',format);form.set('operationKey',crypto.randomUUID());
  const uploaded=await call('',form);let job=await call(`/${uploaded.id}/preview`,{});
  expect(job.state).toBe('preview');expect(job.report.wouldCreate.length).toBeGreaterThan(0);
@@ -58,7 +74,22 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  const pages=(await env.DB.prepare('SELECT id,title,revision_id,parent_page_id FROM pages WHERE workspace_id=? ORDER BY id').bind(workspaceId).all<{id:string;title:string;revision_id:string;parent_page_id:string|null}>()).results;
  expect(pages.length).toBeGreaterThan(1);expect(job.counts.pages).toBe(pages.length);
  expect(await env.DB.prepare('SELECT COUNT(DISTINCT page_id) AS n FROM search_text WHERE workspace_id=?').bind(workspaceId).first('n')).toBe(pages.length);
+ let readableBytes:Uint8Array|undefined;
  if(format==='confluence-space'){
+  const expected=new Map([['Overview',['synthetic-slate-1','synthetic-slate-2']],['Getting started in Confluence',['synthetic-slate-2']],['Pizza Restaurant Launch Plan',[]]]);
+  expect(pages).toHaveLength(expected.size);
+  for(const page of pages){
+   const response=await app.request(`https://slate.example/api/pages/${page.id}`,{headers:{Cookie:cookie}},env);expect(response.status).toBe(200);
+   const doc=await response.json<any>();expect(doc.page.id).toBe(page.id);expect(doc.properties.labels.sort()).toEqual(expected.get(page.title));
+   const stored=(await env.DB.prepare('SELECT label FROM page_labels WHERE page_id=? ORDER BY label').bind(page.id).all<{label:string}>()).results.map(row=>row.label);
+   expect(stored).toEqual(expected.get(page.title));expect(stored).not.toContain('favourite');
+  }
+  const exported=await app.request('https://slate.example/api/exports/readable',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({scope:'workspace',id:workspaceId,format:'html'})},env);
+  expect(exported.status).toBe(200);readableBytes=new Uint8Array(await exported.arrayBuffer());
+  const manifest=JSON.parse(strFromU8(unzipSync(readableBytes)['slate-readable.json']!));
+  expect(manifest.pages).toHaveLength(expected.size);
+  for(const page of manifest.pages)expect(page.labels.sort()).toEqual(expected.get(page.title));
+  console.log('PROBE PAGE-001 3: reviewed Confluence Apply and decoded readable export -> complete three-page global label inventory retained; personal favourite excluded');
   const restricted=await env.DB.prepare("SELECT p.id,p.title FROM pages p JOIN page_grants g ON g.page_id=p.id WHERE p.access_inheritance='restricted' AND g.principal_kind='member' AND g.principal_id=? LIMIT 1").bind(mapped.memberId).first<{id:string;title:string}>();
   expect(restricted).toBeTruthy();
   for(const [memberId,allowed] of [[owner.memberId,true],[mapped.memberId,true],[other.memberId,false],[guest.memberId,false]] as const){
@@ -84,6 +115,20 @@ it('reviews, applies and reverses real Notion and Confluence content without los
  expect(await env.DB.prepare('SELECT id FROM pages WHERE id=?').bind(independent!.id).first('id')).toBeNull();
  expect((await app.request(`https://slate.example/api/pages/${independent!.id}`,{headers:{Cookie:cookie}},env)).status).toBe(404);
  expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM pages WHERE workspace_id=?').bind(workspaceId).first<number>('n')).toBeLessThan(pages.length);
+ if(readableBytes){
+  const form=new FormData();form.set('file',new File([readableBytes as Uint8Array<ArrayBuffer>],'labelled-readable.zip'));form.set('format','slate-readable');form.set('operationKey',crypto.randomUUID());
+  let restored=await call('',form);restored=await call(`/${restored.id}/run`,{});
+  for(let n=0;restored.state!=='completed'&&n<100;n++)restored=await call(`/${restored.id}/resume`,{});
+  expect(restored.state).toBe('completed');
+  const copies=(await env.DB.prepare("SELECT p.id,p.title FROM pages p JOIN federation_import_mappings t ON t.target_id=p.id AND t.target_kind='page' WHERE t.import_job_id=? ORDER BY p.title").bind(restored.id).all<{id:string;title:string}>()).results;
+  expect(copies.map(page=>page.title)).toEqual(['Getting started in Confluence','Overview','Pizza Restaurant Launch Plan']);
+  for(const page of copies){
+   const response=await app.request(`https://slate.example/api/pages/${page.id}`,{headers:{Cookie:cookie}},env);expect(response.status).toBe(200);
+   const doc=await response.json<any>();expect(doc.properties.labels.sort()).toEqual(page.title==='Overview'?['synthetic-slate-1','synthetic-slate-2']:page.title==='Getting started in Confluence'?['synthetic-slate-2']:[]);
+  }
+  console.log('PROBE PAGE-001 3: reviewed re-import of actual Confluence-derived readable ZIP -> all imported page labels retained through native HTTP');
+ }
+
  }
 },120_000);
 
