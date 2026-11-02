@@ -128,6 +128,7 @@ export function usePageInsertion(pageId: string, editor: ReturnType<typeof usePa
   }
   return {
     blocks: recovery ? (recovery.blocks.length ? recovery.blocks : [empty]) : draft ?? (editor.blocks.length ? editor.blocks : [empty]),
+    readBlocks: () => current.current ?? (latestEditor.current.readBlocks().length ? latestEditor.current.readBlocks() : [empty]),
     pending: draft !== null,
     conflicts: recovery?.conflicts ?? [],
     error,

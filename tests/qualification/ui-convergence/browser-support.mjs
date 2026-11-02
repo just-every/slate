@@ -1,3 +1,4 @@
+import {initializeLinkPreviewEdge,readLinkPreviewRequests} from '../../helpers/link-preview-edge.mjs';
 import {initializeEmbedEdge,readEmbedRequests} from '../../helpers/embed-edge.mjs';
 import { initializeWebhookEdge, setWebhookFailure } from '../../helpers/webhook-edge.mjs';
 import { testDevKey } from '../../e2e/dev-key.mjs';
@@ -47,6 +48,7 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
     if (backups) await initializeS3Edge(state);
     if (folders) await initializeFolderEdge(state);
     await initializeEmbedEdge(state);
+    await initializeLinkPreviewEdge(state);
     await initializeWorkspaceDatabase(state);
     const now = new Date().toISOString();
     await executeD1(state, `INSERT INTO workspaces(id,name,mark,created_at,updated_at,revision_id) VALUES('browser-workspace','Harbor operations','','${now}','${now}','initial');
@@ -184,7 +186,7 @@ export async function withWorkspace(viewport, profile, run, overrides = {}, { sc
       assert.equal(response.status, 200, await response.text());
     };
     try {
-      await run({readEmbedRequests:()=>readEmbedRequests(state), page, context, origin: runtime.baseUrl, api, records, atRest, fixtureSql, runScheduled, switchIdentity, modelRequests, readerCookie: `slate_session=${readerToken}`,
+      await run({readLinkPreviewRequests:()=>readLinkPreviewRequests(state), readEmbedRequests:()=>readEmbedRequests(state), page, context, origin: runtime.baseUrl, api, records, atRest, fixtureSql, runScheduled, switchIdentity, modelRequests, readerCookie: `slate_session=${readerToken}`,
         assertNoConsoleErrors: () => assert.deepEqual(consoleErrors, [], 'The browser must have no console errors or uncaught page errors.'),
         ...(webhooks ? {setWebhookFailure:failure=>setWebhookFailure(state,failure)} : {}),
         ...(backups ? { setS3Failure: failure => setS3Failure(state, failure), readS3Requests: () => readS3Requests(state), readS3Objects: () => readS3Objects(state) } : {}),

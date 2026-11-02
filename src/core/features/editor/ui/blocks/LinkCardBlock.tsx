@@ -104,7 +104,7 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
           rel="noreferrer"
           target="_blank"
         >
-          <LinkIcon aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted" />
+          {preview.iconData ? <img src={preview.iconData} alt="" className="size-4 shrink-0" /> : <LinkIcon aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted" />}
           <span className="truncate">{preview.title}</span>
         </a>
       ) : (
@@ -115,7 +115,7 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
           target="_blank"
         >
           <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-control bg-sidebar-hover text-micro font-medium text-ink-muted">
-            {preview.iconLabel ?? <ExternalLink aria-hidden="true" className="size-3.5" />}
+            {preview.iconData ? <img src={preview.iconData} alt="" className="size-6 object-contain" /> : preview.iconLabel ?? <ExternalLink aria-hidden="true" className="size-3.5" />}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-ui font-medium text-ink">{preview.title}</span>
@@ -127,6 +127,7 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
         </a>
       )}
 
+      {block.previewState === "loading" ? <p role="status" className="text-small text-ink-muted">Fetching a preview. The link is already stored.</p> : null}
       {failed ? (
         <p className="flex flex-wrap items-center gap-2 text-small text-ink-muted" role="status">
           <TriangleAlert aria-hidden="true" className="size-3.5 text-warn" />

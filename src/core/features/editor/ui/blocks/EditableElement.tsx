@@ -161,6 +161,19 @@ export function EditableElement({
             }:undefined}}));
           }
         }}
+        onPaste={(event: React.ClipboardEvent<HTMLElement>) => {
+          if (!canEdit || !inlineLabels || !event.currentTarget.closest('[data-page-editor]')) return;
+          const url = event.clipboardData.getData('text/plain');
+          // Leave ordinary text, multiline and rich clipboard pastes to the browser.
+          if (!/^https?:\/\/\S+$/i.test(url)) return;
+          try { const parsed = new URL(url); if (parsed.username || parsed.password) return; } catch { return; }
+          const range = readEditableSelection(event.currentTarget);
+          if (!range) return;
+          const handled = !event.currentTarget.dispatchEvent(new CustomEvent('slate-paste-url', {
+            bubbles: true, cancelable: true, detail: {url, range, text: readRichText(event.currentTarget, value)},
+          }));
+          if (handled) event.preventDefault();
+        }}
         onInput={(event: FormEvent<HTMLElement>) => {
           if (!(event.nativeEvent as InputEvent).isComposing)
             publish(event.currentTarget);

@@ -1,3 +1,4 @@
+import {linkPreviewEdge} from '../helpers/link-preview-edge.mjs';
 import {embedEdge} from '../helpers/embed-edge.mjs';
 import { webhookEdge } from '../helpers/webhook-edge.mjs';
 import { createRequire } from 'node:module';
@@ -34,6 +35,8 @@ const worker = { ...workerOptions, name: config.name,
     if(webhook)return webhook;
     const saml = await samlEdge(request, persistPath, miniflare.Response);
     if (saml) return saml;
+    const preview = await linkPreviewEdge(request,persistPath,miniflare.Response);
+    if (preview) return preview;
     const embed=await embedEdge(request,persistPath,miniflare.Response);
     if(embed)return embed;
     const folder = await folderEdge(request, persistPath, miniflare.Response);

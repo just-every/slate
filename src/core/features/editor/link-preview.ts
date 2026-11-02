@@ -1,101 +1,140 @@
 import { contentLimits } from './limits';
 import { ApiProblem } from '../../app/problems';
+import { sanitizeSvg } from '../media/sanitize';
 import { parse } from 'parse5';
+
+/** link.preview.v1: the only outbound boundary used by pasted link cards. */
 export interface PreviewTransport {
     resolve(hostname: string): Promise<string[]>;
-    get(url: string, options: {
-        signal: AbortSignal;
-    }): Promise<Response>;
+    get(url: string, options: { signal: AbortSignal }): Promise<Response>;
 }
 export function publicIp(address: string) {
     const ip = address.toLowerCase().replace(/^\[|\]$/g, '');
-    if (ip.includes(':'))
-        return /^[0-9a-f:]+$/.test(ip) && !/^::|^fc|^fd|^fe[89ab]|^ff|^2001:db8|^2001:0:/.test(ip) && !ip.includes('ffff');
+    if (ip.includes(':')) {
+        const prefix = parseInt(ip.split(':')[0]!, 16);
+        return /^[0-9a-f:]+$/.test(ip) && prefix >= 0x2000 && prefix < 0x4000
+            && !/^2001:(?:0:|db8:)|^2002:|^3fff:/.test(ip);
+    }
+    if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip)) return false;
     const parts = ip.split('.').map(Number);
-    if (parts.length !== 4 || parts.some(p => !Number.isInteger(p) || p < 0 || p > 255))
-        return false;
+    if (parts.some(p => !Number.isInteger(p) || p < 0 || p > 255)) return false;
     const [a, b] = parts;
     return !(a === 0 || a === 10 || a === 127 || a === 169 && b === 254 || a === 172 && b! >= 16 && b! <= 31 || a === 192 && (b === 168 || b === 0 || b === 2) || a === 198 && (b === 18 || b === 19 || b === 51) || a === 203 && b === 0 || a! >= 224 || a === 100 && b! >= 64 && b! <= 127);
 }
 async function allowed(raw: string, transport: PreviewTransport) {
-    const u = new URL(raw);
-    if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443') || u.hostname.endsWith('.localhost') || !u.hostname.includes('.'))
+    let u: URL;
+    try { u = new URL(raw); } catch { throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Only public HTTPS URLs are previewed.'); }
+    const hostname = u.hostname.replace(/^\[|\]$/g, '');
+    if (u.protocol !== 'https:' || u.username || u.password || u.port || /(^|\.)(localhost|local|internal)\.?$/i.test(hostname) || (!hostname.includes('.') && !hostname.includes(':')))
         throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Only public HTTPS URLs are previewed.');
-    const addresses = /^[\d.]+$/.test(u.hostname) ? [u.hostname] : await transport.resolve(u.hostname);
+    const addresses = /^[\d.]+$/.test(hostname) || hostname.includes(':') ? [hostname] : await transport.resolve(hostname);
     if (!addresses.length || addresses.some(a => !publicIp(a)))
         throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Private and local destinations cannot be previewed.');
     return u;
 }
+const iconTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml'];
 export async function previewLink(raw: string, transport: PreviewTransport) {
-    const started = Date.now(), controller = new AbortController(), timer = setTimeout(() => controller.abort(), contentLimits.maximumUrlFetchSeconds * 1000);
-    try {
-        let url = await allowed(raw, transport);
-        for (let hop = 0; hop <= contentLimits.maximumUrlFetchRedirects; hop++) {
+    const controller = new AbortController();
+    let rejectDeadline: (error: unknown) => void = () => {};
+    const deadline = new Promise<never>((_, reject) => { rejectDeadline = reject; });
+    const timer = setTimeout(() => {
+        controller.abort();
+        rejectDeadline(new ApiProblem(400, 'PREVIEW_REFUSED', 'Preview exceeds the time limit.'));
+    }, contentLimits.maximumUrlFetchSeconds * 1000);
+    const budget = { bytes: 0, redirects: 0 };
+    async function read(rawUrl: string, mediaTypes: readonly string[]) {
+        let url = await allowed(rawUrl, transport);
+        while (true) {
+            controller.signal.throwIfAborted();
             const response = await transport.get(url.href, { signal: controller.signal });
             if (response.status >= 300 && response.status < 400) {
+                await response.body?.cancel();
                 const location = response.headers.get('location');
-                if (!location || hop === contentLimits.maximumUrlFetchRedirects)
+                if (!location || budget.redirects++ >= contentLimits.maximumUrlFetchRedirects)
                     throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Too many redirects.');
                 url = await allowed(new URL(location, url).href, transport);
                 continue;
             }
-            if (!response.ok || !contentLimits.allowedFetchMediaTypes.includes((response.headers.get('content-type') ?? '').split(';')[0]!.trim()))
-                throw new ApiProblem(400, 'PREVIEW_FAILED', 'The destination did not return an HTML page.');
+            const mediaType = (response.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
+            if (!response.ok || !mediaTypes.includes(mediaType)) {
+                await response.body?.cancel();
+                throw new ApiProblem(400, 'PREVIEW_FAILED', 'The destination did not return a supported preview.');
+            }
+            if (Number(response.headers.get('content-length')) + budget.bytes > contentLimits.maximumUrlFetchBytes) {
+                await response.body?.cancel();
+                throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Preview exceeds the size limit.');
+            }
             const reader = response.body?.getReader();
-            if (!reader)
-                throw new ApiProblem(400, 'PREVIEW_FAILED', 'Empty response.');
-            const chunks: Uint8Array[] = [], decoder = new TextDecoder();
-            let bytes = 0, body = '';
-            while (true) {
-                const part = await reader.read();
-                if (part.done)
-                    break;
-                bytes += part.value.byteLength;
-                if (bytes > contentLimits.maximumUrlFetchBytes || Date.now() - started > contentLimits.maximumUrlFetchSeconds * 1000) {
-                    await reader.cancel();
-                    throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Preview exceeds the size or time limit.');
+            if (!reader) throw new ApiProblem(400, 'PREVIEW_FAILED', 'Empty response.');
+            const abort = () => { void reader.cancel().catch(() => {}); };
+            controller.signal.addEventListener('abort', abort, { once: true });
+            const chunks: Uint8Array[] = [];
+            let size = 0;
+            try {
+                while (true) {
+                    const part = await reader.read();
+                    controller.signal.throwIfAborted();
+                    if (part.done) break;
+                    budget.bytes += part.value.byteLength;
+                    if (budget.bytes > contentLimits.maximumUrlFetchBytes)
+                        throw new ApiProblem(400, 'PREVIEW_REFUSED', 'Preview exceeds the size limit.');
+                    chunks.push(part.value); size += part.value.byteLength;
                 }
-                body += decoder.decode(part.value, { stream: true });
+            } finally {
+                controller.signal.removeEventListener('abort', abort);
+                await reader.cancel();
             }
-            body += decoder.decode();
-            const doc = parse(body);
-            let title = '', description = '';
-            function visit(node: any) {
-                if (node.tagName === 'title')
-                    title = (node.childNodes ?? []).map((x: any) => x.value ?? '').join('');
-                if (node.tagName === 'meta') {
-                    const a = Object.fromEntries(node.attrs.map((a: any) => [a.name, a.value]));
-                    if (a.name === 'description' || a.property === 'og:description')
-                        description = a.content ?? description;
-                }
-                for (const child of node.childNodes ?? [])
-                    visit(child);
-            }
-            visit(doc);
-            return { url: raw, previewState: 'ready', display: 'card', preview: { title: title.slice(0, 500), description: description.slice(0, 2000) } };
+            const bytes = new Uint8Array(size);
+            let offset = 0;
+            for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+            return { url, mediaType, bytes };
         }
-        throw new ApiProblem(400, 'PREVIEW_FAILED', 'Preview failed.');
     }
-    finally {
-        clearTimeout(timer);
+    async function run() {
+        const response = await read(raw, contentLimits.allowedFetchMediaTypes);
+        const doc = parse(new TextDecoder().decode(response.bytes));
+        let title = '', description = '', iconHref = '';
+        function visit(node: any) {
+            const attrs = Object.fromEntries((node.attrs ?? []).map((a: any) => [a.name, a.value]));
+            if (node.tagName === 'title') title = (node.childNodes ?? []).map((x: any) => x.value ?? '').join('');
+            if (node.tagName === 'meta' && (attrs.name?.toLowerCase() === 'description' || attrs.property?.toLowerCase() === 'og:description')) description = attrs.content ?? description;
+            if (node.tagName === 'link' && attrs.rel?.toLowerCase().split(/\s+/).includes('icon') && !iconHref) iconHref = attrs.href ?? '';
+            for (const child of node.childNodes ?? []) visit(child);
+        }
+        visit(doc);
+        let iconData: string | undefined;
+        if (iconHref) {
+            try {
+                const icon = await read(new URL(iconHref, response.url).href, iconTypes);
+                const bytes = icon.mediaType === 'image/svg+xml' ? new TextEncoder().encode(sanitizeSvg(new TextDecoder().decode(icon.bytes))) : icon.bytes;
+                let binary = '';
+                for (const byte of bytes) binary += String.fromCharCode(byte);
+                iconData = `data:${icon.mediaType};base64,${btoa(binary)}`;
+            } catch (error) {
+                // A rejected icon must not turn a safe title and description into a remote browser request.
+                if (controller.signal.aborted) throw error;
+            }
+        }
+        return { url: raw, previewState: 'ready' as const, display: 'card' as const, preview: { title: title.slice(0, 500) || response.url.hostname, description: description.slice(0, 2000), ...(iconData ? {iconData} : {}) } };
     }
+    try { return await Promise.race([run(), deadline]); }
+    catch (error) {
+        if (error instanceof ApiProblem) throw error;
+        throw new ApiProblem(400, 'PREVIEW_FAILED', 'A preview could not be fetched, so the link is shown as written.');
+    } finally { clearTimeout(timer); }
 }
-/** DNS is inspected before each anonymous, bodyless fetch; redirects are never followed by fetch. */
-export const publicPreviewTransport: PreviewTransport = { async resolve(hostname) {
-        const results = await Promise.all(['A', 'AAAA'].map(async (type) => {
+/** DNS and target requests are anonymous, bodyless and never follow redirects automatically. */
+export const publicPreviewTransport: PreviewTransport = {
+    async resolve(hostname) {
+        const results = await Promise.all(['A', 'AAAA'].map(async type => {
             const u = new URL('https://cloudflare-dns.com/dns-query');
-            u.searchParams.set('name', hostname);
-            u.searchParams.set('type', type);
-            const r = await fetch(u, { headers: { accept: 'application/dns-json' }, redirect: 'manual', signal: AbortSignal.timeout(3000) });
-            if (!r.ok)
-                throw new ApiProblem(503, 'DNS_UNAVAILABLE', 'Preview DNS lookup is unavailable.');
-            const d = await r.json<{
-                Answer?: {
-                    type: number;
-                    data: string;
-                }[];
-            }>();
+            u.searchParams.set('name', hostname); u.searchParams.set('type', type);
+            const r = await fetch(u, { method: 'GET', credentials: 'omit', headers: { accept: 'application/dns-json' }, redirect: 'manual', signal: AbortSignal.timeout(3000) });
+            if (!r.ok) throw new ApiProblem(503, 'DNS_UNAVAILABLE', 'Preview DNS lookup is unavailable.');
+            const d = await r.json<{ Answer?: { type: number; data: string }[] }>();
             return (d.Answer ?? []).filter(a => a.type === 1 || a.type === 28).map(a => a.data);
         }));
         return results.flat();
-    }, get(url, { signal }) { return fetch(url, { method: 'GET', redirect: 'manual', credentials: 'omit', headers: { accept: 'text/html' }, signal }); } };
+    },
+    get(url, { signal }) { return fetch(url, { method: 'GET', redirect: 'manual', credentials: 'omit', headers: { accept: 'text/html, image/*' }, signal }); }
+};

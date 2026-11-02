@@ -34,6 +34,9 @@ export function createPagesRoutes() {
         if (c.get('runtimeConfig')?.linkPreviewsEnabled === false)
             throw new ApiProblem(503, 'PREVIEWS_DISABLED', 'The workspace has disabled URL previews.');
         const b = await c.req.json();
+        if (typeof b?.url !== 'string' || b.url.length > 8192)
+            throw new ApiProblem(400, 'PREVIEW_REFUSED', 'A preview needs a public HTTPS URL.');
+        c.header('Cache-Control', 'private, no-store');
         return c.json(await previewLink(b.url, publicPreviewTransport));
     });
     r.get('/', async (c) => c.json(await listPages(featureContext(c), c.req.query('containerId'),c.req.query('label'))));

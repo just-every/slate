@@ -1,3 +1,6 @@
+import {pasteLinkCard} from '../../../editor/ui/pasteLinkCard';
+import {ApiError} from '../../../../client/transport';
+import type {LinkCardBlockData, RichText} from '../../../editor/ui/types';
 import {ConnectedFilePicker} from './ConnectedFilePicker';
 import {DocumentHeadings} from '../../../editor/ui/blocks/DocumentHeadings';
 import {StatusLabelDialog} from '../../../editor/ui/blocks/StatusLabelDialog';
@@ -47,6 +50,7 @@ export function PageEditorBody({
   const insertion = usePageInsertion(document.page.id, editor);
   const [dateReminder,setDateReminder]=useState<{date:string;blockId?:string}|null>(null);
   const visibleBlocks = insertion.blocks;
+  const currentInsertion = useRef(insertion); currentInsertion.current = insertion;
   const liveQueries=useContentQueries(document.page.id,visibleBlocks);
   const [queryEditor,setQueryEditor]=useState<string|null>(null);
   const editedQuery=editor.blocks.find(block=>block.id===queryEditor);
@@ -108,6 +112,30 @@ export function PageEditorBody({
       insertion.insert(next);
       requestInsertFocus(inserted.id)(true);
     };
+    const pasteUrl = (event: Event) => {
+      if (!document.permissions.canEdit) return;
+      const target = event.target as HTMLElement, row = target.closest<HTMLElement>('[data-block-id]');
+      if (target !== row?.querySelector('[data-slate-editable]')) return;
+      const {url, range, text} = (event as CustomEvent<{url:string;range:EditableSelection;text:RichText}>).detail;
+      const source = visibleBlocks.find(block => block.id === row.dataset.blockId);
+      if (!source || !('text' in source)) return;
+      const result = pasteLinkCard(visibleBlocks.map(block => block.id === source.id ? {...source, text} : block), source.id, range, url);
+      if (!result) return;
+      event.preventDefault();
+      insertion.insert(result.blocks);
+      requestInsertFocus(result.focusId)(true);
+      void (async () => {
+        let preview: Partial<LinkCardBlockData>;
+        try { preview = await mutate<LinkCardBlockData>('/api/pages/link-preview', {url}); }
+        catch (cause) {
+          preview = {previewState: cause instanceof ApiError && ['PREVIEW_REFUSED','PREVIEWS_DISABLED'].includes(cause.code) ? 'refused' : 'failed', previewMessage: errorMessage(cause)};
+        }
+        const latest = currentInsertion.current, card = latest.readBlocks().find(block => block.id === result.card.id);
+        if (card?.type !== 'link-card' || card.url !== url) return;
+        latest.change(card.id, {...card, previewState: preview.previewState ?? 'failed', preview: preview.preview, previewMessage: preview.previewMessage});
+      })();
+    };
+    element.addEventListener('slate-paste-url', pasteUrl);
     element.addEventListener('slate-split-block', split);
     const undo=(event:KeyboardEvent)=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='z'&&undoConversion.current&&visibleBlocks.some(block=>block.id===undoConversion.current?.block.id)){event.preventDefault();const previous=undoConversion.current;undoConversion.current=null;changeKind(previous.block,-previous.removed);}};
     element.addEventListener('slate-insert-at-cursor',insertAt);
@@ -129,6 +157,7 @@ export function PageEditorBody({
     return () => {
       element.removeEventListener('slate-insert-at-cursor',insertAt);
       element.removeEventListener('slate-split-block', split);
+      element.removeEventListener('slate-paste-url', pasteUrl);
       element.removeEventListener('keydown',undo);
       element.removeEventListener("slate-comment-selection", comment);
       element.removeEventListener("slate-ask-selection", ask);

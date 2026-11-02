@@ -177,6 +177,8 @@ export interface LinkCardBlockData extends BlockBase {
     description?: string;
     siteName?: string;
     iconLabel?: string;
+    /** Bounded target icon bytes; rendering never contacts the target. */
+    iconData?: string;
   };
   /** Why a refused or failed fetch left the plain link. */
   previewMessage?: string;
