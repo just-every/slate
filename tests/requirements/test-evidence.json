@@ -1050,6 +1050,24 @@
         "ACT-002"
       ],
       "reason": "Exercises the SCIM HTTP protocol through native invitation, Member identity, group and removal services, including credential custody and current authority. Real directory-provider acceptance and native invitation capacity outside SCIM remain unproven."
+    },
+    {
+      "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+      "testName": "space tree title filtering preserves ancestors, access and expansion at 390px",
+      "kind": "supporting-regression",
+      "clauses": [
+        "CONT-005"
+      ],
+      "reason": "Native memberRemovalJourney covers repeated personal-container reads, refused member and group and general grants with unchanged sharing snapshots, owner and other-member privacy, an authorized move with destination authority, and Settings removal with archived private body read-back. The same registered workspace authority journeys retain the existing removal, session revocation and erasure assertions. Exact candidate Verify and guarded landing establish acceptance separately."
+    },
+    {
+      "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+      "testName": "page outline follows headings and navigates long pages at 1440px",
+      "kind": "supporting-regression",
+      "clauses": [
+        "CONT-005"
+      ],
+      "reason": "Native memberRemovalJourney covers repeated personal-container reads, refused member and group and general grants with unchanged sharing snapshots, owner and other-member privacy, an authorized move with destination authority, and Settings removal with archived private body read-back. The same registered workspace authority journeys retain the existing removal, session revocation and erasure assertions. Exact candidate Verify and guarded landing establish acceptance separately."
     }
   ]
 }

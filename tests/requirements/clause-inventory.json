@@ -984,7 +984,7 @@
       "id": "CONT-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of CONT-005 — Personal containers. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Native personal-container and removal sanity proof is loaded by both existing responsive workspace authority journeys. Exact candidate Verify and independent guarded landing receipts are established separately.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/repair.test.ts",
@@ -993,6 +993,14 @@
         {
           "file": "tests/flagship/core/access.test.ts",
           "testName": "page viewing applies current grants, private scopes, guest vetoes and restricted ancestry"
+        },
+        {
+          "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+          "testName": "space tree title filtering preserves ancestors, access and expansion at 390px"
+        },
+        {
+          "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+          "testName": "page outline follows headings and navigates long pages at 1440px"
         }
       ]
     },
