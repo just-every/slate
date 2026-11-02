@@ -5,7 +5,8 @@ import { compactPage, savedAfterSaving, watchSaveStates } from './browser-eviden
 import { randomBytes } from 'node:crypto';
 import { secondaryCreateDestinations } from './navigation-journey.mjs';
 import { firstWordsJourney } from './first-words-journey.mjs';
-import { savedAfterCommit } from './two-people-support.mjs';
+import { savedAfterCommit, withSecondPerson } from './two-people-support.mjs';
+import { bodyMentionsJourney } from './body-mentions-journey.mjs';
 
 export async function writeJourney(state, width) {
   const { page, origin, api } = state;
@@ -139,6 +140,7 @@ export async function writeJourney(state, width) {
   await expect(paragraphs.nth(1)).toContainText('Second block: record the next action.');
   await accessible(page, 'two blocks saved in order');
   await firstWordsJourney(state);
+  if (width === 1440) await withSecondPerson(state, width, people => bodyMentionsJourney(state, people));
   await page.goto(`${origin}/app/pages/${pageId}`, { waitUntil: 'networkidle' });
   return pageId;
 }

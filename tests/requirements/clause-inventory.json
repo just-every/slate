@@ -448,8 +448,21 @@
       "id": "BLOCK-005",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for BLOCK-005 — Mentions. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "This legacy inventory classifies supporting tests only; CONTRACT.md owns native clause status. The existing writing and group callers load native body, comment and group mention journeys, including durable readback, replay, reader-safe page labels and two date locales. No external import acceptance is claimed.",
+      "supportingTests": [
+        {
+          "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+          "testName": "real core-wiki and touch-member journeys at 1440px"
+        },
+        {
+          "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+          "testName": "group mentions preview readers and refuse oversized groups at 1440px"
+        },
+        {
+          "file": "tests/flagship/discovery/group-mentions.test.ts",
+          "testName": "BLOCK-020 — group mentions preview and notify only readers once, with owner-controlled administrator bounds"
+        }
+      ]
     },
     {
       "id": "BLOCK-006",

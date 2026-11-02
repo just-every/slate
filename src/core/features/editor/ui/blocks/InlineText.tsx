@@ -22,7 +22,7 @@ const mentionPrefix: Record<NonNullable<InlineSpan["mention"]>["kind"], string> 
   date: "",
 };
 
-function Mention({ span }: { span: InlineSpan }) {
+function Mention({ span, locale }: { span: InlineSpan; locale?: string }) {
   const mention = span.mention;
   if (!mention) return null;
   return (
@@ -37,7 +37,7 @@ function Mention({ span }: { span: InlineSpan }) {
       title={mention.kind==='date'?'Set a reminder for this date':undefined}
     >
       {mentionPrefix[mention.kind]}
-      {mention.kind==='page' && mention.id && mention.available!==false ? <a href={`/app/pages/${encodeURIComponent(mention.id)}`}>{mention.label}</a>:mention.kind==='date' ? new Date(`${mention.id}T12:00:00`).toLocaleDateString() : mention.label}
+      {mention.kind==='page' && mention.id && mention.available!==false ? <a href={`/app/pages/${encodeURIComponent(mention.id)}`}>{mention.label}</a>:mention.kind==='date' ? new Date(`${mention.id}T12:00:00`).toLocaleDateString(locale) : mention.label}
       {mention.kind==='page' && mention.state==='restricted' ? <button type="button" data-request-page-access={mention.id}>Request access</button>:null}
       {mention.state && mention.state!=='live'?<small> · {mention.state==='restricted'?'Unavailable':mention.state}</small>:null}
     </span>
@@ -62,8 +62,8 @@ function withMarks(span: InlineSpan, node: ReactNode): ReactNode {
   return out;
 }
 
-function Span({ span }: { span: InlineSpan }) {
-  if (span.mention) return <Mention span={span} />;
+function Span({ span, locale }: { span: InlineSpan; locale?: string }) {
+  if (span.mention) return <Mention span={span} locale={locale} />;
 
   let node: ReactNode = withMarks(span,span.status?<span className={cn("inline-block rounded-full border border-line px-2 py-0.5 text-[0.85em] font-medium leading-tight",span.status.colour==='grey'?'bg-sidebar-hover text-ink':colourClass[span.status.colour])}>{span.text}</span>:span.text);
 
@@ -91,13 +91,13 @@ function Span({ span }: { span: InlineSpan }) {
   return <>{node}</>;
 }
 
-export function InlineText({ value,canEdit=false }: { value: RichText;canEdit?:boolean }) {
+export function InlineText({ value,canEdit=false,locale }: { value: RichText;canEdit?:boolean;locale?:string }) {
   return (
     <>
       {value.map((span, index) =>
         span.text.length === 0 && !span.mention ? null : (
           <span key={index} data-inline-span={index} data-slate-atomic-length={span.mention || span.status ? span.text.length : undefined} contentEditable={span.mention || span.status ? false : undefined} style={span.status?{border:0,padding:0,background:"transparent",font:"inherit"}:undefined} data-slate-status={span.status?"":undefined} data-status-colour={span.status?.colour} role={span.status&&canEdit?"button":undefined} tabIndex={span.status&&canEdit?0:undefined} aria-label={span.status&&canEdit?`Edit status label: ${span.text}`:undefined}>
-            <Span span={span} />
+            <Span span={span} locale={locale} />
           </span>
         ),
       )}

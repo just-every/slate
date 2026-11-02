@@ -1050,6 +1050,25 @@
         "ACT-002"
       ],
       "reason": "Exercises the SCIM HTTP protocol through native invitation, Member identity, group and removal services, including credential custody and current authority. Real directory-provider acceptance and native invitation capacity outside SCIM remain unproven."
+    },
+    {
+      "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+      "testName": "real core-wiki and touch-member journeys at 1440px",
+      "kind": "supporting-regression",
+      "clauses": [
+        "BLOCK-005"
+      ],
+      "reason": "The existing writing caller loads bodyMentionsJourney: native @ typing offers people, pages and dates together and commits all kinds with reload readback; repeated person references and captured autosave replay retain one readable notification; page labels and links follow rename, reviewed cross-space move, published reader visibility and access revocation; two native member locale contexts render the saved date. No new registration or provider claim."
+    },
+    {
+      "file": "tests/qualification/ui-convergence/journeys.test.mjs",
+      "testName": "group mentions preview readers and refuse oversized groups at 1440px",
+      "kind": "supporting-regression",
+      "clauses": [
+        "BLOCK-005",
+        "BLOCK-020"
+      ],
+      "reason": "Retained native group and comment journeys exercise reader preview, body insertion, inbox delivery, oversized-group refusal and current-access filtering. The Confluence team import obligation remains separate and unproven."
     }
   ]
 }

@@ -1,4 +1,4 @@
-import type { ElementType } from "react";
+import { useEffect, useState, type ElementType } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { richTextToPlain, type RichText } from "../types";
 import { InlineText } from "./InlineText";
@@ -26,9 +26,13 @@ export interface EditableProps {
 }
 
 export function Editable(props: EditableProps) {
+  // Start with the same locale on both sides of hydration. The editable owns
+  // serialized markup, so a locale change must produce a fresh markup value.
+  const [locale, setLocale] = useState('en-US');
+  useEffect(() => { setLocale(navigator.language); }, []);
   // Serialize outside the hooked input component: nested server rendering must
   // finish before React enters that component's hook dispatcher.
-  const html = renderToStaticMarkup(<InlineText value={props.value} canEdit={props.canEdit} />) +
+  const html = renderToStaticMarkup(<InlineText value={props.value} canEdit={props.canEdit} locale={locale} />) +
     (richTextToPlain(props.value).endsWith("\n") ? '<br data-slate-caret-placeholder="">' : "");
   return <EditableElement {...props} html={html} />;
 }
