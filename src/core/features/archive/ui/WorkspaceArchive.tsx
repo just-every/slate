@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useResource } from "../../../client/useResource";
-import { mutate, operationKey, errorMessage } from "../../../client/transport";
+import { mutate, operationKey, errorMessage, ApiError } from "../../../client/transport";
 import { RequestState } from "../../../app/ui/RequestState";
 import { ActionDialog } from "../../../app/ui/ActionDialog";
 import { TopBar } from "../../../app/ui/header/TopBar";
@@ -32,7 +32,9 @@ export function WorkspaceArchive({containerId,embedded}:{containerId?:string;emb
       });
       resource.reload();
     } catch (cause) {
-      setError(cause);
+      if (cause instanceof ApiError && cause.code === "RESTORE_DESTINATION_REQUIRED")
+        setRelocating(item);
+      else setError(cause);
     }
   }
   const tabs = (

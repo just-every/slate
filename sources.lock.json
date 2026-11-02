@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "98a4f009cffa6a233581f7f7c201c74e33834ce989256983a6df57c5cd46c384",
       "executable": false
     },
     "DEMO.md": {
@@ -5848,7 +5848,7 @@
       "executable": false
     },
     "src/core/features/archive/ui/WorkspaceArchive.tsx": {
-      "sha256": "5f3477d811d1dddd7eb19ea944e8c96af56c3f20c8950f174500f9fbe6caea06",
+      "sha256": "373744d8eaa52802d744cfbaf1483c3698fa16f9881811c377d527cfc3382477",
       "executable": false
     },
     "src/core/features/automation/actions.ts": {
@@ -11792,7 +11792,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/archive-restore-journey.mjs": {
-      "sha256": "51dafd1b008d88e339cf23ab6119afaf134be4ffd56d7deb11064987b278423e",
+      "sha256": "d0ed60389438bc05ec1c7ad4477c8ef8fbd8fcd75a8192bf64263d68b141aab9",
       "executable": false
     },
     "tests/qualification/ui-convergence/ask-draft.test.ts": {

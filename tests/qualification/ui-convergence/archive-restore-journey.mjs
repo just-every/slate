@@ -129,6 +129,28 @@ export async function archiveRestoreJourney(state, touch) {
   assert.equal((await state.api(`/api/databases/${database.id}/records/${record}`)).values.points,42);
   await page.reload({waitUntil:'networkidle'});
   await checkpoint(page,'archive container restored');
+  // Another member can archive a parent after this inventory was loaded.
+  const ownerApi=(method,path,body)=>ok(state.context,origin,method,path,body);
+  const ownerSpace=(await ownerApi('GET','/api/containers')).items.find(item=>item.name==='Handbook');
+  const ownerParent=(await ownerApi('POST','/api/pages',{operationKey:randomUUID(),containerId:ownerSpace.id,title:'Archive changing location'})).value;
+  const ownerChild=(await ownerApi('POST','/api/pages',{operationKey:randomUUID(),containerId:ownerSpace.id,parentPageId:ownerParent.pageId,title:'Archive stale inventory'})).value;
+  await ownerApi('POST',`/api/archive/${ownerChild.pageId}`,{operationKey:randomUUID(),expectedRevisionId:ownerChild.revisionId,action:'archive'});
+  const stalePage=await state.context.newPage(),pageErrors=[];
+  stalePage.on('pageerror',error=>pageErrors.push(String(error)));
+  try{
+    await stalePage.goto(origin+'/app/archive',{waitUntil:'networkidle'});
+    const staleRow=stalePage.locator('.archive-list li').filter({has:stalePage.getByRole('heading',{name:'Archive stale inventory',exact:true})});
+    await expect(staleRow).toBeVisible();
+    await ownerApi('POST',`/api/archive/${ownerParent.pageId}`,{operationKey:randomUUID(),expectedRevisionId:ownerParent.revisionId,action:'archive'});
+    const untouched=await ownerApi('GET','/api/archive');
+    const refused=stalePage.waitForResponse(response=>new URL(response.url()).pathname===`/api/archive/${ownerChild.pageId}`&&response.request().method()==='POST');
+    await staleRow.getByRole('button',{name:'Restore',exact:true}).click();
+    const refusal=await refused;assert.equal(refusal.status(),409);assert.equal((await refusal.json()).code,'RESTORE_DESTINATION_REQUIRED');
+    const choose=stalePage.getByRole('dialog',{name:'Choose restore destination',exact:true});
+    await expect(choose).toBeVisible();await choose.getByRole('button',{name:'Cancel',exact:true}).click();
+    assert.deepEqual(await ownerApi('GET','/api/archive'),untouched,'A stale inventory refuses the old destination and cancellation preserves every archived record.');
+    assert.deepEqual(pageErrors,[]);
+  }finally{await stalePage.close();}
   console.log('PROBE ARCH-003 1: native destination dialog cancel, missing and invalid destination -> unchanged inventory; explicit destination -> restored subtree');
   console.log('PROBE ARCH-003 2: native page, database and space Restore -> prior topology and retained identity, history, comments, grants and status; reader, reload and replay passed');
 }
