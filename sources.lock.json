@@ -12040,7 +12040,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/journeys.test.mjs": {
-      "sha256": "46243df2bea4af96cddd120c187781085279e0c2a51cc4901f87c6b1a8d08c05",
+      "sha256": "05bfad450672d9ed12f833d56970fbaf91cd21cbee9472c27c4bfb0fa7fd1d10",
       "executable": false
     },
     "tests/qualification/ui-convergence/link-access-journey.mjs": {
