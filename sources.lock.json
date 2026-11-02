@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "fed8ab96196634016537d28050782d06bf7d8b505c78a2296de2801165a6fed6",
+      "sha256": "4a25d0887f1bb9022653d26b218aee8e4fbd36d6a0dad259a389fdad558935cd",
       "executable": false
     },
     "DEMO.md": {
@@ -8444,7 +8444,7 @@
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageTopBar.tsx": {
-      "sha256": "3d007a01947e1f9105a519c4f04dfc7fa044b62b7a5ab705aa3ff4e02cd24a8e",
+      "sha256": "4abd611f7a5977c5d208380bd5f4f0cd89ff017f89d7253cb4fca48d235c336d",
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageTransferDialog.tsx": {
@@ -12108,7 +12108,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/revision-compare-journey.mjs": {
-      "sha256": "52e2e95f95f14b8f5c9c8936e7785da009d2ba38b944ffc2d9c9d850e6426ea8",
+      "sha256": "5bcf15d9694499e30cc8c3b59b0dc0d30c36da3565f906c8d3f2e6721346300b",
       "executable": false
     },
     "tests/qualification/ui-convergence/saml-journey.mjs": {

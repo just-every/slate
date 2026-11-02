@@ -32,13 +32,13 @@ export function PageTopBar({
       <button className="tool tool-primary" type="button" aria-expanded={detail === "share"} onClick={() => onToggle("share")}>
         Share
       </button>
-      <IconAction label="Comments" aria-expanded={detail === "comments"} onClick={() => onToggle("comments")}>
+      <IconAction label="Comments" data-tooltip="Page comments" aria-expanded={detail === "comments"} onClick={() => onToggle("comments")}>
         <MessageSquare aria-hidden="true" />
       </IconAction>
-      <IconAction className="desktop-page-tool" label="History" aria-expanded={detail === "history"} onClick={() => onToggle("history")}>
+      <IconAction className="desktop-page-tool" label="History" data-tooltip="Version history" aria-expanded={detail === "history"} onClick={() => onToggle("history")}>
         <History aria-hidden="true" />
       </IconAction>
-      <IconAction className="desktop-page-tool" label="Details" aria-expanded={detail === "details"} onClick={() => onToggle("details")}>
+      <IconAction className="desktop-page-tool" label="Details" data-tooltip="Page details" aria-expanded={detail === "details"} onClick={() => onToggle("details")}>
         <FileText aria-hidden="true" />
       </IconAction>
       {more}

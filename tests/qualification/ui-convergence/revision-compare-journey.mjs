@@ -15,7 +15,7 @@ export async function revisionCompareJourney(state, width) {
     await page.goto(origin + '/app/settings?section=workspace', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Edit workspace & policies', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Workspace settings', exact: true });
-    await dialog.getByLabel('History', { exact: true }).selectOption(policy);
+    await dialog.getByRole('combobox', { name: /^History/ }).selectOption(policy);
     const committed = page.waitForResponse(response => new URL(response.url()).pathname === '/api/workspace' && response.request().method() === 'PUT');
     await dialog.getByRole('button', { name: 'Save settings', exact: true }).click();
     assert.equal((await committed).status(), 200);
@@ -65,6 +65,7 @@ export async function revisionCompareJourney(state, width) {
     } else if (proof) {
       // One phone smoke and screenshot; the full behaviour asserts at desktop.
       await expect(comparison).toContainText('Call the new escalation line.');
+      await comparison.getByRole('region', { name: 'After revision', exact: true }).scrollIntoViewIfNeeded();
       await accessible(page, 'revision comparison at 390');
     }
     await page.reload({ waitUntil: 'networkidle' });
@@ -104,7 +105,9 @@ export async function revisionCompareJourney(state, width) {
       }
     }
     console.log(`PROBE REV-004 1: Settings History switches autosnapshot to labelled and back -> both saved pairs compare without changing revisions at ${width}px`);
-    console.log(`PROBE REV-004 2: Version history selects exact nonadjacent native revisions -> added, removed, changed and unchanged blocks retain each side's committed content and positions at ${width}px`);
+    console.log(width === 1440
+      ? 'PROBE REV-004 2: Version history selects exact nonadjacent native revisions -> added, removed, changed and unchanged blocks retain each side’s committed content and positions at 1440px'
+      : 'PROBE REV-004 2: phone Version history -> comparison opens for the saved pair after reload at 390px');
   } finally {
     await setProfile(original.policies['page.version.v1']);
   }
