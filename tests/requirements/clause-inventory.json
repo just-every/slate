@@ -908,7 +908,7 @@
       "id": "ARCH-003",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of ARCH-003 — Restore from archive. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Supporting inventory does not independently award acceptance. ARCH-003 native restore outcomes are exercised by archiveRestoreCase in the existing content HTTP registration and archiveRestoreJourney in the existing desktop management and phone core-wiki registrations; CONTRACT.md tracks their acceptance judgment.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/http.test.ts",

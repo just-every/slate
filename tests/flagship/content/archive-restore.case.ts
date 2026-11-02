@@ -25,7 +25,11 @@ export async function archiveRestoreCase(f: Fixture) {
   const record = (await ok('POST', `/api/databases/${db.id}/records`, {operationKey: op(), title: 'Retained record', values: {points: 42}})).value.pageId;
   const ids = [root, child, db.pageId, record];
   for (const id of ids) {
-    const doc = await ok('GET', `/api/pages/${id}`);
+    let doc = await ok('GET', `/api/pages/${id}`);
+    if (!doc.blocks.length) {
+      await ok('PUT', `/api/pages/${id}/blocks`, {operationKey: op(), expectedRevisionId: doc.page.revisionId, blocks: [{id: op(), blockType: 'paragraph', treePosition: '1', content: {text: [{text: 'Retained structured page body'}]}}]});
+      doc = await ok('GET', `/api/pages/${id}`);
+    }
     await ok('PATCH', `/api/pages/${id}`, {operationKey: op(), expectedRevisionId: doc.page.revisionId, properties: {title: doc.page.title + ' revised'}});
     await ok('POST', `/api/comments/page/${id}`, {operationKey: op(), body: [{text: `Retained comment ${id}`}]});
     await ok('POST', '/api/sharing', {operationKey: op(), targetKind: 'page', targetId: id, principalKind: 'member', principalId: f.b, level: 'view'});
@@ -38,6 +42,7 @@ export async function archiveRestoreCase(f: Fixture) {
       blocks: await rows(`SELECT * FROM page_blocks WHERE page_id IN (${marks}) ORDER BY id`),
       revisions: await rows(`SELECT * FROM page_revisions WHERE page_id IN (${marks}) ORDER BY id`),
       threads: await rows(`SELECT * FROM comment_threads WHERE page_id IN (${marks}) ORDER BY id`),
+      comments: await Promise.all(ids.map(id => ok('GET', `/api/comments/page/${id}`))),
       grants: await rows(`SELECT * FROM page_grants WHERE page_id IN (${marks}) ORDER BY id`),
       record: (await ok('GET', `/api/databases/${db.id}/records/${record}`)).values,
       database: await ok('GET', `/api/databases/${db.id}`),
