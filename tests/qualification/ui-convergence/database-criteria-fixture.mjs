@@ -46,7 +46,8 @@ export async function criteriaFixture({context, origin, api}) {
   ];
   const records = [];
   for (const [title, quantity, due, stage, choice] of rows)
-    records.push({...await mutate(base + '/records', {title, values: {...common, quantity, due, stage, choice}}), title});
+    records.push({...await mutate(base + '/records', {title, values: {...common, quantity, due, stage, choice,
+      checked: title !== 'Excluded status'}}), title});
   const privateRecord = records.at(-1);
   await grant(context, origin, privateRecord.pageId, 'browser-owner', 'full');
   const privatePage = await api(`/api/pages/${privateRecord.pageId}`);
