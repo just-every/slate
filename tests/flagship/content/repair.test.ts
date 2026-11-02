@@ -15,6 +15,31 @@ try {
  const p=await page(f,[task]);let read=await f.request('GET',`/api/pages/${p.pageId}`);expect(read.data.blocks[0].content.completedByMemberId).toBe(f.a);const time=read.data.blocks[0].content.completedAt;expect(time).not.toBe(task.content.completedAt);
  const write=await f.request('PUT',`/api/pages/${p.pageId}/blocks`,{operationKey:createUlid(),expectedRevisionId:p.revisionId,blocks:[task]});expect(write.status).toBe(200);read=await f.request('GET',`/api/pages/${p.pageId}`);expect(read.data.blocks[0].content.completedAt).toBe(time);
  const undone=await f.request('PUT',`/api/pages/${p.pageId}/blocks`,{operationKey:createUlid(),expectedRevisionId:write.data.value.revisionId,blocks:[{...task,content:{...task.content,done:false}}]});expect(undone.status).toBe(200);expect((await f.request('GET',`/api/pages/${p.pageId}`)).data.blocks[0].content.completedByMemberId).toBeNull();
+ expect((await f.request('GET',`/api/pages/${p.pageId}`)).data.blocks[0].content.completedAt).toBeNull();
+ expect((await f.request('GET',`/api/pages/${p.pageId}/details`)).data.taskCompletion).toEqual({completed:0,total:1});
+ const database=await f.request('POST','/api/databases',{operationKey:createUlid(),containerId:f.containerId,title:'Task exclusion records'});expect(database.status).toBe(201);
+ const base=`/api/databases/${database.data.value.id}`;
+ const recordIds=[];
+ for(const title of ['Launch record','Handover record']){const record=await f.request('POST',`${base}/records`,{operationKey:createUlid(),title,values:{}});expect(record.status).toBe(201);recordIds.push(record.data.value.pageId);}
+ const snapshots=[];
+ for(const [position,layout] of ['table','list'].entries()){
+  const current=await f.request('GET',base),viewId=createUlid();
+  const saved=await f.request('POST',`${base}/views`,{operationKey:createUlid(),expectedRevisionId:current.data.database.revision_id,view:{id:viewId,name:layout,layout,filters:[],sorts:[{field:'$title',direction:'asc'}],groups:[],calculations:{},display:{},position}});expect(saved.status).toBe(200);
+  const view=await f.request('GET',`${base}/views/${viewId}`);expect(view.status).toBe(200);expect(view.data.records.map((row:any)=>row.pageId).sort()).toEqual([...recordIds].sort());snapshots.push({viewId,records:view.data.records});
+ }
+ const open=await f.request('GET',`/api/pages/${p.pageId}`);
+ const content={...open.data.blocks[0].content,done:true,completedByMemberId:f.a,completedAt:'2000-01-01T00:00:00Z'};
+ const input={operationKey:createUlid(),expectedRevisionId:open.data.blocks[0].revisionId,content};
+ const completed=await f.request('PATCH',`/api/pages/${p.pageId}/blocks/${id}`,input,f.b);expect(completed.status).toBe(200);
+ const replay=await f.request('PATCH',`/api/pages/${p.pageId}/blocks/${id}`,input,f.b);expect(replay.status).toBe(200);expect(replay.data.receipt).toEqual(completed.data.receipt);
+ const committed=await f.request('GET',`/api/pages/${p.pageId}`);
+ expect(committed.data.blocks[0]).toMatchObject({id,blockType:'task',content:{done:true,completedByMemberId:f.b,completedAt:completed.data.receipt.committedAt}});
+ expect((await f.request('GET',`/api/pages/${p.pageId}/details`)).data.taskCompletion).toEqual({completed:1,total:1});
+ const undo=await f.request('PATCH',`/api/pages/${p.pageId}/blocks/${id}`,{operationKey:createUlid(),expectedRevisionId:committed.data.blocks[0].revisionId,content:{...committed.data.blocks[0].content,done:false}},f.b);expect(undo.status).toBe(200);
+ const cleared=await f.request('GET',`/api/pages/${p.pageId}`);expect(cleared.data.blocks[0]).toMatchObject({id,blockType:'task',content:{done:false,completedByMemberId:null,completedAt:null}});
+ expect((await f.request('GET',`/api/pages/${p.pageId}/details`)).data.taskCompletion).toEqual({completed:0,total:1});
+ for(const snapshot of snapshots){const view=await f.request('GET',`${base}/views/${snapshot.viewId}`);expect(view.status).toBe(200);expect(view.data.records).toEqual(snapshot.records);expect(view.data.records.some((row:any)=>[p.pageId,id].includes(row.pageId))).toBe(false);}
+
 
 } finally {}
 }},

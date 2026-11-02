@@ -36,7 +36,10 @@ export async function pageDetails(ctx:FeatureContext,pageId:string,appOrigin?:st
     if(!body||!properties||!linksTo(JSON.parse(body),pageId,appOrigin))continue;
     linkedFrom.push({id:row.id,title:JSON.parse(properties).title});
   }
-  const text=(await labelForReader(ctx,JSON.parse(revision.body_json) as BlockView[])).map(block=>plainContent(block.content)).join(' ').trim();
+  const blocks=JSON.parse(revision.body_json) as BlockView[];
+  const tasks=blocks.filter(block=>block.blockType==='task');
+  const taskCompletion={completed:tasks.filter(block=>(block.content as {done?:boolean}).done===true).length,total:tasks.length};
+  const text=(await labelForReader(ctx,blocks)).map(block=>plainContent(block.content)).join(' ').trim();
   const wordCount=text?text.split(/\s+/u).length:0;
-  return {owner,linkedFrom,wordCount,characterCount:text.length,readingMinutes:Math.max(1,Math.ceil(wordCount/200))};
+  return {owner,linkedFrom,wordCount,taskCompletion,characterCount:text.length,readingMinutes:Math.max(1,Math.ceil(wordCount/200))};
 }

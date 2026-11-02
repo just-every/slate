@@ -137,7 +137,9 @@ export interface TaskBlockData extends BlockBase {
   assigneeMemberId?: string | null;
   dueDate?: string | null;
   creatorMemberId?: string;
-  /** `BLOCK-007` — who completed it and when. */
+  /** `BLOCK-007` — completion is assigned by the server. */
+  completedByMemberId?: string | null;
+  completedAt?: string | null;
   completedBy?: { name: string };
   completedAtLabel?: string;
 }

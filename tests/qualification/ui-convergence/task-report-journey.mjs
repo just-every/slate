@@ -4,7 +4,116 @@ import path from 'node:path';
 import { expect } from '@playwright/test';
 import { root } from '../../e2e/runtime-harness.mjs';
 import { accessible } from './browser-evidence.mjs';
-import { grant, ok, restrictedPage } from './two-people-support.mjs';
+import { call, grant, ok, restrictedPage } from './two-people-support.mjs';
+
+/** Ordinary body tasks retain native completion without becoming database records. */
+export async function taskBodyJourney(state, people) {
+  const { origin } = state, { alice, bob } = people;
+  const width = bob.page.viewportSize().width;
+  const tasks = ['Check the rollout notes', 'Confirm the review room', 'Prepare the handover'];
+  const source = await restrictedPage({ context: alice.context, origin }, 'Body task checklist', []);
+  await grant(alice.context, origin, source.pageId, bob.id, 'edit');
+  const initial = await ok(alice.context, origin, 'GET', `/api/pages/${source.pageId}`);
+  const blocks = tasks.map((text, index) => ({ id: randomUUID(), blockType: 'task', treePosition: String(index), content: { text: [{ text }], done: false } }));
+  await ok(alice.context, origin, 'PUT', `/api/pages/${source.pageId}/blocks`, {
+    operationKey: randomUUID(), expectedRevisionId: initial.page.revisionId,
+    blocks: [...blocks, { id: randomUUID(), blockType: 'paragraph', treePosition: '3', content: { text: [{ text: 'Keep these tasks in the page body.' }] } }],
+  });
+
+  // Populated, unfiltered native views make an accidental task record observable.
+  const database = (await ok(alice.context, origin, 'POST', '/api/databases', { operationKey: randomUUID(), containerId: source.spaceId, title: 'Checklist records' })).value;
+  const base = `/api/databases/${database.id}`;
+  const records = [];
+  for (const title of ['Launch record', 'Handover record']) records.push((await ok(alice.context, origin, 'POST', `${base}/records`, { operationKey: randomUUID(), title, values: {} })).value.pageId);
+  const views = [];
+  for (const [position, layout] of ['table', 'list'].entries()) {
+    const current = await ok(alice.context, origin, 'GET', base);
+    const view = { id: randomUUID(), name: `Checklist ${layout}`, layout, filters: [], sorts: [{ field: '$title', direction: 'asc' }], groups: [], calculations: {}, display: {}, position };
+    await ok(alice.context, origin, 'POST', `${base}/views`, { operationKey: randomUUID(), expectedRevisionId: current.database.revision_id, view });
+    views.push(view.id);
+  }
+  const snapshots = await Promise.all(views.map(id => ok(alice.context, origin, 'GET', `${base}/views/${id}`)));
+  for (const snapshot of snapshots) assert.deepEqual(snapshot.records.map(row => row.pageId).sort(), [...records].sort(), 'Each populated view contains only its two real records.');
+  const unchangedViews = async () => {
+    for (const [index, id] of views.entries()) {
+      const current = await ok(alice.context, origin, 'GET', `${base}/views/${id}`);
+      assert.deepEqual(current.records, snapshots[index].records, 'Body completion never changes a database row or adds a task record.');
+      assert.ok(current.records.every(row => ![source.pageId, ...blocks.map(block => block.id)].includes(row.pageId)));
+    }
+  };
+  const read = () => ok(bob.context, origin, 'GET', `/api/pages/${source.pageId}`);
+  const figure = bob.page.getByLabel('Task completion', { exact: true });
+  const openDetails = async () => {
+    const button = bob.page.getByRole('button', { name: 'Details', exact: true });
+    if (await button.isVisible()) await button.click();
+    else {
+      await bob.page.getByRole('button', { name: 'More', exact: true }).click();
+      await bob.page.getByRole('menuitem', { name: 'Details', exact: true }).click();
+    }
+  };
+  const counts = async completed => {
+    await expect(figure).toHaveText(`${completed} of 3 complete`);
+    assert.deepEqual((await ok(bob.context, origin, 'GET', `/api/pages/${source.pageId}/details`)).taskCompletion, { completed, total: 3 });
+  };
+  const toggle = async (index, done) => {
+    const [response] = await Promise.all([
+      bob.page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().endsWith(`/api/pages/${source.pageId}/blocks/${blocks[index].id}`)),
+      bob.page.getByRole('checkbox', { name: `Mark complete: ${tasks[index]}`, exact: true }).click(),
+    ]);
+    assert.equal(response.status(), 200, 'Another editor can toggle a task through the native body control.');
+    const receipt = (await response.json()).receipt;
+    const document = await read(), block = document.blocks.find(block => block.id === blocks[index].id);
+    assert.equal(block.blockType, 'task');
+    assert.equal(block.content.done, done);
+    assert.equal(block.content.completedByMemberId, done ? bob.id : null);
+    assert.equal(block.content.completedAt, done ? receipt.committedAt : null, 'The server assigns completion time, and undo clears it.');
+    return block.content.completedAt;
+  };
+  await bob.page.goto(`${origin}/app/pages/${source.pageId}`, { waitUntil: 'networkidle' });
+  await openDetails();
+  await counts(0);
+  const times = [];
+  for (const index of [0, 1]) {
+    times.push(await toggle(index, true));
+    await counts(index + 1);
+  }
+  await bob.page.reload({ waitUntil: 'networkidle' });
+  await counts(2);
+  for (const index of [0, 1]) {
+    const row = bob.page.locator(`[data-block-id="${blocks[index].id}"] [data-task-item]`);
+    await expect(row.getByRole('checkbox')).toBeChecked();
+    await expect(row.locator('[data-task-completion]')).toContainText('Completed by Morgan Reader');
+    await expect(row.locator('[data-task-completion] time')).toHaveAttribute('datetime', times[index]);
+    assert.ok((await row.locator('[data-task-completion] time').innerText()).trim(), 'A reader sees the committed time.');
+    assert.ok(await row.locator('[data-task-completion]').evaluate(element => parseFloat(getComputedStyle(element).fontSize) >= 13));
+  }
+  await unchangedViews();
+  await accessible(bob.page, 'body task completion and page details');
+  await bob.page.screenshot({ path: path.join(root, `.artifacts/ui-convergence/body-tasks-${width}-completed.png`), fullPage: true });
+  for (const [offset, index] of [0, 1].entries()) {
+    await toggle(index, false);
+    await counts(1 - offset);
+  }
+  await bob.page.reload({ waitUntil: 'networkidle' });
+  await counts(0);
+  await expect(bob.page.locator('[data-task-completion]')).toHaveCount(0);
+  for (const text of tasks) await expect(bob.page.getByRole('checkbox', { name: `Mark complete: ${text}`, exact: true })).not.toBeChecked();
+  const final = await read();
+  assert.deepEqual(final.blocks.filter(block => block.blockType === 'task').map(block => block.id), blocks.map(block => block.id), 'Completion preserves ordinary task block identities.');
+  for (const block of final.blocks.filter(block => block.blockType === 'task')) assert.deepEqual([block.content.done, block.content.completedByMemberId, block.content.completedAt], [false, null, null]);
+  await unchangedViews();
+  await bob.page.screenshot({ path: path.join(root, `.artifacts/ui-convergence/body-tasks-${width}-undone.png`), fullPage: true });
+
+  // The same body door denies a viewer, including a replay of forged attribution.
+  await grant(alice.context, origin, source.pageId, bob.id, 'view');
+  await bob.page.reload({ waitUntil: 'networkidle' });
+  await expect(bob.page.getByRole('checkbox', { name: `Mark complete: ${tasks[0]}`, exact: true })).toBeDisabled();
+  const before = await read();
+  const refused = await call(bob.context, origin, 'PATCH', `/api/pages/${source.pageId}/blocks/${blocks[0].id}`, { operationKey: randomUUID(), expectedRevisionId: before.blocks[0].revisionId, content: { ...before.blocks[0].content, done: true, completedByMemberId: 'browser-owner', completedAt: '2000-01-01T00:00:00Z' } });
+  assert.equal(refused.status, 403);
+  assert.deepEqual((await read()).blocks, before.blocks, 'A denied toggle cannot alter completion or attribution.');
+  await unchangedViews();
+}
 
 /**
  * BLOCK-016: Alex embeds a report filtered to one space and one assignee over tasks on
@@ -13,6 +122,7 @@ import { grant, ok, restrictedPage } from './two-people-support.mjs';
  * page shows the report as a sign-in notice and never runs it for an anonymous reader.
  */
 export async function taskReportJourney(state, people) {
+  await taskBodyJourney(state, people);
   const { origin } = state, { alice, bob } = people;
   const width = alice.page.viewportSize().width;
   const shot = (view, label) => view.screenshot({ path: path.join(root, `.artifacts/ui-convergence/task-report-${width}-${label}.png`), fullPage: true });

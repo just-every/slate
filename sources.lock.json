@@ -6896,7 +6896,7 @@
       "executable": false
     },
     "src/core/features/editor/ui/blocks/TaskBlock.tsx": {
-      "sha256": "62f046dad376a2bb3bb8d15a232992ba3a5e5244ae810916f783d7ea6adf29f3",
+      "sha256": "a34ef1ec1abb02a610ce4b1a9819fc33fce15b32633cf916113cbf2b90714e95",
       "executable": false
     },
     "src/core/features/editor/ui/blocks/TaskPageContext.tsx": {
@@ -6952,7 +6952,7 @@
       "executable": false
     },
     "src/core/features/editor/ui/types.ts": {
-      "sha256": "6529e103b982be726d969fee1af2363eb11df47a4df2feb400f3a07e5a9a3082",
+      "sha256": "36aed11ad0ab0b8265ad00f9b915e0e79011060354ccd2b80d74aa732e1595b4",
       "executable": false
     },
     "src/core/features/editor/ui/useTouchBlockDrag.ts": {
@@ -8256,7 +8256,7 @@
       "executable": false
     },
     "src/core/features/pages/details.ts": {
-      "sha256": "a5b37812abfef5f87111ddc8fb66147b58b3ad76ef6888a654a7033b9b187e67",
+      "sha256": "f1555a255a71d97a4ae6e73e746826dd44199ec02d75116698f9510e67a580ea",
       "executable": false
     },
     "src/core/features/pages/erased.ts": {
@@ -8416,7 +8416,7 @@
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageMetadata.tsx": {
-      "sha256": "0b20f233a14a91b3b5439ee60cbf92392246d7c5d3a8c75be8bdf75e18b85b90",
+      "sha256": "23b4a2279a42e4d5e1189edd0c0c19967ce0514587af13b3bd30250816d3dbff",
       "executable": false
     },
     "src/core/features/pages/ui/workspace/PageMoreMenu.tsx": {
@@ -10796,7 +10796,7 @@
       "executable": false
     },
     "tests/flagship/content/journeys.ts": {
-      "sha256": "82e45ebb17a8b25e223e6a847ae02e62e13b72bfcd76013eea3aa2c6b3dab08b",
+      "sha256": "898d9cd16d534980737f4562d84ee260e0946076c9774e2939a4719ff84daa59",
       "executable": false
     },
     "tests/flagship/content/lifecycle.ts": {
@@ -10812,7 +10812,7 @@
       "executable": false
     },
     "tests/flagship/content/repair.test.ts": {
-      "sha256": "a77d5b22c588b946d6ae4f5b1fb9856cfa2c27d41564127d01b963ebcc2aa0d4",
+      "sha256": "bb3e5585031ab82e3ad86265fb87431f2bd87f8614b3c129a0e4594f1d74658e",
       "executable": false
     },
     "tests/flagship/content/sqlite-harness.mts": {
@@ -12160,7 +12160,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/task-report-journey.mjs": {
-      "sha256": "b0ee39ec453ddacfb5d458184d819693d2de7373524da20aa7bbcf6e56192fe1",
+      "sha256": "c93d821f2ac4c630bae03cff8aa0df54ca7a7218a3104cb9a4294393b78b9e52",
       "executable": false
     },
     "tests/qualification/ui-convergence/template-capture-journey.mjs": {
@@ -12276,7 +12276,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "f3be84eeda6c6dd4781b584a5e90bc545dd77d7779d1eb7da73c24c4979b7b71",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12292,7 +12292,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "a9bfdb72ca0d1cfb9210d49711f0f206251866dcc78cdf94ccca5081485cf746",
+      "sha256": "bee00b4b4389fa1748b426a75b2d9149374cdf7f0fb93101b2f5aa441d7829e0",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

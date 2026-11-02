@@ -462,7 +462,7 @@
       "id": "BLOCK-007",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of BLOCK-007 — Task items. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "The existing content repair Workers journey proves server attribution, duplicate-safe completion, undo, native details counts and unchanged populated table and list records. The taskBodyJourney helper in tests/qualification/ui-convergence/task-report-journey.mjs runs through the existing task-report browser registration: another editor toggles multiple body tasks, reloads visible actor and time, reconciles completion counts, undoes them and proves database exclusion plus refusal after edit access is removed. Independent release acceptance is separate.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/repair.test.ts",

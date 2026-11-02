@@ -12,6 +12,7 @@ import {createArchiveRoutes} from '../../../src/core/features/archive/routes';
 import {createStatusRoutes} from '../../../src/core/features/page-status/routes';
 import {createMediaRoutes} from '../../../src/core/features/media/routes';
 import {createPublishingRoutes,createPublicPagesRoutes} from '../../../src/core/features/publishing/routes';
+import {createDatabasesRoutes} from '../../../src/core/features/databases/routes';
 import {createCommentsRoutes} from '../../../src/core/features/comments/routes';
 export async function fixture(){
  const now=new Date().toISOString(),w=createUlid(),a=createUlid(),b=createUlid();
@@ -19,7 +20,7 @@ export async function fixture(){
  for(const id of [a,b])await env.DB.prepare("INSERT INTO members(id,workspace_id,email,display_name,initials,role,created_at,updated_at) VALUES (?,?,?,?,?,'owner',?,?)").bind(id,w,`${id}@repair.invalid`,id,'R',now,now).run();
  const actors=new Map([a,b].map(id=>[id,{id,workspaceId:w,workspaceName:'Repair',email:`${id}@repair.invalid`,displayName:id,initials:'R',role:'owner'} as AuthenticatedMember]));
  const app=new Hono<AppEnvironment>();app.use('*',async(c,next)=>{const actor=actors.get(c.req.header('x-test-actor')??'');if(actor)c.set('member',actor);await next();});app.onError((e,c)=>e instanceof ApiProblem?c.json({code:e.code,message:e.message},e.status):c.json({code:'ERROR',message:e.message},500));
- app.route('/api/pages',createPagesRoutes());app.route('/api/containers',createContainersRoutes());app.route('/api/revisions',createRevisionsRoutes());app.route('/api/archive',createArchiveRoutes());app.route('/api/status',createStatusRoutes());app.route('/api/media',createMediaRoutes());app.route('/api/publishing',createPublishingRoutes());app.route('/api/comments',createCommentsRoutes());app.route('/p',createPublicPagesRoutes());
+ app.route('/api/databases',createDatabasesRoutes());app.route('/api/pages',createPagesRoutes());app.route('/api/containers',createContainersRoutes());app.route('/api/revisions',createRevisionsRoutes());app.route('/api/archive',createArchiveRoutes());app.route('/api/status',createStatusRoutes());app.route('/api/media',createMediaRoutes());app.route('/api/publishing',createPublishingRoutes());app.route('/api/comments',createCommentsRoutes());app.route('/p',createPublicPagesRoutes());
  const request=async(method:string,path:string,body?:unknown,actor=a)=>{const r=await app.request(`https://local.test${path}`,{method,headers:{'content-type':'application/json','x-test-actor':actor},body:body===undefined?undefined:JSON.stringify(body)},env);return{status:r.status,data:await r.json<any>()};};
  const c=await request('POST','/api/containers',{operationKey:createUlid(),name:'Team'});expect(c.status).toBe(200);
  return {w,a,b,app,request,containerId:c.data.value.id,ctx:{db:env.DB,files:env.FILES,jobs:env.JOBS,actor:actors.get(a)!,now}};

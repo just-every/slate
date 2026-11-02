@@ -4,6 +4,7 @@ import { Editable } from "./Editable";
 import { useState } from 'react';
 import { sliceRichText } from '../sliceRichText';
 import { useTaskAssignment } from './TaskAssignment';
+import { displayDate } from "../../../../app/ui/displayDate";
 import { ReminderDialog } from './ReminderDialog';
 
 /**
@@ -19,12 +20,7 @@ export function TaskBlock({ block, canEdit, onChange }: BlockRenderProps<TaskBlo
   const today=new Date();today.setHours(0,0,0,0);
   const overdue=!block.done&&due&&due<today;
   const assignee=page?.people.find(person=>person.id===block.assigneeMemberId);
-  const completion =
-    block.done && (block.completedBy || block.completedAtLabel)
-      ? [block.completedBy ? `Completed by ${block.completedBy.name}` : "Completed", block.completedAtLabel]
-          .filter(Boolean)
-          .join(" · ")
-      : null;
+  const completedBy = page?.people.find(person => person.id === block.completedByMemberId);
 
   return (
     <div className="flex items-start gap-2 py-0.5" data-task-item data-task-overdue={overdue||undefined}>
@@ -58,7 +54,9 @@ export function TaskBlock({ block, canEdit, onChange }: BlockRenderProps<TaskBlo
           {page?<button type="button" onClick={()=>setRemind(true)}>Remind me</button>:null}
         </div>
         {dateOpen&&canEdit?<label className="task-date-picker">Due date<input autoFocus aria-label="Task due date" type="date" value={block.dueDate??''} onChange={event=>{onChange({...block,dueDate:event.target.value||null});setDateOpen(false);}}/><button type="button" onClick={()=>{onChange({...block,dueDate:null});setDateOpen(false);}}>Clear date</button><button type="button" onClick={()=>setDateOpen(false)}>Close date picker</button></label>:null}
-        {completion ? <p className="text-tiny text-ink-faint">{completion}</p> : null}
+        {block.done && block.completedAt ? <p className="text-[13px] text-ink-muted" data-task-completion>
+          Completed by {completedBy?.displayName ?? 'Former member'} · <time dateTime={block.completedAt}>{displayDate(block.completedAt, true)}</time>
+        </p> : null}
         {prompt}
         {remind&&page?<ReminderDialog pageId={page.pageId} blockId={block.id} onClose={()=>setRemind(false)}/>:null}
       </div>
