@@ -1,3 +1,4 @@
+import {pageIdentityJourney} from './page-identity-journey.mjs';
 import {contentQueryJourney} from './content-query-journey.mjs';
 import {publicProfileJourney} from './public-profile-journey.mjs';
 import { publicationJourney } from './publication-journey.mjs';
@@ -392,10 +393,11 @@ for (const width of [1440]) {
 // Give the complete query journey its own workspace and deadline, keeping the
 // established member journey's timeout and every query assertion unchanged.
 for (const width of [1440, 390]) {
-  test(`BLOCK-010 — native content queries retain criteria and current-reader results at ${width}px`, { timeout: 180000 }, async () => {
+  test(`BLOCK-010 — native content queries retain criteria and current-reader results at ${width}px`, { timeout: 300000 }, async () => {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await contentQueryJourney(state, width);
+      await step('PAGE-003 — one populated page retains every reference throughout its lifetime', () => pageIdentityJourney(state, width));
     });
   });
 }
