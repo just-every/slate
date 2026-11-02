@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "af4904bef53e2cc91c7da289bd737a71a96c986f4ff1e200ccc6ad77facc7f29",
       "executable": false
     },
     "DEMO.md": {
@@ -10792,7 +10792,7 @@
       "executable": false
     },
     "tests/flagship/content/archive-hierarchy.case.ts": {
-      "sha256": "b272f878926c3ef14586b646d83f9f35ad068a7d6bc29a0c48c873ecd3046f41",
+      "sha256": "c96be8cd42b0e670da5fcc4e1bebde9c97029136f57514505266d3c022a8765d",
       "executable": false
     },
     "tests/flagship/content/http.test.ts": {
@@ -12284,7 +12284,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "de3bd7051d8e944476087f209603d7ff4b30883078b38e00cab553869d42d094",
+      "sha256": "d80ec7301636efad94b08f45d91031c62332eda0e59249a8bf10139feaae3195",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12300,7 +12300,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "6b716643f077122e7385bc45a7492c365fc11d62fa39014ecd49368f7d457b19",
+      "sha256": "4c8abb4cfc9ffa8862453d686c74eb6c54093d15a25875bb45c806117dd2cc51",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

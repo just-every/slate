@@ -9,9 +9,9 @@ export async function archiveHierarchyCase(ownerId: string, viewerId: string) {
   const viewer = await sessionFor(viewerId);
   const revoked = await sessionFor(ownerId, {revokedAt: new Date().toISOString()});
   const call = async (method: string, path: string, body?: object, actor: string | null = cookie) => {
-    const response = await SELF.fetch(`http://localhost/api${path}`, {
+    const response = await SELF.fetch(`https://slate.test/api${path}`, {
       method,
-      headers: {origin: 'http://localhost', 'content-type': 'application/json', ...(actor ? {cookie: actor} : {})},
+      headers: {origin: 'https://slate.test', 'content-type': 'application/json', ...(actor ? {cookie: actor} : {})},
       ...(body ? {body: JSON.stringify(body)} : {}),
     });
     return {status: response.status, body: await response.json() as any};
@@ -46,7 +46,7 @@ export async function archiveHierarchyCase(ownerId: string, viewerId: string) {
     pages: await inventory(),
     containers: await sql('SELECT * FROM containers ORDER BY id'),
     locations: await sql('SELECT * FROM content_archive_locations ORDER BY page_id'),
-    events: await sql('SELECT * FROM content_events ORDER BY page_id,revision_id,kind'),
+    events: await sql('SELECT * FROM content_events ORDER BY sequence'),
     activity: await sql('SELECT * FROM activity_entries ORDER BY id'),
     receipts: await sql('SELECT * FROM operation_receipts ORDER BY id'),
   });
@@ -125,4 +125,40 @@ export async function archiveHierarchyCase(ownerId: string, viewerId: string) {
       .toEqual(affected.map(({updated_at, ...row}) => row));
     console.log(`PROBE ARCH-001 ${scenario.name}: native session archive -> ${scenario.ids.length} exact descendants, actor, time, prior locations, ${scenario.reason ? 'supplied' : 'absent'} reason, unchanged refusals and one receipt under replay`);
   }
+  // Reasons are personal data too: erasure clears both newly retained audit
+  // detail and archive-location reasons, and old captures cannot recreate them.
+  const memberMutate = async (path: string, body: object) => {
+    const result = await call('POST', path, {operationKey: createUlid(), ...body}, viewer);
+    expect(result.status, JSON.stringify(result.body)).toBeLessThan(300);
+    return result.body.value;
+  };
+  const authored = await memberMutate('/containers', {name: 'Member archive history', visibility: 'private'});
+  await memberMutate('/sharing', {targetKind: 'container', targetId: authored.id, principalKind: 'member', principalId: ownerId, level: 'full'});
+  const authoredPage = await memberMutate('/pages', {containerId: authored.id, title: 'Retained shared record'});
+  const capturedPage = {operationKey: createUlid(), expectedRevisionId: authoredPage.revisionId, action: 'archive', reason: 'synthetic-slate-erased-page-reason'};
+  const pageArchive = await call('POST', `/archive/${authoredPage.pageId}`, capturedPage, viewer);
+  expect(pageArchive.status).toBe(200);
+  const empty = await memberMutate('/containers', {name: 'Member space history', visibility: 'private'});
+  await memberMutate('/sharing', {targetKind: 'container', targetId: empty.id, principalKind: 'member', principalId: ownerId, level: 'full'});
+  const emptyRevision = (await call('GET', `/containers/${empty.id}`, undefined, viewer)).body.revisionId;
+  const capturedSpace = {operationKey: createUlid(), expectedRevisionId: emptyRevision, reason: 'synthetic-slate-erased-space-reason'};
+  const spaceArchive = await call('POST', `/containers/${empty.id}/archive`, capturedSpace, viewer);
+  expect(spaceArchive.status).toBe(200);
+  const proof = await sessionFor(ownerId, {freshProof: true});
+  const erased = await call('POST', '/members/remove', {operationKey: createUlid(), memberId: viewerId, erase: true}, proof);
+  expect(erased.status, JSON.stringify(erased.body)).toBe(200);
+  expect(erased.body.value.erased).toBe(true);
+  const retainedIds = [authoredPage.pageId, empty.homePageId];
+  const retainedArchive = (await call('GET', '/archive')).body.items.filter((item: any) => retainedIds.includes(item.id));
+  expect(retainedArchive).toHaveLength(2);
+  expect(retainedArchive.every((item: any) => item.reason === null)).toBe(true);
+  for (const activityId of [pageArchive.body.receipt.activityId, spaceArchive.body.receipt.activityId]) {
+    expect(await sql('SELECT actor_member_id,detail_json FROM activity_entries WHERE id=?', activityId)).toEqual([{actor_member_id: null, detail_json: '{}'}]);
+  }
+  const afterErasure = await state();
+  expect((await call('POST', `/archive/${authoredPage.pageId}`, capturedPage, viewer)).status).toBe(401);
+  expect((await call('POST', `/containers/${empty.id}/archive`, capturedSpace, viewer)).status).toBe(401);
+  expect(await state()).toEqual(afterErasure);
+  expect((await call('GET', '/archive')).body.items.filter((item: any) => retainedIds.includes(item.id))).toEqual(retainedArchive);
+
 }

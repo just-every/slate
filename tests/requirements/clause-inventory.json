@@ -894,7 +894,7 @@
       "id": "ARCH-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Native session archiveHierarchyCase covers page subtrees, databases and containers with complete descendants and committed metadata, unchanged refusals and replay. Responsive archiveJourney is loaded in the existing desktop template-management and phone core callers; independent acceptance and guarded landing receipts remain separate.",
+      "unmetReason": "Native session archiveHierarchyCase covers page subtrees, databases and containers with complete descendants and committed metadata, unchanged refusals and replay. Responsive archiveJourney is loaded in the existing desktop template-management and phone core callers. Native actor erasure clears retained reasons and activity detail; erased-session captures refuse unchanged. Independent acceptance and guarded landing receipts remain separate.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/http.test.ts",
