@@ -314,9 +314,10 @@
       "kind": "supporting-regression",
       "clauses": [
         "BASE-ACCESS-002",
-        "DB-012"
+        "DB-012",
+        "ARCH-001"
       ],
-      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys."
+      "reason": "Asserts Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input. Its supporting scope is limited to the listed requirements; it does not establish their full UI, every profile, external-provider behavior or complete end-to-end acceptance. Populated native record reads retain defined field order, body, comments and exact earlier revisions; an editor changes an ordinary field, computed and metadata assignments refuse unchanged, and a downgraded viewer retains readable fields while fresh and replayed writes refuse. Both parity values retain stored content. Complete browser record-detail proof is loaded through the existing responsive journeys. ARCH-001 archiveHierarchyCase uses native Worker sessions for populated page, database and space archives: exact complete descendant inventories, actor and committed time, prior locations, supplied and absent reasons, retained archive-location and activity records, unchanged unrelated branches, missing or revoked sessions, view-only refusal, stale-revision rollback and duplicate-safe replay. Existing responsive archiveJourney controls provide the browser proof."
     },
     {
       "file": "tests/flagship/structured/template-permissions.test.ts",

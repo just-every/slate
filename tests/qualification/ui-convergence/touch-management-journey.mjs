@@ -1,3 +1,4 @@
+import {archiveJourney} from './archive-journey.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {expect} from '@playwright/test';
@@ -36,21 +37,7 @@ export async function touchManagementJourney(state,touch){
  assert.ok(templateDocument.blocks.some(block=>block.blockType==='task'));
  const templateLifecycle=templateDocument.page.lifecycle;
  await checkpoint(page,'template used by touch');
- // Archive this real template copy, then restore it through the archive surface.
- await tap(page.getByRole('button',{name:'More',exact:true}));
- await tap(page.getByRole('menuitem',{name:'Archive page',exact:true}));
- const archive=page.getByRole('dialog',{name:'Archive this page?',exact:true});
- await type(page,archive.getByRole('textbox',{name:'Reason',exact:true}),'Meeting completed.');
- await tap(archive.getByRole('button',{name:'Confirm',exact:true}));
- await expect(archive).toBeHidden();
- await page.goto(origin+'/app/archive',{waitUntil:'networkidle'});
- const row=page.locator('.archive-list li').filter({hasText:'Meeting notes'});
- await expect(row).toContainText('Meeting completed.');
- await checkpoint(page,'archive populated');
- await tap(row.getByRole('button',{name:'Restore',exact:true}));
- await expect(row).toHaveCount(0);
- assert.equal((await api(`/api/pages/${templatePage}`)).page.lifecycle,templateLifecycle);
- await checkpoint(page,'archive restored');
+ await archiveJourney(touch,templatePage,templateLifecycle);
 
  const ownerContext=await state.context.browser().newContext({viewport:page.viewportSize(),hasTouch:true,isMobile:page.viewportSize().width===390,storageState:await state.context.storageState(),locale:'en-US'});
  const errors=[];

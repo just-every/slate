@@ -97,6 +97,7 @@ for (const width of [390, 1440]) {
         await chatJourney(state, width);
         await step('STAT-005 — status profiles preserve vocabulary and page revisions', () => statusProfileJourney(state, width));
         if (width === 390) {
+          await step('ARCH-001 native archive controls and complete descendants on a phone', () => touchManagementJourney(state,touch));
           await step('DB-012 populated record fields, comments, history and parity', () => recordDetailJourney(state, width));
           await templateCaptureJourney(state);
           await withSecondPerson(state, width, people => step('DB-015 — template handover and revoked-saver pause on a phone', () => recordTemplatesJourney(state, people)));

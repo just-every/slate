@@ -2,7 +2,7 @@ import type { FeatureContext } from "../../app/feature-context";
 import { ApiProblem } from "../../app/problems";
 import { resolveCurrentAccess } from "../sharing/current-access";
 export async function listArchive(ctx: FeatureContext) {
-        const rows = (await ctx.db.prepare('SELECT p.id,p.title,p.container_id AS containerId,p.revision_id AS revisionId,p.archived_at AS archivedAt,p.trashed_at AS trashedAt,l.reason,l.occurred_at AS occurredAt,p.working_revision_id,p.published_revision_id FROM pages p LEFT JOIN content_archive_locations l ON l.page_id=p.id WHERE p.workspace_id=? AND p.deleted_at IS NULL AND (p.archived_at IS NOT NULL OR p.trashed_at IS NOT NULL)').bind(ctx.actor.workspaceId).all<Record<string, any>>()).results, out = [];
+        const rows = (await ctx.db.prepare('SELECT p.id,p.title,p.page_kind AS pageKind,p.container_id AS containerId,p.revision_id AS revisionId,p.archived_at AS archivedAt,p.trashed_at AS trashedAt,l.reason,l.occurred_at AS occurredAt,l.actor_member_id AS actorMemberId,l.prior_container_id AS priorContainerId,l.prior_parent_id AS priorParentId,l.prior_position AS priorPosition,l.prior_lifecycle AS priorLifecycle,p.working_revision_id,p.published_revision_id FROM pages p LEFT JOIN content_archive_locations l ON l.page_id=p.id WHERE p.workspace_id=? AND p.deleted_at IS NULL AND (p.archived_at IS NOT NULL OR p.trashed_at IS NOT NULL)').bind(ctx.actor.workspaceId).all<Record<string, any>>()).results, out = [];
         for (const r of rows) {
             try {
                 const { working_revision_id, published_revision_id, ...item } = r, access = await resolveCurrentAccess(ctx, r.id, { includeTrashed: true });

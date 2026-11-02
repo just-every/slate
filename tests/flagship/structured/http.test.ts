@@ -1,3 +1,4 @@
+import {archiveHierarchyCase} from '../content/archive-hierarchy.case';
 import { env } from "cloudflare:test";
 import { beforeEach, test, expect } from "vitest";
 import { resetDeployment } from "../../e2e/setup/reset-deployment";
@@ -188,6 +189,7 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
     expect(retained.page.blocks).toEqual(edited.page.blocks);
     expect(retained.values).toEqual(edited.values);
   }
+  await archiveHierarchyCase(ctx.actor.id, reader.actor.id);
 });
 
 test("database file references list only attachments the reader could open", async () => {

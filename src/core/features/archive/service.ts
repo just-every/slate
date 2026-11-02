@@ -69,7 +69,8 @@ export async function prepareArchivePage(ctx: FeatureContext, id: string, input:
         }
         statements.push(...contentEvent(ctx, p.id, p.revision_id, input.action, {}, [p.container_id]));
     }
-    return { statements, entity: { id, kind: 'page', revisionId: root.revision_id }, value: { pageId: id, revisionId: root.revision_id, action: input.action } };
+    return { statements, entity: { id, kind: 'page', revisionId: root.revision_id }, value: { pageId: id, revisionId: root.revision_id, action: input.action },
+        detail: { reason: input.reason ?? null, priorLocation: { containerId: root.container_id, parentPageId: root.parent_page_id, position: root.tree_position } } };
 }
 export async function permanentDeletePage(ctx: FeatureContext, id: string, input: {
     operationKey: string;

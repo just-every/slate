@@ -31,6 +31,7 @@ export async function archiveContainer(ctx: FeatureContext, id: string, input: {
                 statements.push(...plan.statements);
             }
             statements.push(await containerRevision(ctx, id, revisionId, { ...container, archived_at: input.restore ? null : ctx.now }));
-            return { statements, entity: { id, kind: 'container', revisionId }, value: { id, revisionId, archived: !input.restore } };
+            return { statements, entity: { id, kind: 'container', revisionId }, value: { id, revisionId, archived: !input.restore },
+                detail: { reason: input.reason ?? null, priorLocation: { workspaceId: container.workspace_id } } };
         } });
 }

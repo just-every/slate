@@ -894,8 +894,13 @@
       "id": "ARCH-001",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "No complete semantic journey is registered for ARCH-001 — Archive. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "unmetReason": "Native session archiveHierarchyCase covers page subtrees, databases and containers with complete descendants and committed metadata, unchanged refusals and replay. Responsive archiveJourney is loaded in the existing desktop template-management and phone core callers; independent acceptance and guarded landing receipts remain separate.",
+      "supportingTests": [
+        {
+          "file": "tests/flagship/structured/http.test.ts",
+          "testName": "Worker HTTP rejects missing expired revoked and denied sessions and persists authorized input"
+        }
+      ]
     },
     {
       "id": "ARCH-002",
