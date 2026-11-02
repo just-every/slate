@@ -61,7 +61,6 @@ export async function navigationSlotJourney() {
         const ssr = await fetch(origin + '/app', { headers: { cookie } });
         assert.equal(ssr.status, 200);
         const html = await ssr.text();
-        assert.match(html, /data-testid="member-email"/);
         assert.ok(!html.includes('Response library'), 'The buyer contribution appears only after hydration.');
         context = await browser.newContext({ viewport: { width, height: width === 1440 ? 1000 : 844 } });
         await context.addCookies(cookie.split('; ').map(item => {

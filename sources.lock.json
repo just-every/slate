@@ -10564,7 +10564,7 @@
       "executable": false
     },
     "tests/e2e/navigation-slot.mjs": {
-      "sha256": "acd40a2873683a2fb6dff9f05f817c2a4e27bf0cef28cf4d59260a137e34edc8",
+      "sha256": "49cfabb31acfc7afaa8e6d56076a768f4a9d3ed0541594efe3892d02f5f54a22",
       "executable": false
     },
     "tests/e2e/navigation/create-in-place.test.ts": {
@@ -12048,7 +12048,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/navigation-configuration.mjs": {
-      "sha256": "19338deaeca7cd253ddc0a11a73586088669d10bddcdf142a2d4d85783da21ff",
+      "sha256": "8465debee9f39f49a9dc773bb2fa1d41fa83eba39f4226b9958f028aeb858087",
       "executable": false
     },
     "tests/qualification/ui-convergence/navigation-journey.mjs": {
@@ -12136,7 +12136,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/sidebar-journey.mjs": {
-      "sha256": "5d6133e52385c62e94f1da4b4e05e97827a15f31e808300e148013664488d50e",
+      "sha256": "3203067ee97f17f93ddfc58addd6e50fb184b7f4d6278e51e085cf70e566b5d5",
       "executable": false
     },
     "tests/qualification/ui-convergence/starter-templates-journey.mjs": {

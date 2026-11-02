@@ -48,7 +48,7 @@ export async function navigationJourney(state, width, { buyerSlot = false } = {}
   const favouriteData = (await api('/api/navigation')).favourites;
   assert.deepEqual(favouriteData.slice(0, 3).map(item => item.id), [privatePage, space.id, database.id]);
   assert.deepEqual(await links(favourites.locator('a')), favouriteData.map(({ href, title }) => ({ href, label: title })));
-  const group = trees.locator('details.space-group').filter({ has: trees.locator('summary', { hasText: 'Navigation response team' }) });
+  const group = trees.locator('details.space-group').filter({ has: page.locator('summary', { hasText: 'Navigation response team' }) });
   await expect(trees.locator(`a[href="/app/pages/${privatePage}"]`)).toBeVisible();
   await expect(trees.locator(`a[href="/app/pages/${child}"]`)).toBeVisible();
   assert.equal(await trees.locator(`a[href="/app/pages/${child}"]`).evaluate(anchor => new URL(anchor.closest('li').parentElement.closest('li').querySelector(':scope > .tree-row a').href).pathname), `/app/pages/${root}`);
@@ -59,7 +59,7 @@ export async function navigationJourney(state, width, { buyerSlot = false } = {}
       return tree && account && !!(tree.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(element.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING);
     }), 'The real buyer contribution occupies its declared slot after trees and before the account.');
   }
-  const inventory = async () => ({ global: await links(primary.locator('a')), favourites: await links(favourites.locator('a')), tree: await links(trees.locator('a')), buyer: buyerSlot ? await links(slot.locator('a')) : [] });
+  const inventory = async () => ({ all: await links(sidebar.locator('.sidebar-content a')), global: await links(primary.locator('a')), favourites: await links(favourites.locator('a')), tree: await links(trees.locator('a')), buyer: buyerSlot ? await links(slot.locator('a')) : [] });
   const baseline = await inventory();
   const reconcile = async () => {
     await openNavigation(page);
