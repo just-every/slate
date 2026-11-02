@@ -1518,8 +1518,8 @@ Core · published · **partial**
 1. Every change is recorded in activity and takes effect under `SHARE-007`.
 2. Container grants are edited only by container administrators or owners and drive inherited access.
 
-**Evidence.** `CONTRACT.md` — requirement text only; no validated CI-run proof.
-**Gap.** No validated CI-run proof for this acceptance point: "A container's grants use the principals and levels of `SHARE-001` and `SHARE-002`, are the source of every page's inherited access, and are editable only by a container administrator or a workspace owner."<br>No validated CI-run proof for this acceptance point: "Every change is recorded in activity and takes effect under `SHARE-007`."
+**Evidence.** `tests/flagship/content/repair.test.ts` — "content structure, task attribution, privacy and activity retain exact revisions", calling `tests/flagship/content/container-grant-principals.case.ts` — "containerGrantPrincipalsCase" (scoped labels and unchanged authority refusals); `tests/qualification/ui-convergence/journeys.test.mjs` — "page outline follows headings and navigates long pages at 1440px" and "space tree title filtering preserves ancestors, access and expansion at 390px", calling `tests/qualification/ui-convergence/workspace-authority-journey.mjs` — "workspaceAuthorityJourney" and `tests/qualification/ui-convergence/container-grants-journey.mjs` — "containerGrantsJourney" (native owner and administrator controls, configured principals and levels, inherited descendants, restrictions, personal privacy, one activity under replay, next-write refusal, unsaved text and measured current page, tree, search and inbox access).
+**Gap.** Acceptance 1 remains unproved for AI-answer removal within five seconds inherited through `SHARE-007`, held under the existing `ADMIN-007` prerequisite. No AI or live-provider proof is claimed.
 
 ### Structured records
 
