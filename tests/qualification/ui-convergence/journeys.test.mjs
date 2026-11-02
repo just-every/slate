@@ -1,3 +1,4 @@
+import {referenceStateJourney} from './reference-state-journey.mjs';
 import {contentQueryJourney} from './content-query-journey.mjs';
 import {publicProfileJourney} from './public-profile-journey.mjs';
 import { publicationJourney } from './publication-journey.mjs';
@@ -125,6 +126,7 @@ for (const width of [390]) {
     await withWorkspace({ width, height: width === 1440 ? 1000 : 844 }, 'core-wiki', async state => {
       await setupWorkspace(state);
       await treeFilterJourney(state);
+      await withSecondPerson(state,width,people=>referenceStateJourney(state,people));
       await state.switchIdentity('owner');
       await settingsJourney(state,width);
       await workspaceAuthorityJourney(state,width);

@@ -1,3 +1,4 @@
+import {referenceStateJourney} from './reference-state-journey.mjs';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
@@ -52,4 +53,5 @@ export async function linkAccessJourney(state, people, target, containerId) {
   assert.equal(notices.length, 1, 'Repeated requests notify one current granter once.');
   assert.deepEqual(notices[0].detail, { requesterMemberId: bob.id });
   assert.equal((await call(bob.context, origin, 'GET', `/api/pages/${target}`)).status, 404, 'Requesting access never grants it.');
+  await referenceStateJourney(state,people);
 }

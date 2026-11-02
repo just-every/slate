@@ -1050,6 +1050,16 @@
         "ACT-002"
       ],
       "reason": "Exercises the SCIM HTTP protocol through native invitation, Member identity, group and removal services, including credential custody and current authority. Real directory-provider acceptance and native invitation capacity outside SCIM remain unproven."
+    },
+    {
+      "file": "tests/flagship/content/mention-access.test.ts",
+      "testName": "LINK-004 — a mentioned page title reaches a reader through no door once their access is removed or expired",
+      "kind": "supporting-regression",
+      "clauses": [
+        "LINK-003",
+        "LINK-004"
+      ],
+      "reason": "The retained-reference HTTP journey reads unchanged mention targets and link addresses after rename, move, archive, trash, restore and confirmed permanent deletion, including current published titles, revoked authority, historical host readback and content-free deletion. The existing cross-door removal and expiry assertions remain intact. Responsive presentation is asserted by the existing browser callers."
     }
   ]
 }

@@ -34,7 +34,7 @@ export function readRichText(root: HTMLElement, previous: RichText): RichText {
       if (!original) throw new Error("Edited inline span has no source metadata");
       const { text: _text, ...rest } = original;
       metadata = rest;
-      if (original.mention || original.status) {
+      if (original.mention || original.status || original.link && element.querySelector('[data-page-reference]')) {
         result.push({ ...original });
         return;
       }

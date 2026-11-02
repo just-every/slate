@@ -1,3 +1,4 @@
+import {resolvePageReferences} from './mentions';
 import { rejectErasedPage } from '../pages/erased';
 import type {FeatureContext} from '../../app/feature-context';
 import {ApiProblem} from '../../app/problems';
@@ -7,8 +8,13 @@ import {loadPageTrust} from '../search/trust';
 import {readRevision} from '../versions/service';
 
 export async function pageLinkCard(ctx:FeatureContext,pageId:string,revisionId?:string) {
-  await rejectErasedPage(ctx,pageId);
+  // Revision citations retain their exact-revision refusal and erasure contract.
+  if(revisionId!==undefined)await rejectErasedPage(ctx,pageId);
   if(revisionId==='')throw new ApiProblem(400,'INVALID_REVISION','Choose an exact page revision.');
+  const reference=(await resolvePageReferences(ctx,[pageId]))[pageId]!;
+  if(reference.state==='restricted'||reference.state==='unavailable')throw new ApiProblem(404,'NOT_FOUND','Not found.');
+  const href=`/app/pages/${encodeURIComponent(pageId)}`;
+  if(revisionId===undefined&&(reference.state==='deleted'||reference.state==='trashed'))return {title:reference.label,href,state:reference.state};
   const access=await requirePageLevel(ctx,pageId,'view');
   const page=await pageRow(ctx,pageId);
   if(page.trashed_at)throw new ApiProblem(404,'NOT_FOUND','Not found.');
@@ -19,5 +25,5 @@ export async function pageLinkCard(ctx:FeatureContext,pageId:string,revisionId?:
   if(typeof exact.properties?.title!=='string')throw new ApiProblem(404,'NOT_FOUND','The referenced page revision is unavailable.');
   const trust=(await loadPageTrust(ctx,[pageId],new Map([[pageId,revision]]))).get(pageId);
   if(!trust)throw new ApiProblem(409,'PAGE_CHANGED','The page changed. Load its details again.');
-  return {title:exact.properties.title,href:`/app/pages/${encodeURIComponent(pageId)}${revisionId!==undefined?`?revision=${encodeURIComponent(revision)}`:''}`,trust};
+  return {state:reference.state,title:exact.properties.title,href:`/app/pages/${encodeURIComponent(pageId)}${revisionId!==undefined?`?revision=${encodeURIComponent(revision)}`:''}`,trust};
 }

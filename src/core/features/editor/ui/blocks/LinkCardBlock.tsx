@@ -1,3 +1,4 @@
+import {ApiError} from '../../../../client/transport';
 import {useEffect,useState} from 'react';
 import {providerEmbed} from '../../embeds/providers';
 import {useTaskPage} from './TaskPageContext';
@@ -69,9 +70,9 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
     {canEdit?<DisplaySwitch block={block} onChange={onChange}/>:null}
   </div>;
   if(page.internal)return <div className="my-2 flex flex-col gap-2">
-    {page.checking?<p role="status">Checking page access…</p>:<RequestState loading={page.resource.loading} error={page.resource.error} retry={page.resource.reload}>
+    {page.checking?<p role="status">Checking page access…</p>:page.resource.error instanceof ApiError&&page.resource.error.status===404?<p>Access needed</p>:<RequestState loading={page.resource.loading} error={page.resource.error} retry={page.resource.reload}>
       {page.resource.data?<>
-        {block.display==='plain'?<PlainLink url={block.url}/>:block.display==='inline'?(
+        {block.display==='plain'?<a className="text-body break-all text-accent underline underline-offset-2" href={page.resource.data.href}>{page.resource.data.title}</a>:block.display==='inline'?(
           <a className="inline-flex max-w-full items-center gap-1.5 rounded-control border border-line px-1.5 py-0.5 align-middle text-body text-ink hover:bg-sidebar-hover" href={page.resource.data.href}>
             <LinkIcon aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted"/>
             <span className="truncate">{page.resource.data.title}</span>
@@ -81,11 +82,12 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
             <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-control bg-sidebar-hover text-micro font-medium text-ink-muted"><LinkIcon aria-hidden="true" className="size-3.5"/></span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-ui font-medium text-ink">{page.resource.data.title}</span>
-              <span className="mt-1 block truncate text-tiny text-ink-faint">{block.url}</span>
+              <span className="mt-1 block truncate text-small text-ink-muted">{block.url}</span>
             </span>
           </a>
         )}
-        <TrustBadge trust={page.resource.data.trust}/>
+        {page.resource.data.state!=='live'?<span className="text-small text-ink-muted">{page.resource.data.state}</span>:null}
+        {page.resource.data.trust?<TrustBadge trust={page.resource.data.trust}/>:null}
       </>:null}
     </RequestState>}
     {canEdit?<DisplaySwitch block={block} onChange={onChange}/>:null}
@@ -122,7 +124,7 @@ export function LinkCardBlock({ block, canEdit, onChange, actions }: BlockRender
             {preview.description ? (
               <span className="mt-0.5 block line-clamp-2 text-small text-ink-muted">{preview.description}</span>
             ) : null}
-            <span className="mt-1 block truncate text-tiny text-ink-faint">{preview.siteName ?? block.url}</span>
+            <span className="mt-1 block truncate text-small text-ink-muted">{preview.siteName ?? block.url}</span>
           </span>
         </a>
       )}

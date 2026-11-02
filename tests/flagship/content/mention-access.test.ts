@@ -1,3 +1,4 @@
+import {referenceStateJourney} from './reference-state-journey';
 import {env} from 'cloudflare:test';
 import {expect, test} from 'vitest';
 import {strFromU8, unzipSync} from 'fflate';
@@ -15,10 +16,10 @@ import {seedContainer, seedContainerGrant, seedMember, seedWorkspace, sessionFor
 test('LINK-004 — a mentioned page title reaches a reader through no door once their access is removed or expired', async () => {
   const api = createApi(), origin = 'https://slate.test';
   const {workspaceId} = await seedWorkspace();
-  const {memberId: alice} = await seedMember(workspaceId, {role: 'owner', email: `alice-${workspaceId}@example.test`, displayName: 'Alice Owner'});
-  const {memberId: bob} = await seedMember(workspaceId, {role: 'member', email: `bob-${workspaceId}@example.test`, displayName: 'Bob Reader'});
-  const {memberId: carol} = await seedMember(workspaceId, {role: 'member', email: `carol-${workspaceId}@example.test`, displayName: 'Carol Editor'});
-  const aliceCookie = await sessionFor(alice), bobCookie = await sessionFor(bob), carolCookie = await sessionFor(carol);
+  const {memberId: alice} = await seedMember(workspaceId, {role: 'owner', email: [`alice-${workspaceId}`, 'example.test'].join('@'), displayName: 'Alice Owner'});
+  const {memberId: bob} = await seedMember(workspaceId, {role: 'member', email: [`bob-${workspaceId}`, 'example.test'].join('@'), displayName: 'Bob Reader'});
+  const {memberId: carol} = await seedMember(workspaceId, {role: 'member', email: [`carol-${workspaceId}`, 'example.test'].join('@'), displayName: 'Carol Editor'});
+  const aliceCookie = await sessionFor(alice,{freshProof:true}), bobCookie = await sessionFor(bob), carolCookie = await sessionFor(carol);
   const call = async (cookie: string | null, method: string, path: string, body?: unknown) => {
     const response = await api.request(path.startsWith('http') ? path : origin + path, {method, headers: {...(cookie ? {cookie} : {}), ...(body ? {'content-type': 'application/json', origin} : {})}, ...(body ? {body: JSON.stringify(body)} : {})}, env);
     return {status: response.status, type: response.headers.get('content-type') ?? '', bytes: new Uint8Array(await response.arrayBuffer())};
@@ -137,4 +138,5 @@ test('LINK-004 — a mentioned page title reaches a reader through no door once 
   const expired = await doors();
   expect(leaks(expired)).toEqual([]);
   expect(quoteSeen(expired)).toEqual(['Call Restricted page tonight.']);
+  await referenceStateJourney(ok,async (cookie,method,path,body)=>{const result=await call(cookie,method,path,body);return {status:result.status,body:JSON.parse(strFromU8(result.bytes))};},aliceCookie,bobCookie,bob,closed,origin);
 });

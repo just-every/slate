@@ -15,6 +15,6 @@ export function usePageLinkCard(url:string) {
   const [checked,setChecked]=useState<{url:string;local:boolean}>();
   useEffect(()=>{setChecked({url,local:!!target&&(target.origin===null||target.origin===window.location.origin)});},[url]);
   const local=target?.origin===null?true:checked?.url===url?checked.local:undefined;
-  const resource=useResource<{title:string;href:string;trust:PageTrust}>(target&&local?`/api/pages/${encodeURIComponent(target.id)}/link-card${target.revision!==null?`?revision=${encodeURIComponent(target.revision)}`:''}`:null);
-  return {internal:!!target&&local!==false,checking:!!target&&local===undefined,resource};
+  const resource=useResource<{title:string;href:string;state:string;trust?:PageTrust}>(target&&local?`/api/pages/${encodeURIComponent(target.id)}/link-card${target.revision!==null?`?revision=${encodeURIComponent(target.revision)}`:''}`:null);
+  return {targetId:target?.id,internal:!!target&&local!==false,checking:!!target&&local===undefined,resource};
 }

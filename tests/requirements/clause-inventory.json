@@ -1741,14 +1741,24 @@
       "document": "CONTRACT.md",
       "status": "unproven",
       "unmetReason": "No complete semantic journey is registered for LINK-003 — References follow their target. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "supportingTests": [
+        {
+          "file": "tests/flagship/content/mention-access.test.ts",
+          "testName": "LINK-004 — a mentioned page title reaches a reader through no door once their access is removed or expired"
+        }
+      ]
     },
     {
       "id": "LINK-004",
       "document": "CONTRACT.md",
       "status": "unproven",
       "unmetReason": "No complete semantic journey is registered for LINK-004 — Links respect access. The original planned placeholder, if present, is not implementation evidence. The requirement remains open; lack of registration is not a claim that all its behavior is absent.",
-      "supportingTests": []
+      "supportingTests": [
+        {
+          "file": "tests/flagship/content/mention-access.test.ts",
+          "testName": "LINK-004 — a mentioned page title reaches a reader through no door once their access is removed or expired"
+        }
+      ]
     },
     {
       "id": "AI-001",

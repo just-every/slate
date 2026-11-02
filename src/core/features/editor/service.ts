@@ -16,7 +16,7 @@ import { validateBlockContent, validateBlockTree, plainContent } from './validat
 import { contentPolicy } from '../pages/policy';
 import { labelForReader, labelPageMentions } from '../pages/mentions';
 /** Equal once every page mention's label is dropped: a reader's copy carries labels chosen for them, never the stored title. */
-async function sameContent(a: JsonValue, b: JsonValue) { const bare = (value: JsonValue) => labelGroups(labelPageMentions(value, () => ''), () => ''); return await requestHash(bare(a)) === await requestHash(bare(b)); }
+async function sameContent(a: JsonValue, b: JsonValue, origin?:string) { const bare = (value: JsonValue) => labelGroups(labelPageMentions(value, () => '',origin), () => ''); return await requestHash(bare(a)) === await requestHash(bare(b)); }
 function revisionUpdate(ctx: FeatureContext, id: string, revisionId: string, live: boolean) { return ctx.db.prepare("UPDATE pages SET working_revision_id=?,revision_id=?,published_revision_id=CASE WHEN ? THEN ? ELSE published_revision_id END,lifecycle=CASE WHEN ? THEN lifecycle WHEN lifecycle IN ('live','live-with-unpublished-changes') THEN 'live-with-unpublished-changes' ELSE lifecycle END,updated_at=? WHERE id=?").bind(revisionId, revisionId, +live, revisionId, +live, ctx.now, id); }
 export async function updateBlock(ctx: FeatureContext, pageId: string, blockId: string, input: BlockUpdateInput) {
     // Retry only snapshot contention from a different block. The submitted block CAS is never rebased.
@@ -32,7 +32,7 @@ export async function updateBlock(ctx: FeatureContext, pageId: string, blockId: 
                         throw new ApiProblem(409, 'BLOCK_CONFLICT', 'This block changed. Keep your unsaved text and compare.', { blockId, currentRevisionId: block.revisionId, serverContent: await labelForReader(ctx, block.content) });
                     let content = await canonicalGroupLabels(ctx,validateBlockContent(block.blockType, input.content));
                     content = await normalizeTask(ctx, { ...block, content }, block);
-                    if (await sameContent(content, block.content))
+                    if (await sameContent(content, block.content,ctx.appOrigin))
                         return { noChange: true, statements: [pageGuard(ctx, page, page.revision_id), mutationGuard(ctx.db, 'SELECT revision_id=? FROM page_blocks WHERE id=? AND page_id=?', [input.expectedRevisionId, blockId, pageId])], entity: { id: pageId, kind: 'page', revisionId: page.revision_id }, value: { pageId, revisionId: page.revision_id, blockRevisionId: block.revisionId, previousRevisionId: page.revision_id } };
                     const blockRevisionId = createUlid();
                     const next = blocks.map(b => b.id === blockId ? { ...b, content, revisionId: blockRevisionId } : b);
@@ -75,12 +75,12 @@ export async function replaceBlocks(ctx: FeatureContext, pageId: string, input: 
  * that builds the whole page from one read at expectedRevisionId may omit the revisions: the
  * page revision guard then covers every block.
  */
-async function blockConflict(old: BlockView[], next: { id: string; blockType: string; content: JsonValue }[], known: Record<string, string>) {
+async function blockConflict(old: BlockView[], next: { id: string; blockType: string; content: JsonValue }[], known: Record<string, string>,origin?:string) {
     for (const stored of old) {
         if (known[stored.id] === stored.revisionId)
             continue;
         const sent = next.find(b => b.id === stored.id);
-        if (sent && sent.blockType === stored.blockType && await sameContent(sent.content, stored.content))
+        if (sent && sent.blockType === stored.blockType && await sameContent(sent.content, stored.content,origin))
             continue;
         return stored;
     }
@@ -95,12 +95,12 @@ export async function prepareReplaceBlocks(ctx: FeatureContext, pageId: string, 
     writable(page);
     const old = await pageBlocks(ctx.db, pageId);
     const normalized = await Promise.all(incoming.map(async b => ({ ...b, content: await normalizeTask(ctx, b, old.find(o => o.id === b.id)) })));
-    const conflict = input.blockRevisions && await blockConflict(old, normalized, input.blockRevisions);
+    const conflict = input.blockRevisions && await blockConflict(old, normalized, input.blockRevisions,ctx.appOrigin);
     if (conflict)
         throw new ApiProblem(409, 'BLOCK_CONFLICT', 'Someone else changed a block on this page since you loaded it. Nothing was changed; compare or reload that block, then try again.', { blockId: conflict.id, currentRevisionId: conflict.revisionId, serverContent: await labelForReader(ctx, conflict.content) });
     // A block whose content this change leaves as stored keeps its revision, so a concurrent edit to it still saves.
     // A block left as stored keeps its stored text too, so a reader's mention labels are never written back.
-    const kept = await Promise.all(normalized.map(async b => { const stored = old.find(o => o.id === b.id); return stored && stored.blockType === b.blockType && await sameContent(stored.content, b.content) ? stored : undefined; }));
+    const kept = await Promise.all(normalized.map(async b => { const stored = old.find(o => o.id === b.id); return stored && stored.blockType === b.blockType && await sameContent(stored.content, b.content,ctx.appOrigin) ? stored : undefined; }));
     const next = normalized.map((b, i) => ({ ...b, pageId, parentBlockId: b.parentBlockId ?? null, revisionId: kept[i]?.revisionId ?? createUlid() }));
     const saved = next.map((b, i) => kept[i] ? { ...b, content: kept[i]!.content } : b);
     for (const b of next) {

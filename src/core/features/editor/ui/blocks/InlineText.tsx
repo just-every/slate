@@ -1,3 +1,6 @@
+import {ApiError} from '../../../../client/transport';
+import {RequestState} from '../../../../app/ui/RequestState';
+import {usePageLinkCard} from './usePageLinkCard';
 import type { ReactNode } from "react";
 import { cn } from "../../../../ui";
 import type { InlineColour, InlineSpan, RichText } from "../types";
@@ -39,7 +42,7 @@ function Mention({ span }: { span: InlineSpan }) {
       {mentionPrefix[mention.kind]}
       {mention.kind==='page' && mention.id && mention.available!==false ? <a href={`/app/pages/${encodeURIComponent(mention.id)}`}>{mention.label}</a>:mention.kind==='date' ? new Date(`${mention.id}T12:00:00`).toLocaleDateString() : mention.label}
       {mention.kind==='page' && mention.state==='restricted' ? <button type="button" data-request-page-access={mention.id}>Request access</button>:null}
-      {mention.state && mention.state!=='live'?<small> · {mention.state==='restricted'?'Unavailable':mention.state}</small>:null}
+      {mention.state && mention.state!=='live'?<span className="text-small"> · {mention.state==='restricted'?'Unavailable':mention.state}</span>:null}
     </span>
   );
 }
@@ -62,6 +65,17 @@ function withMarks(span: InlineSpan, node: ReactNode): ReactNode {
   return out;
 }
 
+function PageLink({span,children}:{span:InlineSpan;children:ReactNode}) {
+  const href=span.link!.href;
+  const page=usePageLinkCard(href);
+  if(!page.internal)return <a className="text-accent underline underline-offset-2" href={href} rel="noreferrer" target="_blank">{children}</a>;
+  if(page.resource.error&&!(page.resource.error instanceof ApiError&&page.resource.error.status===404&&page.resource.error.code==='NOT_FOUND'))return <RequestState loading={false} error={page.resource.error} retry={page.resource.reload}/>;
+  const reference=page.resource.data;
+  return <span data-page-reference="" data-slate-atomic-length={span.text.length} contentEditable={false}>
+    {reference?<><a className="text-accent underline underline-offset-2" href={href} rel="noreferrer" target="_blank">{new URL(href,'https://slate.invalid').searchParams.has('revision')?children:withMarks(span,reference.title)}</a>{reference.state!=='live'?<span className="text-small"> · {reference.state}</span>:null}</>:page.resource.error?<span>Access needed</span>:<span>Checking page access…</span>}
+  </span>;
+}
+
 function Span({ span }: { span: InlineSpan }) {
   if (span.mention) return <Mention span={span} />;
 
@@ -69,9 +83,7 @@ function Span({ span }: { span: InlineSpan }) {
 
   if (span.link) {
     node = (
-      <a className="text-accent underline underline-offset-2" href={span.link.href} rel="noreferrer" target="_blank">
-        {node}
-      </a>
+      <PageLink span={span}>{node}</PageLink>
     );
   }
 
