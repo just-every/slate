@@ -1181,7 +1181,7 @@
       "id": "AUTO-002",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of AUTO-002 — A rule acts as its actor. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This Workers registry records native HTTP admission, non-owner manual authority, committed content outbox effects, current grant revocation, ordered recovery, safe run-log receipts and native member erasure. Complete AUTO-002 acceptance is recorded in CONTRACT.md together with touchDatabaseToolsJourney through its existing Verify registration; this registry classifies supporting Workers evidence only.",
       "supportingTests": [
         {
           "file": "tests/flagship/structured/automation-repairs.test.ts",

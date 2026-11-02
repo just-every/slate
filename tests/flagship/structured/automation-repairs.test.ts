@@ -18,6 +18,7 @@ const adapters:AutomationAdapters={archive:(ctx,id,input)=>archivePage(ctx,id,{.
 test("automation admission, resumed effects and schedules preserve current scope and exactly-once recovery", async () => {
   await resetDeployment();
   await automationHttpAuthority();
+  await resetDeployment();
   await runFoldCases([
 {name:"AUTO-002 admission, movement, branch and resumed actions enforce current container scope and private definitions",before:async()=>{await resetFoldDeployment();},run:async()=>{
 try {

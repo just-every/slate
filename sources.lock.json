@@ -988,7 +988,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8958080d83ab6f7bc9bbeb0d8b7dba93f9060a662a4ac91aeb558d403e381fa1",
+      "sha256": "a0f6fad8227791806e2cdd6dbb628869f9a5dbbc49584fda64c5b5786ae6a1c5",
       "executable": false
     },
     "DEMO.md": {
@@ -11228,11 +11228,11 @@
       "executable": false
     },
     "tests/flagship/structured/automation-http.ts": {
-      "sha256": "6e81b7ef82c97ffd1770eb0ce075672f9fc331793ea3fb8fc3e9dd8615ff7dab",
+      "sha256": "5f3f8e8736f1afbd7c613f6291f88c7fa972401447ecb03d1890ed34047d890a",
       "executable": false
     },
     "tests/flagship/structured/automation-repairs.test.ts": {
-      "sha256": "9d928bfde6c4fab9a90b98a231be6790900dee6e87825114b32f82dc6a1696bd",
+      "sha256": "84a45b5066384531dc4f5f9383545f5f40b2d55bc032b30c6783d11a22a1a9ce",
       "executable": false
     },
     "tests/flagship/structured/http.test.ts": {
@@ -12188,7 +12188,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/touch-database-tools-journey.mjs": {
-      "sha256": "edf0c4ce5a83ca2d1b40ca4dbeaa22429c03c496d606eda2437e24d48d71ad93",
+      "sha256": "5f3e717d186d02ea1e8422be0274de51b09db8f28e84740e797ef463e92a33cf",
       "executable": false
     },
     "tests/qualification/ui-convergence/touch-database.mjs": {
@@ -12280,7 +12280,7 @@
       "executable": false
     },
     "tests/requirements/clause-inventory.json": {
-      "sha256": "4632359e043e4905e2a6e59921405db2f260d5ba4df24b83cbfabdeee8d48ef2",
+      "sha256": "384bb10baa5e3f0e598f83fb8b9d7aa36548df5ccbea7aa6a4e24137d3b04ce7",
       "executable": false
     },
     "tests/requirements/cli-journey.md": {
@@ -12296,7 +12296,7 @@
       "executable": false
     },
     "tests/requirements/test-evidence.json": {
-      "sha256": "a9bfdb72ca0d1cfb9210d49711f0f206251866dcc78cdf94ccca5081485cf746",
+      "sha256": "58aebb7eff422a19d8cd2fcbe7b4236d12e7e4d04b6470ca161d63600d4176a3",
       "executable": false
     },
     "tests/rer/editor.test.mjs": {

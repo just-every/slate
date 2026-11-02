@@ -182,6 +182,18 @@ export async function automationHttpAuthority() {
     await runAutomationMaintenance({ ...f.ctx, now: new Date().toISOString() });
     expect(await receipts(run!.id)).toEqual(retainedReceipts);
     expect(await snapshot()).toEqual(retained);
+    const erased = await record();
+    await runAutomationMaintenance(pause(async () => !!await env.DB.prepare(
+      "SELECT id FROM automation_jobs WHERE state='queued' AND json_extract(payload_json,'$.event.pageId')=?",
+    ).bind(erased.id).first(), () => call("POST", "/api/members/remove", {
+      operationKey: createUlid(), memberId: f.readerId, erase: true,
+    })));
+    expect((await f.request("GET", "/api/automation", undefined, f.readerId)).status).toBe(401);
+    expect((await document(erased.id)).values["synthetic-slate-number"]).toBe(1);
+    expect(await comments(erased.id)).toEqual([]);
+    const afterErasure = await snapshot();
+    await runAutomationMaintenance({ ...f.ctx, now: new Date().toISOString() });
+    expect(await snapshot()).toEqual(afterErasure);
     console.info("PROBE AUTO-002 2: native outbox as non-owner -> manual-equivalent effects confirmed; queued downgrade skips all effects; mid-run revocation keeps first effect and skips later effects; safe run log and replay agree with canonical receipts");
   } finally {
     env.SLATE_PROFILE = previous;

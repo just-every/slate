@@ -76,6 +76,7 @@ export async function touchDatabaseToolsJourney(state,touch){
  });
  await state.runScheduled();
  await page.reload({waitUntil:'networkidle'});
+ await tap(page.getByRole('navigation',{name:'Saved views'}).getByRole('button',{name:'Automations',exact:true}));
  await tap(rule.getByRole('button',{name:'Run log',exact:true}));
  const log=page.getByRole('heading',{name:'Run log',exact:true}).locator('..');
  await expect(log).toContainText('Action 1: skipped');
@@ -86,6 +87,7 @@ export async function touchDatabaseToolsJourney(state,touch){
  assert.equal((await api(`/api/comments/page/${blocked.pageId}`)).comments.length,0);
  await state.runScheduled();
  assert.deepEqual((await api(`/api/automation/${saved.id}/runs`)).items,runs);
+ await log.getByText('Action 1: skipped',{exact:true}).scrollIntoViewIfNeeded();
  await checkpoint(page,'database automation skips current read-only target');
  console.log('NAV-006 touch database charts, templates and automations passed');
 }
