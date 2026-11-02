@@ -12,14 +12,14 @@ import type { MemberView, Theme } from '../../shared/api/workspace';
 export async function currentMember(ctx:FeatureContext):Promise<MemberView> {
   const subject=await currentSubject(ctx);
   const [member]=await Promise.all([
-    ctx.db.prepare('SELECT id,display_name AS displayName,email,role,member_kind AS memberKind,theme FROM members WHERE id=?').bind(ctx.actor.id).first<MemberView>(),
+    ctx.db.prepare('SELECT id,display_name AS displayName,email,role,member_kind AS memberKind,theme,is_setup_owner AS isSetupOwner FROM members WHERE id=?').bind(ctx.actor.id).first<Omit<MemberView,'isSetupOwner'>&{isSetupOwner:number}>(),
     ensurePersonalContainer(ctx,subject)
   ]);
-  return member!;
+  return {...member!,isSetupOwner:!!member!.isSetupOwner};
 }
 export async function listMembers(ctx:FeatureContext,kind:'member'|'guest') {
   const subject=await currentSubject(ctx); if(kind==='guest')await requireWorkspaceOwner(ctx); if(subject.isGuest) throw new ApiProblem(403,'FORBIDDEN','Guests cannot list workspace members.');
-  return {items:(await ctx.db.prepare("SELECT id,display_name AS displayName,email,role,member_kind AS memberKind,theme FROM members WHERE workspace_id=? AND member_kind=? AND status='active' ORDER BY display_name,id").bind(ctx.actor.workspaceId,kind).all<MemberView>()).results};
+  return {items:(await ctx.db.prepare("SELECT id,display_name AS displayName,email,role,member_kind AS memberKind,theme,is_setup_owner AS isSetupOwner FROM members WHERE workspace_id=? AND member_kind=? AND status='active' ORDER BY display_name,id").bind(ctx.actor.workspaceId,kind).all<Omit<MemberView,'isSetupOwner'>&{isSetupOwner:number}>()).results.map(person=>({...person,isSetupOwner:!!person.isSetupOwner}))};
 }
 export async function setTheme(ctx:FeatureContext,input:{operationKey:string;theme:Theme}) {
   return commitOperation(ctx,{operationKey:input.operationKey,action:'member.theme',request:input,authorize:async()=>{await currentSubject(ctx)},prepare:async({revisionId})=>({entity:{id:ctx.actor.id,kind:'member',revisionId},value:{theme:input.theme},statements:[await identityRevision(ctx,revisionId,'member',ctx.actor.id,{theme:input.theme}),ctx.db.prepare('UPDATE members SET theme=?,updated_at=? WHERE id=?').bind(input.theme,ctx.now,ctx.actor.id)]})});

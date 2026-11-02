@@ -46,8 +46,8 @@ export function MembersPanel() {
                   {person.email} · {person.role}
                 </p>
               </div>
-              {owner && person.id !== member.id ? (
-                <button onClick={() => setRemove(person)}>Remove</button>
+              {(person.id === member.id ? owner || person.isSetupOwner : owner && !person.isSetupOwner) ? (
+                <button onClick={() => setRemove(person)}>{person.id === member.id ? "Remove yourself" : "Remove"}</button>
               ) : null}
             </li>
           ))}
@@ -114,6 +114,10 @@ export function MembersPanel() {
               operationKey: operationKey(),
               memberId: remove.id,
             });
+            if (remove.id === member.id) {
+              window.location.assign("/signin");
+              return;
+            }
             members.reload();
             groups.reload();
           }}

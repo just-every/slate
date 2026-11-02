@@ -36,7 +36,7 @@
       "id": "WORK-003",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of WORK-003 — Member management. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "Native Settings invitation and removal, ordinary-member refusal, setup-member self-removal with fresh native email proof, and last-owner protection are covered by the existing responsive authority journeys described in tests/requirements/cli-journey.md. WORK-003 remains partial: acceptance 3 complete invariance across every policy value, extension, automation and AI action is unproven; ADMIN-007 and shared company-policy prerequisites remain authoritative. This inventory retains the supporting Workers regression and makes no complete requirement claim.",
       "supportingTests": [
         {
           "file": "tests/flagship/core/security.test.ts",

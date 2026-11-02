@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {expect} from '@playwright/test';
 import {accessible} from './browser-evidence.mjs';
 import {call,ok} from './two-people-support.mjs';
-import {memberRemovalJourney} from './member-removal-journey.mjs';
+import {memberRemovalJourney,setupMemberRemovalJourney} from './member-removal-journey.mjs';
 import {guestScopeJourney} from './guest-scope-journey.mjs';
 
 /** Workspace administration and content grants remain separate authorities. */
@@ -123,5 +123,6 @@ export async function workspaceAuthorityJourney(state,width) {
     await accessible(page,'deleted group leaves individual grants intact');
     await memberRemovalJourney(state,width);
     await guestScopeJourney(state,width);
+    await setupMemberRemovalJourney(state,width,reader);
   } finally {await reader.close();}
 }
