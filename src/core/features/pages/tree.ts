@@ -79,9 +79,10 @@ async function prepareMovePreview(ctx: FeatureContext, id: string, input: MovePl
     const locationOverrides = Object.fromEntries(pages.map(p => [p.id, { containerId: input.containerId, parentPageId: p.id === id ? input.parentPageId ?? null : p.parent_page_id }]));
     const exposure = await publicMoveChanges(ctx, pages, input.containerId);
     const changes: { pageId: string; memberId: string | null; audience?: 'public-link'; before: string | null; after: string | null }[] = [...exposure.changes, ...await relocationAudienceChanges(ctx, pages, locationOverrides)];
-    // Moving is an edit only while effective access stays unchanged. Inheritance
-    // changes require the authority to share every affected page, including children.
-    for (const pageId of new Set(changes.map(change => change.pageId)))
+    // PAGE-004 permits editors at both locations to move the whole subtree and
+    // accept destination inheritance. Enabling or disabling a public exposure
+    // remains a sharing operation, including exposures on descendants.
+    for (const pageId of new Set(exposure.changes.map(change => change.pageId)))
         await requirePageLevel(ctx, pageId, 'full');
     const fingerprint = { pages: pages.map(p => [p.id, p.revision_id]), destination: { containerId: input.containerId, parentPageId: input.parentPageId ?? null }, changes };
     return { changes, publicGuard: exposure.guard, accessPreviewHash: await requestHash(fingerprint), order: relative ? await prepareOrder(ctx, id, input) : undefined };

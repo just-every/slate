@@ -32,6 +32,7 @@ export function DialogContent({
         {showClose ? (
           <DialogPrimitive.Close
             aria-label="Close"
+            data-tooltip="Close dialog" data-tooltip-align="end"
             className="max-[700px]:min-h-11 max-[700px]:min-w-11 absolute top-3 right-3 rounded-control p-1 text-ink-faint transition-colors hover:bg-sidebar-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
           >
             <X aria-hidden="true" className="size-4" />

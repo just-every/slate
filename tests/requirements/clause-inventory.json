@@ -283,7 +283,7 @@
       "id": "PAGE-004",
       "document": "CONTRACT.md",
       "status": "unproven",
-      "unmetReason": "Listed exact supporting regressions cover only particular mechanics of PAGE-004 — Move. Full requirement-level UI, profile and runtime evidence remains unproven.",
+      "unmetReason": "This Workers registry records supporting regressions only. PAGE-004 native acceptance additionally runs pageMoveJourney from tests/qualification/ui-convergence/page-move-journey.mjs through the existing responsive core-wiki browser registrations. An edit-only member uses the searchable More move picker to reorder, reparent and transfer a four-page branching subtree; reconciles every displayed audience change with the native preview; reloads; and verifies exact topology, destination-derived reader access, retained comments, immutable snapshots and pre-existing permanent links. The existing content HTTP registration also runs pageMoveCase for stale review, independently revoked source and destination authority, captured replay refusal, unchanged canonical state and retained full authority for public exposure changes. CONTRACT.md owns clause status; independent release acceptance remains separate.",
       "supportingTests": [
         {
           "file": "tests/flagship/content/http.test.ts",

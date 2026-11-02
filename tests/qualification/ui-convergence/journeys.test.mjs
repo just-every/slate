@@ -1,3 +1,4 @@
+import { pageMoveJourney } from './page-move-journey.mjs';
 import {contentQueryJourney} from './content-query-journey.mjs';
 import {publicProfileJourney} from './public-profile-journey.mjs';
 import { publicationJourney } from './publication-journey.mjs';
@@ -87,6 +88,7 @@ for (const width of [390, 1440]) {
         await step('BLOCK-001 — a new page body takes real keystrokes, including before it finishes loading, and keeps them through committed save, failed save, explicit retry and leaving; touch member creates, inserts and drags blocks', async () => { pageId = await writeJourney(state, width); touch=await beginTouchJourney(state,width);await columnsJourney(state,width,touch); });
         assert.ok(pageId, 'Writing must complete before dependent journeys.');
         assert.ok(touch, 'Touch-member writing must complete before its dependent journeys.');
+        await step('PAGE-004 searchable move preserves the branching subtree and retained content', () => withSecondPerson(state, width, people => pageMoveJourney(state, people, { proofOnly: width === 390 })));
         await step('anchored comment, reset composer, reply and resolve; touch member comments and resolves', async () => {await commentJourney(state, pageId);await touchCommentJourney(touch,touch.pageId);});
         await step('invite existing member, persisted grant and canonical copied link; touch member publishes and shares', async () => {await shareJourney(state, pageId);await touchPublishShareJourney(touch,touch.pageId);});
         await step('PAGE-007 populated Details and full-member ownership preserve grants under replay and edit-only refusal', async () => {await withSecondPerson(state,width,people=>pageDetailsJourney(state,people));});
