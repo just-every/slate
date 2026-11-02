@@ -12,7 +12,7 @@ export async function taskBodyJourney(state, people) {
   const width = bob.page.viewportSize().width;
   const tasks = ['Check the rollout notes', 'Confirm the review room', 'Prepare the handover'];
   const source = await restrictedPage({ context: alice.context, origin }, 'Body task checklist', []);
-  await grant(alice.context, origin, source.pageId, bob.id, 'edit');
+  const access = await grant(alice.context, origin, source.pageId, bob.id, 'edit');
   const initial = await ok(alice.context, origin, 'GET', `/api/pages/${source.pageId}`);
   const blocks = tasks.map((text, index) => ({ id: randomUUID(), blockType: 'task', treePosition: String(index), content: { text: [{ text }], done: false } }));
   await ok(alice.context, origin, 'PUT', `/api/pages/${source.pageId}/blocks`, {
@@ -55,18 +55,22 @@ export async function taskBodyJourney(state, people) {
     await expect(figure).toHaveText(`${completed} of 3 complete`);
     assert.deepEqual((await ok(bob.context, origin, 'GET', `/api/pages/${source.pageId}/details`)).taskCompletion, { completed, total: 3 });
   };
+  let capturedCompletion;
   const toggle = async (index, done) => {
+    await bob.page.getByRole('button', { name: 'Close details ×', exact: true }).click();
     const [response] = await Promise.all([
       bob.page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().endsWith(`/api/pages/${source.pageId}/blocks/${blocks[index].id}`)),
       bob.page.getByRole('checkbox', { name: `Mark complete: ${tasks[index]}`, exact: true }).click(),
     ]);
     assert.equal(response.status(), 200, 'Another editor can toggle a task through the native body control.');
+    if (index === 0 && done) capturedCompletion = response.request().postDataJSON();
     const receipt = (await response.json()).receipt;
     const document = await read(), block = document.blocks.find(block => block.id === blocks[index].id);
     assert.equal(block.blockType, 'task');
     assert.equal(block.content.done, done);
     assert.equal(block.content.completedByMemberId, done ? bob.id : null);
     assert.equal(block.content.completedAt, done ? receipt.committedAt : null, 'The server assigns completion time, and undo clears it.');
+    await openDetails();
     return block.content.completedAt;
   };
   await bob.page.goto(`${origin}/app/pages/${source.pageId}`, { waitUntil: 'networkidle' });
@@ -84,12 +88,15 @@ export async function taskBodyJourney(state, people) {
     await expect(row.getByRole('checkbox')).toBeChecked();
     await expect(row.locator('[data-task-completion]')).toContainText('Completed by Morgan Reader');
     await expect(row.locator('[data-task-completion] time')).toHaveAttribute('datetime', times[index]);
-    assert.ok((await row.locator('[data-task-completion] time').innerText()).trim(), 'A reader sees the committed time.');
+    await expect(row.locator('[data-task-completion] time')).toHaveText(new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(times[index])));
     assert.ok(await row.locator('[data-task-completion]').evaluate(element => parseFloat(getComputedStyle(element).fontSize) >= 13));
   }
   await unchangedViews();
   await accessible(bob.page, 'body task completion and page details');
   await bob.page.screenshot({ path: path.join(root, `.artifacts/ui-convergence/body-tasks-${width}-completed.png`), fullPage: true });
+  await bob.page.getByRole('button', { name: 'Close details ×', exact: true }).click();
+  await bob.page.screenshot({ path: path.join(root, `.artifacts/ui-convergence/body-tasks-${width}-body.png`), fullPage: true });
+  await openDetails();
   for (const [offset, index] of [0, 1].entries()) {
     await toggle(index, false);
     await counts(1 - offset);
@@ -105,14 +112,21 @@ export async function taskBodyJourney(state, people) {
   await bob.page.screenshot({ path: path.join(root, `.artifacts/ui-convergence/body-tasks-${width}-undone.png`), fullPage: true });
 
   // The same body door denies a viewer, including a replay of forged attribution.
-  await grant(alice.context, origin, source.pageId, bob.id, 'view');
+  await grant(alice.context, origin, source.pageId, bob.id, 'view', { id: access.value.id });
   await bob.page.reload({ waitUntil: 'networkidle' });
   await expect(bob.page.getByRole('checkbox', { name: `Mark complete: ${tasks[0]}`, exact: true })).toBeDisabled();
   const before = await read();
   const refused = await call(bob.context, origin, 'PATCH', `/api/pages/${source.pageId}/blocks/${blocks[0].id}`, { operationKey: randomUUID(), expectedRevisionId: before.blocks[0].revisionId, content: { ...before.blocks[0].content, done: true, completedByMemberId: 'browser-owner', completedAt: '2000-01-01T00:00:00Z' } });
-  assert.equal(refused.status, 403);
+  assert.equal(refused.status, 404, 'The body write uses the native non-disclosure refusal for insufficient access.');
+  assert.equal(refused.body.code, 'NOT_FOUND');
+  const replay = await call(bob.context, origin, 'PATCH', `/api/pages/${source.pageId}/blocks/${blocks[0].id}`, capturedCompletion);
+  assert.equal(replay.status, 404, 'Replaying a previously allowed completion rechecks current edit access.');
+  assert.equal(replay.body.code, 'NOT_FOUND');
   assert.deepEqual((await read()).blocks, before.blocks, 'A denied toggle cannot alter completion or attribution.');
   await unchangedViews();
+  // Retire this database as one tree before the shared task scenario cleans up pages.
+  const databasePage = await ok(alice.context, origin, 'GET', `/api/pages/${database.pageId}`);
+  await ok(alice.context, origin, 'POST', `/api/archive/${database.pageId}`, { operationKey: randomUUID(), expectedRevisionId: databasePage.page.revisionId, action: 'trash' });
 }
 
 /**

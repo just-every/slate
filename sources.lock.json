@@ -12160,7 +12160,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/task-report-journey.mjs": {
-      "sha256": "c93d821f2ac4c630bae03cff8aa0df54ca7a7218a3104cb9a4294393b78b9e52",
+      "sha256": "d66dfa15efe583de2267a9db01ed049b98dcf60220088a74be86d94b2bd7169a",
       "executable": false
     },
     "tests/qualification/ui-convergence/template-capture-journey.mjs": {
