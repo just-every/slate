@@ -149,6 +149,7 @@ export async function savedCriteriaCase(input: {
     expect(result.view.filters, probe.kind).toEqual(next.filters);
     expect(result.records.map((record: any) => record.pageId), probe.kind).toEqual(ids(probe.indexes));
   }
+  console.log('PROBE DB-005 field kinds: 19 native saved filter configurations and exact matching record sets passed');
 
   const criteria: View = {
     ...view,
@@ -204,4 +205,5 @@ export async function savedCriteriaCase(input: {
   expect(await read(viewPath)).toEqual(revokedSnapshot);
   expect(await read(base)).toEqual(revokedDatabase);
   expect(await snapshots()).toEqual(before);
+  console.log('PROBE DB-005 authority and clear: exact shared configuration and order, viewer refusal, combined clear and revoked replay preserve all eight records');
 }

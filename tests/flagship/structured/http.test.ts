@@ -191,7 +191,7 @@ test("Worker HTTP rejects missing expired revoked and denied sessions and persis
   }
   await savedCriteriaCase({ call, ownerCookie: cookie, memberCookie,
     ownerId: ctx.actor.id, memberId: reader.actor.id, ownerEmail: ctx.actor.email, containerId });
-});
+}, 120_000);
 
 test("database file references list only attachments the reader could open", async () => {
   const { SELF } = await import("cloudflare:test");

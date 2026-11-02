@@ -11248,11 +11248,11 @@
       "executable": false
     },
     "tests/flagship/structured/criteria-case.ts": {
-      "sha256": "d37cd16e8bbe6ea947ba2b2f19c5fa0458a8c3c0c2250a2609adb298800934d5",
+      "sha256": "447fd9f39416fc04593313c54856fdbb5d34da375ffcc3e4a4bf35ed93fcdd1b",
       "executable": false
     },
     "tests/flagship/structured/http.test.ts": {
-      "sha256": "5b709dd05c1a3eb80180ac9fe7fa4c7c86930cf4b17904f582b4121cef050f8b",
+      "sha256": "5ee736031c90343b8072e6d34b16d2d8a0ee6bf52d47dfd37d55b4896cb98065",
       "executable": false
     },
     "tests/flagship/structured/migration.py": {
