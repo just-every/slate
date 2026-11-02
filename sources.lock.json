@@ -5880,7 +5880,7 @@
       "executable": false
     },
     "src/core/features/automation/service.ts": {
-      "sha256": "9df67472d9fcdf24430149e5633c83efaa58f1a2e7b2da635156b3e0310d41ca",
+      "sha256": "8cf940976b34849e2bf71617fbf5a5e3cb91b22892229a3415c482d0e2bb9cc2",
       "executable": false
     },
     "src/core/features/automation/types.ts": {
@@ -5916,7 +5916,7 @@
       "executable": false
     },
     "src/core/features/automation/worker.ts": {
-      "sha256": "4b1971efddcf82bff490280d0ccea7af0e2367af983a84438e2a017c508ed584",
+      "sha256": "c92c7937b20acf4440c0ac2d56d942abdf0cf0764f042664219aca998f0880d7",
       "executable": false
     },
     "src/core/features/backups/configuration.ts": {
@@ -11227,8 +11227,12 @@
       "sha256": "1a1716e371fd9d588775021a34743b6471777c1d445bf501ae38a05f81f40941",
       "executable": false
     },
+    "tests/flagship/structured/automation-http.ts": {
+      "sha256": "6e81b7ef82c97ffd1770eb0ce075672f9fc331793ea3fb8fc3e9dd8615ff7dab",
+      "executable": false
+    },
     "tests/flagship/structured/automation-repairs.test.ts": {
-      "sha256": "f9b369a0292369ac859963f9e13435a4c4cfe6d3e740f17fca9a76511392d818",
+      "sha256": "9d928bfde6c4fab9a90b98a231be6790900dee6e87825114b32f82dc6a1696bd",
       "executable": false
     },
     "tests/flagship/structured/http.test.ts": {
@@ -12184,7 +12188,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/touch-database-tools-journey.mjs": {
-      "sha256": "65f75d721224b96ef0e853113539778dd4b92fa5307d971a845a0c9b046dd3fe",
+      "sha256": "edf0c4ce5a83ca2d1b40ca4dbeaa22429c03c496d606eda2437e24d48d71ad93",
       "executable": false
     },
     "tests/qualification/ui-convergence/touch-database.mjs": {

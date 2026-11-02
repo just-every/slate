@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {expect} from '@playwright/test';
 import {tap,type,checkpoint} from './touch-controls.mjs';
+import {ok} from './two-people-support.mjs';
+import {randomUUID} from 'node:crypto';
 
 /** The database's remaining modes use the same member and records as its six layouts. */
 export async function touchDatabaseToolsJourney(state,touch){
@@ -56,5 +58,34 @@ export async function touchDatabaseToolsJourney(state,touch){
  const comments=await api(`/api/comments/page/${created.pageId}`);
  assert.equal(comments.comments.filter(comment=>JSON.stringify(comment.body).includes('The duty team should review this response.')).length,1);
  await checkpoint(page,'database automation completed');
+ // Keep the native rule readable while removing the actor's mutation authority.
+ // The rule's public run log must show the skipped action after a reload.
+ const saved=(await api('/api/automation')).items.find(item=>item.name==='Confirm response intake');
+ assert.equal(saved.actor_member_id,'browser-reader');
+ const blocked=(await ok(touch.context,origin,'POST',`${base}/records`,{
+   operationKey:randomUUID(),title:'synthetic-slate-read-only-target',values:{},
+ })).value;
+ const grant=async(member,level)=>ok(touch.context,origin,'POST','/api/sharing',{
+   operationKey:randomUUID(),targetKind:'page',targetId:blocked.pageId,
+   principalKind:'member',principalId:member,level,
+ });
+ await grant('browser-owner','full');
+ await grant('browser-reader','view');
+ await ok(touch.context,origin,'PUT',`/api/sharing/pages/${blocked.pageId}/inheritance`,{
+   operationKey:randomUUID(),expectedRevisionId:blocked.revisionId,restricted:true,
+ });
+ await state.runScheduled();
+ await page.reload({waitUntil:'networkidle'});
+ await tap(rule.getByRole('button',{name:'Run log',exact:true}));
+ const log=page.getByRole('heading',{name:'Run log',exact:true}).locator('..');
+ await expect(log).toContainText('Action 1: skipped');
+ const runs=(await api(`/api/automation/${saved.id}/runs`)).items;
+ const skipped=runs.find(item=>JSON.parse(item.trigger_json).pageId===blocked.pageId);
+ assert.equal(skipped.state,'no-action');
+ assert.deepEqual(skipped.receipts.map(item=>item.state),['skipped']);
+ assert.equal((await api(`/api/comments/page/${blocked.pageId}`)).comments.length,0);
+ await state.runScheduled();
+ assert.deepEqual((await api(`/api/automation/${saved.id}/runs`)).items,runs);
+ await checkpoint(page,'database automation skips current read-only target');
  console.log('NAV-006 touch database charts, templates and automations passed');
 }

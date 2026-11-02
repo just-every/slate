@@ -230,7 +230,7 @@ export async function runLog(ctx: FeatureContext, id: string) {
         delete trigger.containerId;
       }
     }
-    const receipts =
+    const storedReceipts =
       rule.actor_member_id === ctx.actor.id
         ? (
             await ctx.db
@@ -245,9 +245,36 @@ export async function runLog(ctx: FeatureContext, id: string) {
                 receipt: string;
               }>()
           ).results
-            .filter((r) => !r.targetId || readable.includes(r.targetId))
-            .map((r) => ({ ...r, receipt: JSON.parse(r.receipt) }))
         : [];
+    const receipts = [];
+    const currentAccess = new Map<string, boolean>();
+    const canRead = async (pageId: string) => {
+      if (!currentAccess.has(pageId)) {
+        try {
+          await requirePageLevel(ctx, pageId, "view");
+          currentAccess.set(pageId, true);
+        } catch (e) {
+          if (!(e instanceof ApiProblem) || e.status !== 404) throw e;
+          currentAccess.set(pageId, false);
+        }
+      }
+      return currentAccess.get(pageId)!;
+    };
+    for (const stored of storedReceipts) {
+      const targetReadable = !stored.targetId || await canRead(stored.targetId);
+      const receipt = JSON.parse(stored.receipt);
+      if (stored.state === "skipped") {
+        // A skipped action is still a visible outcome. Its target and payload
+        // must not reveal a page the actor can no longer read.
+        receipts.push({ ...stored, targetId: targetReadable ? stored.targetId : "", receipt: {
+          code: receipt.code,
+          message: "Action skipped because current access does not permit it.",
+        } });
+      } else if (targetReadable) {
+        const resultPage = receipt?.receipt?.entity?.kind === "page" ? receipt.receipt.entity.id : undefined;
+        if (!resultPage || await canRead(resultPage)) receipts.push({ ...stored, receipt });
+      }
+    }
     items.push({
       ...row,
       records_json: JSON.stringify(readable),

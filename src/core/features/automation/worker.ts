@@ -22,6 +22,13 @@ import {
   defaultAutomationLimits,
   type AutomationLimits,
 } from "./jobs";
+async function skipAction(ctx: FeatureContext, runId: string, index: number, target: string, code: string) {
+  await ctx.db.prepare(
+    "INSERT INTO automation_action_receipts VALUES (?,?,?,'skipped',?,?) ON CONFLICT(run_id,action_index,target_id) DO UPDATE SET state='skipped',receipt_json=excluded.receipt_json WHERE automation_action_receipts.state NOT IN ('confirmed','skipped')",
+  ).bind(runId, index, target, JSON.stringify({
+    code, message: "Action skipped because current access does not permit it.",
+  }), ctx.now).run();
+}
 export async function processAutomationJob(
   ctx: FeatureContext,
   jobId: string,
@@ -219,22 +226,7 @@ export async function processAutomationJob(
                 e instanceof ApiProblem &&
                 [401, 403, 404].includes(e.status)
               ) {
-                await ctx.db
-                  .prepare(
-                    "INSERT INTO automation_action_receipts VALUES (?,?,?,'skipped',?,?) ON CONFLICT(run_id,action_index,target_id) DO UPDATE SET state='skipped',receipt_json=excluded.receipt_json",
-                  )
-                  .bind(
-                    job.run_id,
-                    index,
-                    target,
-                    JSON.stringify({
-                      code: e.code,
-                      message:
-                        "Action skipped because current access does not permit it.",
-                    }),
-                    fresh.now,
-                  )
-                  .run();
+                await skipAction(fresh, job.run_id, index, target, e.code);
                 detail.skipped = true;
                 continue;
               }
@@ -245,16 +237,29 @@ export async function processAutomationJob(
       }
     }
   } catch (e) {
-    const transient = !(e instanceof ApiProblem) || e.status >= 500;
-    state = transient && job.cursor < 2 ? "running" : e instanceof ApiProblem && e.status === 429 ? "throttled" : "failure";
-    detail = {
-      ...detail,
-      error: e instanceof ApiProblem ? e.code : "ACTION_FAILED",
-      message:
-        e instanceof ApiProblem
-          ? e.message
-          : "An action failed; retained receipts identify committed work.",
-    };
+    if (e instanceof ApiProblem && [403, 404].includes(e.status)) {
+      // Access may disappear before conditions are read, or between effects.
+      // Retain confirmed work and log every remaining known target as skipped.
+      const rule = await ctx.db.prepare("SELECT actions_json FROM automation_rules WHERE id=?")
+        .bind(job.rule_id).first<{ actions_json: string }>();
+      const actions = rule ? JSON.parse(rule.actions_json) as RuleAction[] : [];
+      const targets = payload.targets ?? (payload.event.pageId ? [payload.event.pageId] : [""]);
+      for (const target of targets) for (let index = 0; index < actions.length; index++)
+        await skipAction(ctx, job.run_id, index, target, e.code);
+      state = "success";
+      detail.skipped = true;
+    } else {
+      const transient = !(e instanceof ApiProblem) || e.status >= 500;
+      state = transient && job.cursor < 2 ? "running" : e instanceof ApiProblem && e.status === 429 ? "throttled" : "failure";
+      detail = {
+        ...detail,
+        error: e instanceof ApiProblem ? e.code : "ACTION_FAILED",
+        message:
+          e instanceof ApiProblem
+            ? e.message
+            : "An action failed; retained receipts identify committed work.",
+      };
+    }
   }
   if (state === "success") {
     const confirmed = await ctx.db
