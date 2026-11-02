@@ -34,6 +34,7 @@ export async function inlineTextJourney(state, pageId, width) {
     await expect(control).toHaveAttribute('data-tooltip', /\S+\s+\S+/);
   }
   const colourControl = toolbar.getByRole('button', { name: 'Text colour', exact: true });
+  await page.keyboard.press('Tab');
   await colourControl.focus();
   await expect.poll(() => colourControl.evaluate(element => getComputedStyle(element, '::after').opacity)).toBe('1');
   await select();

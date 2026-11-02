@@ -43,9 +43,9 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
     const exportReceipt=await source.cli('export',first,sourceCookie);const before=unpack(await readFile(first));
     assert.equal(exportReceipt.counts.pages,3);assert.equal(before.manifest.tables.containers.length,2);assert.equal(before.manifest.tables.page_revisions.length,6);assert.equal(before.manifest.tables.comments.length,2);assert.equal(before.manifest.tables.files.length,2);assert.equal(before.manifest.tables.groups.length,1);assert.equal(before.manifest.tables.members.length,3);assert.equal(before.manifest.tables.public_exposures.length,1);assert.equal(before.manifest.tables.public_exposures[0].revoked_at,null);
     await source.close();
+    const readableDirectory=path.join(scratch,'readable');await mkdir(readableDirectory);
+    readableTarget=await runtime(readableDirectory);assert.notEqual(readableTarget.persist,source.persist);
     for(const archive of readableArchives) {
-      const directory=path.join(scratch,`readable-${archive.format}`);await mkdir(directory);
-      readableTarget=await runtime(directory);assert.notEqual(readableTarget.persist,source.persist);
       await readableTarget.start();const cookie=await signIn(readableTarget);
       const form=new FormData();form.set('operationKey',randomUUID());form.set('format','slate-readable');form.set('file',new Blob([archive.bytes],{type:'application/zip'}),'readable.zip');
       const job=await(await api(readableTarget,cookie,'/api/imports',{method:'POST',body:form})).json();
@@ -71,8 +71,8 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
         assert.deepEqual(copy.blocks.map(block=>block.content),original.blocks.map(block=>remap(block.content)),'Readable import into separate storage preserves all spans with explicit identity mapping.');
       }
       console.log(`PROBE BLOCK-002 readable ${archive.format}: export and import into separate D1 and R2 -> exact marks, colours, references and status labels after explicit identity mapping`);
-      readableTarget=undefined;
     }
+    readableTarget=undefined;
     target=await runtime(path.join(scratch,'target'));
     assert.notEqual(target.persist,source.persist);
     const [empty]=await target.sql('SELECT (SELECT COUNT(*) FROM workspaces) AS workspaces,(SELECT COUNT(*) FROM members) AS members,(SELECT COUNT(*) FROM containers) AS containers,(SELECT COUNT(*) FROM pages) AS pages,(SELECT COUNT(*) FROM files) AS files');
@@ -134,6 +134,7 @@ test('BASE-DATA-001 PORT-001 PORT-002 PORT-005 — actual native ZIP backup/rest
       CREATE TABLE portability_unregistered_record(id TEXT PRIMARY KEY,body TEXT);
       INSERT INTO portability_unregistered_record VALUES ('unregistered','must not silently disappear')`);
     t.diagnostic(JSON.stringify(equivalent(before,after,ownerEmail,reexport.id,bootstrapAudit.results)));
+    console.log('PROBE BLOCK-002 native ZIP: backup, restore and backup in separate D1 and R2 -> exact canonical spans, revisions, grants, comments, labels and original attachment bytes');
     await target.start();
     const refused=await fetch(target.origin+'/api/exports/workspace',{method:'POST',headers:{Cookie:targetCookie,Origin:target.origin,'Content-Type':'application/json'},body:JSON.stringify({operationKey:randomUUID()})});
     assert.equal(refused.status,409);assert.equal((await refused.json()).code,'UNREGISTERED_PORTABLE_TABLE','Populated unknown tables still fail closed.');

@@ -12,7 +12,7 @@ export function canonicalContent(block: ImportedBlock, idFor: (kind: string, id:
         if (reference) return [key, reference[1] + idFor(reference[1] === '/app/pages/' ? 'page' : 'file', decodeURIComponent(reference[2]!)) + reference[3]];
       }
       if (key === 'mention' && item && typeof item === 'object' && !Array.isArray(item) && typeof item.id === 'string') {
-        const kind = item.kind === 'person' ? 'member' : item.kind === 'page' ? 'page' : item.kind === 'group' ? 'group' : undefined;
+        const kind = item.kind === 'person' ? 'member' : item.kind === 'page' ? 'page' : undefined;
         return [key, kind ? {...item, id: idFor(kind, item.id)} : item];
       }
       return [key, key === 'commentAnchorId' && typeof item === 'string' ? idFor('comment-anchor', item) : key === 'fileId' && typeof item === 'string' ? idFor('file', item) : rewrite(item)];

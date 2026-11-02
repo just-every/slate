@@ -7156,7 +7156,7 @@
       "executable": false
     },
     "src/core/features/imports/canonical-block.ts": {
-      "sha256": "82c7caafbe4197c80514a2b3c56d9baf6c1b19dcb8185848de4ba175968a3c2a",
+      "sha256": "40e3486964572b9016c87e722816c30a26ea040bf1c984c973f3ff1ac037116e",
       "executable": false
     },
     "src/core/features/imports/comment-plan.ts": {
@@ -11380,7 +11380,7 @@
       "executable": false
     },
     "tests/portability/roundtrip.test.mjs": {
-      "sha256": "30231bf0839f400261c3965bab416960da9b13257fe5b248ddbe581b0227ac98",
+      "sha256": "14e943f08bce0f61f9ad7635786b192447f6a5f1407402dbdf734b2b01519b18",
       "executable": false
     },
     "tests/portability/runtime.mjs": {
@@ -12020,7 +12020,7 @@
       "executable": false
     },
     "tests/qualification/ui-convergence/inline-text-journey.mjs": {
-      "sha256": "b3ef05b19a712aa0c12eaca9fde463038080508aae3db272886c78457287dace",
+      "sha256": "e7088b4fd1cedc69989f074295f46248964fc8b4833114209bc920d2a6535edf",
       "executable": false
     },
     "tests/qualification/ui-convergence/journey-shard.mjs": {
